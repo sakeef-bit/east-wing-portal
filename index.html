@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { --hca-sage: #C5D1B8; --hca-dark: #2C3E50; --hca-bg: #F4F7F6; }
+        body { background: var(--hca-bg); font-family: 'Segoe UI', sans-serif; padding-bottom: 50px; }
+        .hero { background: var(--hca-dark); color: white; padding: 40px; text-align: center; position: relative; }
+        .sub-brand { position: absolute; bottom: 10px; right: 40px; font-weight: bold; color: var(--hca-sage); font-size: 0.8rem; }
+        .huge-btn { height: 180px; border-radius: 15px; border: none; background: var(--hca-sage); color: var(--hca-dark); font-weight: bold; font-size: 1.2rem; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .huge-btn:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .view-pane { display: none; padding: 40px; }
+        #launchpad { display: block; }
+        .app-nav { background: white; border-radius: 10px; display: flex; overflow: hidden; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .app-nav-btn { flex: 1; text-align: center; padding: 15px; cursor: pointer; font-weight: bold; border-right: 1px solid #eee; }
+        .app-nav-btn.active { background: var(--hca-sage); }
+        #st { background: white; border-radius: 8px; padding: 15px; position: fixed; bottom: 20px; right: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: none; z-index: 1000; }
+        .je-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; font-family: monospace; }
+        .dr { color: #2C3E50; width: 80px; text-align: right; }
+        .cr { color: #d9534f; width: 80px; text-align: right; }
+    </style>
+</head>
+<body>
+
+<div id="launchpad">
+    <div class="hero"><h1>Automation Tool</h1><div class="sub-brand">By East Wing</div></div>
+    <div class="container mt-5">
+        <div id="keyGate" class="card p-4 border-0 shadow-sm mb-4 text-center">
+            <h5 class="mb-3">Enter Gemini API Key</h5>
+            <input type="password" id="master_gk" class="form-control mb-3 text-center" placeholder="Paste Key Here">
+            <button class="btn btn-dark w-100" onclick="lockKey()">Unlock Portal</button>
+        </div>
+        <div id="mainPortal" style="display:none">
+            <div class="card p-4 border-0 shadow-sm mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="w-50"><label class="fw-bold small">ACTIVE CLIENT</label><select id="masterClient" class="form-select"><option value="">-- Select --</option></select></div>
+                    <button class="btn btn-dark" onclick="showPane('config')">+ Add New Client</button>
+                </div>
+            </div>
+            <div class="row g-4" id="actionGrid" style="opacity:0.3; pointer-events:none;">
+                <div class="col-md-4"><button class="huge-btn w-100" onclick="triggerFile('PDF')">🏦 BANK<br>STATEMENT</button></div>
+                <div class="col-md-4"><button class="huge-btn w-100" onclick="triggerFile('CC')">💳 CREDIT<br>CARD</button></div>
+                <div class="col-md-4"><button class="huge-btn w-100" onclick="loadDash()" style="background:#eee">📂 VIEW<br>DASHBOARD</button></div>
+            </div>
+            <input type="file" id="f_pdf" style="display:none" onchange="handleFile(this, 'PDF')">
+            <input type="file" id="f_cc" style="display:none" onchange="handleFile(this, 'CC')">
+        </div>
+    </div>
+</div>
+
+<div id="configPane" class="view-pane container">
+    <div class="card p-5 border-0 shadow">
+        <h3>Client Setup</h3><hr>
+        <input id="n" class="form-control mb-3" placeholder="Company Name">
+        <textarea id="gl" class="form-control mb-3" placeholder="GL Accounts (comma separated)" rows="5"></textarea>
+        <button onclick="save()" class="btn btn-primary w-100">Provision 100k Ledger</button>
+        <button onclick="showPane('launchpad')" class="btn btn-link w-100">Cancel</button>
+    </div>
+</div>
+
+<div id="dashPane" class="view-pane">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 id="activeTitle" class="fw-bold">Dashboard</h2>
+        <div class="gap-2 d-flex">
+            <button class="btn btn-outline-primary btn-sm" onclick="approveAll()">Approve All</button>
+            <button class="btn btn-primary btn-sm" onclick="saveAll()">Save All</button>
+            <button class="btn btn-outline-danger btn-sm" onclick="location.reload()">Exit</button>
+        </div>
+    </div>
+    <div class="app-nav">
+        <div id="nav-review" class="app-nav-btn active" onclick="switchTab('review')">REVIEW</div>
+        <div id="nav-history" class="app-nav-btn" onclick="switchTab('history')">HISTORY</div>
+        <div id="nav-je" class="app-nav-btn" onclick="switchTab('je')">JE VIEW</div>
+    </div>
+    <div id="tab-review" class="bg-white p-4 rounded shadow-sm">
+        <div class="d-flex justify-content-between mb-3"><h4>Staging</h4><button class="btn btn-dark btn-sm" onclick="pushQBO()">Push to QBO</button></div>
+        <table class="table table-hover table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Status</th></tr></thead><tbody id="tb-staging"></tbody></table>
+    </div>
+    <div id="tab-history" class="bg-white p-4 rounded shadow-sm" style="display:none;">
+        <h4>History</h4><table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync</th></tr></thead><tbody id="tb-history"></tbody></table>
+    </div>
+    <div id="tab-je" class="bg-white p-4 rounded shadow-sm" style="display:none;"><h4>Balanced Journal Entry</h4><div id="jeList" class="mt-3"></div></div>
+</div>
+
+<datalist id="glOptionsList"></datalist>
+<div id="st"><strong>Working...</strong></div>
+
+<script>
+    const ENGINE_URL = "https://script.google.com/a/macros/hcaconsulting.com/s/AKfycbyJIDPF-GaEjuKqJ9TZQghVjiocHBXBDeWrKzV4KMWeqynRIVsn_6pe-36JlQ6WXKIpNw/exec";
+    let currentClient = "";
+
+    async function callEngine(payload) {
+        const response = await fetch(ENGINE_URL, { method: 'POST', body: JSON.stringify(payload) });
+        return await response.json();
+    }
+
+    function lockKey() {
+        localStorage.setItem('hca_gk', document.getElementById('master_gk').value);
+        document.getElementById('keyGate').style.display = 'none';
+        document.getElementById('mainPortal').style.display = 'block';
+        loadList();
+    }
+
+    async function loadList() {
+        const list = await callEngine({action: "getList"});
+        const sel = document.getElementById('masterClient');
+        sel.innerHTML = '<option value="">-- Choose --</option>';
+        list.forEach(v => sel.innerHTML += `<option value="${v}">${v}</option>`);
+    }
+
+    window.onload = () => {
+        if(localStorage.getItem('hca_gk')) {
+            document.getElementById('keyGate').style.display = 'none';
+            document.getElementById('mainPortal').style.display = 'block';
+            loadList();
+        }
+    };
+
+    document.getElementById('masterClient').onchange = function() {
+        const val = this.value;
+        document.getElementById('actionGrid').style.opacity = val ? "1" : "0.3";
+        document.getElementById('actionGrid').style.pointerEvents = val ? "auto" : "none";
+    };
+
+    async function save() {
+        const n = document.getElementById('n').value;
+        const gl = document.getElementById('gl').value;
+        document.getElementById('st').style.display = 'block';
+        const res = await callEngine({action: "provision", clientName: n, glList: gl});
+        alert(res.msg); location.reload();
+    }
+
+    function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
+
+    async function handleFile(input, type) {
+        currentClient = document.getElementById('masterClient').value;
+        document.getElementById('st').style.display = 'block';
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const res = await callEngine({action: "process", client: currentClient, source: type, fileData: e.target.result.split(',')[1], geminiKey: localStorage.getItem('hca_gk')});
+            renderDashboard(res);
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+
+    async function loadDash() {
+        currentClient = document.getElementById('masterClient').value;
+        document.getElementById('st').style.display = 'block';
+        const res = await callEngine({action: "getAppData", clientName: currentClient});
+        renderDashboard(res);
+    }
+
+    function renderDashboard(res) {
+        document.getElementById('st').style.display = 'none';
+        showPane('dash');
+        document.getElementById('activeTitle').innerText = currentClient;
+        const dList = document.getElementById('glOptionsList'); dList.innerHTML = "";
+        res.glOptions.forEach(opt => dList.innerHTML += `<option value="${opt}">`);
+        const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
+        let jeData = {}; let totalNet = 0;
+        res.staging.forEach(i => {
+            sBody.innerHTML += `<tr><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td><input id="c${i.row}" list="glOptionsList" data-row="${i.row}" class="form-control form-control-sm mb-0 row-cat" value="${i.cat}"></td><td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td></tr>`;
+            let val = parseFloat(i.amt.replace(/[^0-9.-]+/g,""));
+            jeData[i.cat] = (jeData[i.cat] || 0) + val; totalNet += val;
+        });
+        const jeDiv = document.getElementById('jeList');
+        jeDiv.innerHTML = `<div class="je-item fw-bold"><span>Account</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
+        for (let cat in jeData) {
+            let dr = jeData[cat] < 0 ? Math.abs(jeData[cat]) : 0;
+            let cr = jeData[cat] > 0 ? jeData[cat] : 0;
+            jeDiv.innerHTML += `<div class="je-item"><span>${cat}</span><span class="dr">${dr?'$'+dr.toFixed(2):''}</span><span class="cr">${cr?'$'+cr.toFixed(2):''}</span></div>`;
+        }
+        const hBody = document.getElementById('tb-history'); hBody.innerHTML = "";
+        res.history.forEach(i => { hBody.innerHTML += `<tr><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; });
+    }
+
+    function switchTab(t) {
+        document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.app-nav-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-'+t).style.display = 'block';
+        document.getElementById('nav-'+t).classList.add('active');
+    }
+
+    function approveAll() { document.querySelectorAll('.row-stat').forEach(s => s.value = "APPROVED"); }
+    
+    async function saveAll() {
+        let updates = [];
+        document.querySelectorAll('.row-cat').forEach(inp => {
+            let r = inp.getAttribute('data-row');
+            updates.push({ row: r, cat: inp.value, stat: document.getElementById('s'+r).value });
+        });
+        document.getElementById('st').style.display = 'block';
+        await callEngine({action: "updateRow", client: currentClient, updateData: updates});
+        loadDash();
+    }
+
+    async function pushQBO() {
+        document.getElementById('st').style.display = 'block';
+        const res = await callEngine({action: "pushQBO", client: currentClient});
+        renderDashboard(res);
+    }
+
+    function showPane(p) {
+        document.querySelectorAll('.view-pane, #launchpad').forEach(el => el.style.display = 'none');
+        document.getElementById(p + (p.includes('Pane') ? '' : 'Pane')).style.display = 'block';
+    }
+</script>
+</body>
+</html>
