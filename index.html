@@ -6,7 +6,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root { --hca-sage: #C5D1B8; --hca-dark: #2C3E50; --hca-bg: #F8F9FA; }
-        body { background: var(--hca-bg); font-family: 'Segoe UI', sans-serif; color: var(--hca-dark); padding-bottom: 60px; }
+        body { background: var(--hca-bg); font-family: 'Segoe UI', system-ui, sans-serif; color: var(--hca-dark); padding-bottom: 60px; }
         .rounded-xl { border-radius: 12px !important; }
         .navbar { background: white; border-bottom: 2px solid var(--hca-sage); padding: 1rem 2rem; }
         .hero-section { background: linear-gradient(135deg, var(--hca-dark) 0%, #34495e 100%); color: white; padding: 60px 20px; text-align: center; margin-bottom: 40px; }
@@ -14,12 +14,15 @@
         .card-custom:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
         .card-img-top { height: 180px; object-fit: cover; width: 100%; }
         .btn-hca { background: var(--hca-sage); color: var(--hca-dark); border: none; font-weight: bold; padding: 10px 20px; border-radius: 10px; cursor: pointer; }
+        .btn-hca:hover { background: #b5c4a7; }
         .btn-dark-hca { background: var(--hca-dark); color: white; border-radius: 10px; padding: 10px 20px; cursor: pointer; }
         .view-pane { display: none; }
         .app-nav { background: white; border-radius: 12px; display: flex; overflow: hidden; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .app-nav-btn { flex: 1; text-align: center; padding: 15px; cursor: pointer; font-weight: bold; border-right: 1px solid #eee; color: #7f8c8d; }
         .app-nav-btn.active { background: var(--hca-sage); color: var(--hca-dark); }
         #st { background: white; border-radius: 12px; padding: 20px; position: fixed; bottom: 30px; right: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: none; z-index: 2000; border: 1px solid var(--hca-sage); }
+        .dr { color: #2C3E50; width: 80px; text-align: right; font-weight: bold;}
+        .cr { color: #d9534f; width: 80px; text-align: right; font-weight: bold;}
     </style>
 </head>
 <body>
@@ -34,7 +37,7 @@
 <div id="view-launchpad">
     <header class="hero-section">
         <h1 class="display-4 fw-bold">Financial Automation Portal</h1>
-        <p class="lead opacity-75">Professional Ledger Processing & AI Extraction</p>
+        <p class="lead opacity-75">Professional Ledger Processing</p>
     </header>
 
     <div class="container">
@@ -112,7 +115,7 @@
         <h2 id="activeTitle" class="fw-bold">Dashboard</h2>
         <div class="gap-2 d-flex">
             <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="approveAll()">Approve All</button>
-            <button class="btn btn-primary btn-sm rounded-pill px-3" onclick="saveAll()">Save Changes</button>
+            <button class="btn btn-primary btn-sm rounded-pill px-3" onclick="saveAll()">Save All</button>
             <button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="showPane('launchpad')">Exit</button>
         </div>
     </div>
@@ -123,11 +126,11 @@
         <div id="nav-meta" class="app-nav-btn" onclick="switchTab('meta')">CLIENT INFO</div>
     </div>
     <div id="tab-review" class="bg-white p-4 rounded-xl shadow-sm">
-        <div class="d-flex justify-content-between mb-3"><h5>Staging</h5><button class="btn btn-dark btn-sm rounded-pill" onclick="pushQBO()">Push to QBO</button></div>
+        <div class="d-flex justify-content-between mb-3 align-items-center"><h5>Staging</h5><button class="btn btn-dark btn-sm rounded-pill" onclick="pushQBO()">Push to QBO</button></div>
         <table class="table table-hover table-sm align-middle"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Status</th></tr></thead><tbody id="tb-staging"></tbody></table>
     </div>
     <div id="tab-history" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5>History</h5><table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync</th></tr></thead><tbody id="tb-history"></tbody></table></div>
-    <div id="tab-je" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5>Balanced Journal Entry</h5><div id="jeList" class="mt-3 font-monospace"></div></div>
+    <div id="tab-je" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5>JE View</h5><div id="jeList" class="mt-3 font-monospace"></div></div>
     <div id="tab-meta" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5>Client Info</h5><div id="metaList"></div></div>
 </div>
 
@@ -146,9 +149,10 @@
                 body: JSON.stringify(payload),
                 redirect: 'follow'
             });
-            return await response.json();
+            const text = await response.text();
+            return JSON.parse(text);
         } catch (e) {
-            alert("Connection Error: " + e.message);
+            alert("Network Error: Failed to fetch");
             document.getElementById('st').style.display = 'none';
         }
     }
@@ -162,7 +166,7 @@
             document.getElementById('nav-actions').style.display = 'block';
             const list = await callEngine({action: "getList"});
             const sel = document.getElementById('masterClient');
-            if(list) list.forEach(v => sel.innerHTML += `<option value="${v}">${v}</option>`);
+            if(list && !list.error) list.forEach(v => sel.innerHTML += `<option value="${v}">${v}</option>`);
         }
     };
 
@@ -174,7 +178,8 @@
     async function save() {
         document.getElementById('st').style.display = 'block';
         const res = await callEngine({ action: "provision", clientName: document.getElementById('n').value, nature: document.getElementById('nature').value, keys: { QBO_ID: document.getElementById('qi').value, QBO_SEC: document.getElementById('qs').value }, glList: document.getElementById('gl').value });
-        alert(res.msg); location.reload();
+        if(res && res.msg) alert(res.msg);
+        location.reload();
     }
 
     function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
@@ -192,11 +197,13 @@
 
     function renderDashboard(res) {
         document.getElementById('st').style.display = 'none';
-        if(!res || res.error) { alert("Error: " + (res ? res.error : "No data")); return; }
+        if(!res || res.error) { alert("Error: " + (res ? res.error : "No data received")); return; }
         showPane('dash');
         document.getElementById('activeTitle').innerText = currentClient;
+        
         const dl = document.getElementById('glChoices'); dl.innerHTML = "";
         res.glOptions.forEach(opt => dl.innerHTML += `<option value="${opt}">`);
+
         const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
         let jeData = {}; let totalNet = 0;
         res.staging.forEach(i => {
@@ -204,13 +211,15 @@
             let val = parseFloat(i.amt.replace(/[^0-9.-]+/g,""));
             jeData[i.cat] = (jeData[i.cat] || 0) + val; totalNet += val;
         });
+
         const jeDiv = document.getElementById('jeList'); jeDiv.innerHTML = `<div>Account Name <span style="float:right">DR | CR</span></div><hr>`;
         for (let cat in jeData) {
             let dr = jeData[cat] < 0 ? Math.abs(jeData[cat]) : 0, cr = jeData[cat] > 0 ? jeData[cat] : 0;
             jeDiv.innerHTML += `<div>${cat} <span style="float:right">${dr?`$${dr.toFixed(2)}`:''} | ${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
         }
         res.history.forEach(i => { document.getElementById('tb-history').innerHTML += `<tr><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; });
-        res.metadata.forEach(m => document.getElementById('metaList').innerHTML += `<div class="small py-1 border-bottom"><strong>${m[0]}:</strong> <span class="text-muted">${m[1]}</span></div>`);
+        const mDiv = document.getElementById('metaList'); mDiv.innerHTML = "";
+        res.metadata.forEach(m => mDiv.innerHTML += `<div class="small py-1 border-bottom"><strong>${m[0]}:</strong> <span class="text-muted">${m[1]}</span></div>`);
     }
 
     function switchTab(t) {
