@@ -7,23 +7,21 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root { --hca-sage: #C5D1B8; --hca-dark: #2C3E50; --hca-bg: #F8F9FA; }
-        body { background: var(--hca-bg); font-family: 'Segoe UI', system-ui, sans-serif; color: var(--hca-dark); padding-bottom: 60px; }
+        body { background: var(--hca-bg); font-family: 'Segoe UI', sans-serif; color: var(--hca-dark); padding-bottom: 60px; }
         .rounded-xl { border-radius: 12px !important; }
         .navbar { background: white; border-bottom: 2px solid var(--hca-sage); padding: 1rem 2rem; }
         .hero-section { background: linear-gradient(135deg, var(--hca-dark) 0%, #34495e 100%); color: white; padding: 60px 20px; text-align: center; margin-bottom: 40px; }
         .card-custom { background: white; border: none; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: 0.3s; height: 100%; display: flex; flex-direction: column; }
         .card-custom:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
-        .card-img-top { height: 180px; object-fit: cover; }
-        .btn-hca { background: var(--hca-sage); color: var(--hca-dark); border: none; font-weight: bold; padding: 10px 20px; border-radius: 10px; transition: 0.2s; }
+        .card-img-top { height: 180px; object-fit: cover; width: 100%; }
+        .btn-hca { background: var(--hca-sage); color: var(--hca-dark); border: none; font-weight: bold; padding: 10px 20px; border-radius: 10px; transition: 0.2s; cursor: pointer; }
         .btn-hca:hover { background: #b5c4a7; }
-        .btn-dark-hca { background: var(--hca-dark); color: white; border-radius: 10px; padding: 10px 20px; }
-        .view-pane { display: none; animation: fadeIn 0.4s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-dark-hca { background: var(--hca-dark); color: white; border-radius: 10px; padding: 10px 20px; cursor: pointer; }
+        .view-pane { display: none; }
         .app-nav { background: white; border-radius: 12px; display: flex; overflow: hidden; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .app-nav-btn { flex: 1; text-align: center; padding: 15px; cursor: pointer; font-weight: bold; border-right: 1px solid #eee; color: #7f8c8d; }
         .app-nav-btn.active { background: var(--hca-sage); color: var(--hca-dark); }
         #st { background: rgba(255,255,255,0.9); border-radius: 12px; padding: 20px; position: fixed; bottom: 30px; right: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: none; z-index: 2000; border: 1px solid var(--hca-sage); }
-        .je-table { font-family: 'Courier New', Courier, monospace; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -42,7 +40,6 @@
     </header>
 
     <div class="container">
-        <!-- AUTH SECTION -->
         <div id="keyGate" class="row justify-content-center">
             <div class="col-md-5">
                 <div class="card card-custom p-4 text-center">
@@ -53,7 +50,6 @@
             </div>
         </div>
 
-        <!-- MAIN HUB -->
         <div id="mainPortal" style="display:none">
             <div class="card p-4 rounded-xl border-0 shadow-sm mb-4">
                 <div class="row align-items-center">
@@ -62,7 +58,7 @@
                         <select id="masterClient" class="form-select rounded-pill"><option value="">-- Choose a Client --</option></select>
                     </div>
                     <div class="col-md-4 text-end pt-4">
-                        <button class="btn btn-dark-hca rounded-pill" onclick="showPane('config')">+ Add New Client</button>
+                        <button class="btn btn-dark-hca rounded-pill" onclick="showPane('config')">+ Add/Update Client</button>
                     </div>
                 </div>
             </div>
@@ -70,32 +66,23 @@
             <div class="row g-4" id="actionGrid" style="opacity:0.3; pointer-events:none;">
                 <div class="col-md-4">
                     <div class="card card-custom">
-                        <img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80" class="card-img-top" alt="Bank">
-                        <div class="card-body p-4">
-                            <h5 class="fw-bold">Bank Statement</h5>
-                            <p class="small text-muted">AI-powered extraction for standard bank PDF statements.</p>
-                            <button class="btn btn-hca w-100 mt-auto" onclick="triggerFile('PDF')">Process PDF</button>
-                        </div>
+                        <img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80" class="card-img-top">
+                        <div class="card-body p-4"><h5 class="fw-bold">Bank Statement</h5><p class="small text-muted">AI extraction for bank PDFs.</p>
+                        <button class="btn btn-hca w-100 mt-auto" onclick="triggerFile('PDF')">Process PDF</button></div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="card card-custom">
-                        <img src="https://images.unsplash.com/photo-1556742049-0a67568d0d9f?auto=format&fit=crop&w=600&q=80" class="card-img-top" alt="CC">
-                        <div class="card-body p-4">
-                            <h5 class="fw-bold">Credit Card</h5>
-                            <p class="small text-muted">Automated reconciliation for credit card expense reports.</p>
-                            <button class="btn btn-hca w-100 mt-auto" onclick="triggerFile('CC')">Process PDF</button>
-                        </div>
+                        <img src="https://images.unsplash.com/photo-1556742049-0a67568d0d9f?auto=format&fit=crop&w=600&q=80" class="card-img-top">
+                        <div class="card-body p-4"><h5 class="fw-bold">Credit Card</h5><p class="small text-muted">Reconciliation for CC reports.</p>
+                        <button class="btn btn-hca w-100 mt-auto" onclick="triggerFile('CC')">Process PDF</button></div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="card card-custom">
-                        <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80" class="card-img-top" alt="Dashboard">
-                        <div class="card-body p-4">
-                            <h5 class="fw-bold">Client Dashboard</h5>
-                            <p class="small text-muted">View existing staging area, history, and sync to QuickBooks.</p>
-                            <button class="btn btn-hca w-100 mt-auto" onclick="loadDash()">Enter Dashboard</button>
-                        </div>
+                        <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80" class="card-img-top">
+                        <div class="card-body p-4"><h5 class="fw-bold">Dashboard</h5><p class="small text-muted">View staging, history, and sync.</p>
+                        <button class="btn btn-hca w-100 mt-auto" onclick="loadDash()">Enter Dashboard</button></div>
                     </div>
                 </div>
             </div>
@@ -105,104 +92,60 @@
     </div>
 </div>
 
-<!-- CLIENT CONFIGURATION PANE -->
 <div id="configPane" class="view-pane container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card p-5 card-custom">
-                <h3 class="fw-bold mb-4">Provision New Client</h3>
-                <div class="row g-3">
-                    <div class="col-md-6"><label class="fw-bold small">Company Name</label><input id="n" class="form-control rounded-pill"></div>
-                    <div class="col-md-6"><label class="fw-bold small">Nature (e.g. Retail)</label><input id="nature" class="form-control rounded-pill"></div>
-                    <div class="col-md-6"><label class="fw-bold small">QBO Client ID</label><input id="qi" class="form-control rounded-pill"></div>
-                    <div class="col-md-6"><label class="fw-bold small">QBO Secret</label><input id="qs" type="password" class="form-control rounded-pill"></div>
-                    <div class="col-12"><label class="fw-bold small">GL Accounts (Comma Separated)</label><textarea id="gl" class="form-control rounded-xl" rows="4"></textarea></div>
-                    <div class="col-12 d-flex gap-2 pt-3">
-                        <button onclick="save()" class="btn btn-dark-hca flex-grow-1 rounded-pill">Save & Create 100k Ledger</button>
-                        <button onclick="showPane('launchpad')" class="btn btn-outline-secondary rounded-pill">Exit</button>
-                    </div>
-                </div>
+    <div class="row justify-content-center"><div class="col-md-8"><div class="card p-5 card-custom">
+        <h3 class="fw-bold mb-4">Provision Client</h3>
+        <div class="row g-3">
+            <div class="col-md-6"><label class="fw-bold small">Company Name</label><input id="n" class="form-control rounded-pill"></div>
+            <div class="col-md-6"><label class="fw-bold small">Nature</label><input id="nature" class="form-control rounded-pill"></div>
+            <div class="col-md-6"><label class="fw-bold small">QBO ID</label><input id="qi" class="form-control rounded-pill"></div>
+            <div class="col-md-6"><label class="fw-bold small">QBO Secret</label><input id="qs" type="password" class="form-control rounded-pill"></div>
+            <div class="col-12"><label class="fw-bold small">GL Accounts (Comma Separated)</label><textarea id="gl" class="form-control rounded-xl" rows="4"></textarea></div>
+            <div class="col-12 d-flex gap-2 pt-3">
+                <button onclick="save()" class="btn btn-dark-hca flex-grow-1 rounded-pill">Save & Provision</button>
+                <button onclick="showPane('launchpad')" class="btn btn-outline-secondary rounded-pill">Exit</button>
             </div>
         </div>
-    </div>
+    </div></div></div>
 </div>
 
-<!-- DASHBOARD PANE -->
 <div id="dashPane" class="view-pane container-fluid px-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 id="activeTitle" class="fw-bold">Dashboard</h2>
         <div class="gap-2 d-flex">
             <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="approveAll()">Approve All</button>
-            <button class="btn btn-primary btn-sm rounded-pill px-3" onclick="saveAll()">Save Changes</button>
+            <button class="btn btn-primary btn-sm rounded-pill px-3" onclick="saveAll()">Save All</button>
             <button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="showPane('launchpad')">Exit</button>
         </div>
     </div>
-    
     <div class="app-nav">
         <div id="nav-review" class="app-nav-btn active" onclick="switchTab('review')">REVIEW</div>
         <div id="nav-history" class="app-nav-btn" onclick="switchTab('history')">HISTORY</div>
         <div id="nav-je" class="app-nav-btn" onclick="switchTab('je')">JE VIEW</div>
         <div id="nav-meta" class="app-nav-btn" onclick="switchTab('meta')">CLIENT INFO</div>
     </div>
-
     <div id="tab-review" class="bg-white p-4 rounded-xl shadow-sm">
-        <div class="d-flex justify-content-between mb-3 align-items-center">
-            <h5 class="fw-bold">Staging (Pending Sync)</h5>
-            <button class="btn btn-dark btn-sm rounded-pill" onclick="pushQBO()">Push Approved to QBO</button>
-        </div>
+        <div class="d-flex justify-content-between mb-3"><h5>Staging</h5><button class="btn btn-dark btn-sm rounded-pill" onclick="pushQBO()">Push to QBO</button></div>
         <table class="table table-hover table-sm align-middle"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Status</th></tr></thead><tbody id="tb-staging"></tbody></table>
     </div>
-
-    <div id="tab-history" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
-        <h5 class="fw-bold">Permanent Ledger History</h5>
-        <table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync Status</th></tr></thead><tbody id="tb-history"></tbody></table>
-    </div>
-
-    <div id="tab-je" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
-        <h5 class="fw-bold">Balanced Journal Entry</h5><div id="jeList" class="mt-3 je-table"></div>
-    </div>
-
-    <div id="tab-meta" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
-        <div class="row">
-            <div class="col-md-6">
-                <h5 class="fw-bold mb-3">Client Credentials</h5>
-                <div id="metaList"></div>
-            </div>
-            <div class="col-md-6 border-start">
-                <h5 class="fw-bold mb-3">GL Management</h5>
-                <p class="small text-muted">Upload a CSV with columns: "Account Name", "Nature"</p>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-sm btn-outline-dark rounded-pill" onclick="downloadGLTemplate()">Download CSV Template</button>
-                    <button class="btn btn-sm btn-dark rounded-pill" onclick="document.getElementById('gl_upload').click()">Upload New GL List</button>
-                </div>
-                <input type="file" id="gl_upload" style="display:none" onchange="uploadGL(this)">
-            </div>
-        </div>
-    </div>
+    <div id="tab-history" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5>History</h5><table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync</th></tr></thead><tbody id="tb-history"></tbody></table></div>
+    <div id="tab-je" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5>JE View</h5><div id="jeList" class="mt-3"></div></div>
+    <div id="tab-meta" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5>Client Info</h5><div id="metaList"></div></div>
 </div>
 
 <datalist id="glChoices"></datalist>
-<div id="st"><div class="spinner-border spinner-border-sm text-primary me-2"></div><strong>Processing Data...</strong></div>
+<div id="st"><div class="spinner-border spinner-border-sm text-primary me-2"></div><strong>Processing...</strong></div>
 
 <script>
-    const ENGINE_URL = "https://script.google.com/macros/s/AKfycbwsMzXsxbTkDnM8OP40rnXg1KICv5TMgXjW9hK8oXArnkzcKPixMOrvxcQBQ_oUYX6LaQ/exec";
+    const ENGINE_URL = "https://script.google.com/macros/s/AKfycbxNfpKODTWv4yc3KqjUiLoWUeiyRSdTqEB135EQXbyVu4zTn0bvmJlxNqldGjh1t77h6A/exec";
     let currentClient = "";
 
     async function callEngine(payload) {
-        const response = await fetch(ENGINE_URL, {
-            method: 'POST',
-            mode: 'cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload),
-            redirect: 'follow'
-        });
+        const response = await fetch(ENGINE_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload), redirect: 'follow' });
         return await response.json();
     }
 
-    function lockKey() {
-        localStorage.setItem('hca_gk', document.getElementById('master_gk').value);
-        location.reload();
-    }
+    function lockKey() { localStorage.setItem('hca_gk', document.getElementById('master_gk').value); location.reload(); }
 
     window.onload = async () => {
         if(localStorage.getItem('hca_gk')) {
@@ -221,15 +164,8 @@
     };
 
     async function save() {
-        const payload = {
-            action: "provision",
-            clientName: document.getElementById('n').value,
-            nature: document.getElementById('nature').value,
-            keys: { QBO_ID: document.getElementById('qi').value, QBO_SEC: document.getElementById('qs').value },
-            glList: document.getElementById('gl').value
-        };
         document.getElementById('st').style.display = 'block';
-        const res = await callEngine(payload);
+        const res = await callEngine({ action: "provision", clientName: document.getElementById('n').value, nature: document.getElementById('nature').value, keys: { QBO_ID: document.getElementById('qi').value, QBO_SEC: document.getElementById('qs').value }, glList: document.getElementById('gl').value });
         alert(res.msg); location.reload();
     }
 
@@ -252,8 +188,8 @@
         showPane('dash');
         document.getElementById('activeTitle').innerText = currentClient;
         
-        const dlist = document.getElementById('glChoices'); dlist.innerHTML = "";
-        res.glOptions.forEach(opt => dlist.innerHTML += `<option value="${opt}">`);
+        const dl = document.getElementById('glChoices'); dl.innerHTML = "";
+        res.glOptions.forEach(opt => dl.innerHTML += `<option value="${opt}">`);
 
         const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
         let jeData = {}; let totalNet = 0;
@@ -263,13 +199,13 @@
             jeData[i.cat] = (jeData[i.cat] || 0) + val; totalNet += val;
         });
 
-        const jeDiv = document.getElementById('jeList'); jeDiv.innerHTML = `<div class="je-item fw-bold"><span>Account</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
+        const jeDiv = document.getElementById('jeList'); jeDiv.innerHTML = `<div class="je-item fw-bold"><span>Account</span><span>DR</span><span>CR</span></div>`;
         for (let cat in jeData) {
             let dr = jeData[cat] < 0 ? Math.abs(jeData[cat]) : 0, cr = jeData[cat] > 0 ? jeData[cat] : 0;
-            jeDiv.innerHTML += `<div class="je-item"><span>${cat}</span><span class="dr">${dr?`$${dr.toFixed(2)}`:''}</span><span class="cr">${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
+            jeDiv.innerHTML += `<div class="je-item"><span>${cat}</span><span>${dr?`$${dr.toFixed(2)}`:''}</span><span>${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
         }
         let bDr = totalNet > 0 ? totalNet : 0, bCr = totalNet < 0 ? Math.abs(totalNet) : 0;
-        jeDiv.innerHTML += `<div class="je-item fw-bold text-primary border-top pt-2"><span>[Cash Offset] Bank/Card</span><span class="dr">${bDr?`$${bDr.toFixed(2)}`:''}</span><span class="cr">${bCr?`$${bCr.toFixed(2)}`:''}</span></div>`;
+        jeDiv.innerHTML += `<div class="je-item fw-bold text-primary border-top pt-2"><span>[Offset] Bank/Card</span><span>${bDr?`$${bDr.toFixed(2)}`:''}</span><span>${bCr?`$${bCr.toFixed(2)}`:''}</span></div>`;
 
         const hBody = document.getElementById('tb-history'); hBody.innerHTML = "";
         res.history.forEach(i => { hBody.innerHTML += `<tr><td>${i[2]}</td><td>${i[3]}</td><td>$${i[4]}</td><td>${i[5]}</td><td>${i[6]}</td></tr>`; });
@@ -296,23 +232,18 @@
         await callEngine({action: "updateRows", client: currentClient, updateData: updates});
         loadDash();
     }
-    async function pushQBO() { document.getElementById('st').style.display = 'block'; const res = await callEngine({action: "pushQBO", client: currentClient}); renderDashboard(res); }
-    function showPane(p) { document.querySelectorAll('.view-pane, #launchpad').forEach(el => el.style.display = 'none'); document.getElementById(p + (p.includes('Pane') ? '' : 'Pane')).style.display = 'block'; }
-    async function loadDash() { currentClient = document.getElementById('masterClient').value; document.getElementById('st').style.display = 'block'; const res = await callEngine({action: "getAppData", clientName: currentClient}); renderDashboard(res); }
-    function downloadGLTemplate() {
-        let csvContent = "data:text/csv;charset=utf-8,Account Name,Nature\nRent,Expense\nSales,Revenue";
-        let encodedUri = encodeURI(csvContent);
-        let link = document.createElement("a");
-        link.setAttribute("href", encodedUri); link.setAttribute("download", "gl_template.csv");
-        document.body.appendChild(link); link.click();
+    async function pushQBO() { 
+        document.getElementById('st').style.display = 'block'; 
+        const res = await callEngine({action: "pushQBO", client: currentClient}); 
+        renderDashboard(res); 
     }
-    async function uploadGL(input) {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const res = await callEngine({action: "uploadGL", client: currentClient, csvData: e.target.result});
-            alert(res.msg); loadDash();
-        };
-        reader.readAsText(input.files[0]);
+    function showPane(p) { document.querySelectorAll('.view-pane, #view-launchpad').forEach(el => el.style.display = 'none'); document.getElementById(p + (p.includes('Pane') ? '' : 'Pane')).style.display = 'block'; }
+    async function loadDash() { 
+        currentClient = document.getElementById('masterClient').value; 
+        if(!currentClient) return alert("Select client first");
+        document.getElementById('st').style.display = 'block'; 
+        const res = await callEngine({action: "getAppData", clientName: currentClient}); 
+        renderDashboard(res); 
     }
 </script>
 </body>
