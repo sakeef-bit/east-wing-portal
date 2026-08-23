@@ -6,7 +6,7 @@
         :root { --hca-sage: #C5D1B8; --hca-dark: #2C3E50; --hca-bg: #F4F7F6; }
         body { background: var(--hca-bg); font-family: 'Segoe UI', sans-serif; padding-bottom: 50px; }
         .hero { background: var(--hca-dark); color: white; padding: 40px; text-align: center; position: relative; }
-        .sub-brand { position: absolute; bottom: 10px; right: 40px; font-weight: bold; color: var(--hca-sage); font-size: 0.8rem; }
+        .hero .sub-brand { position: absolute; bottom: 10px; right: 40px; font-weight: bold; color: var(--hca-sage); font-size: 0.8rem; }
         .huge-btn { height: 180px; border-radius: 15px; border: none; background: var(--hca-sage); color: var(--hca-dark); font-weight: bold; font-size: 1.2rem; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .huge-btn:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
         .view-pane { display: none; padding: 40px; }
@@ -27,14 +27,14 @@
     <div class="container mt-5">
         <div id="keyGate" class="card p-4 border-0 shadow-sm mb-4 text-center">
             <h5>Enter Master Key</h5>
-            <input type="password" id="master_gk" class="form-control mb-3 text-center" placeholder="Gemini API Key">
+            <input type="password" id="master_gk" class="form-control mb-3 text-center" placeholder="Paste Gemini Key Here">
             <button class="btn btn-dark w-100" onclick="lockKey()">Unlock Portal</button>
         </div>
         <div id="mainPortal" style="display:none">
             <div class="card p-4 border-0 shadow-sm mb-4">
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="w-50"><label class="fw-bold small">ACTIVE CLIENT</label><select id="masterClient" class="form-select c-list"><option value="">-- Choose Client --</option></select></div>
-                    <button class="btn btn-dark" onclick="showPane('config')">+ Add New Client</button>
+                    <button class="btn btn-dark" onclick="showPane('config')">+ Add Client</button>
                 </div>
             </div>
             <div class="row g-4" id="actionGrid" style="opacity:0.3; pointer-events:none;">
@@ -79,15 +79,15 @@
     <div id="tab-history" class="bg-white p-4 rounded shadow-sm" style="display:none;">
         <h4>History</h4><table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync</th></tr></thead><tbody id="tb-history"></tbody></table>
     </div>
-    <div id="tab-je" class="bg-white p-4 rounded shadow-sm" style="display:none;"><h4>Balanced Journal Entry</h4><div id="jeList" class="mt-3"></div></div>
+    <div id="tab-je" class="bg-white p-4 rounded shadow-sm" style="display:none;"><h4>Journal Entry View</h4><div id="jeList" class="mt-3"></div></div>
 </div>
 
 <datalist id="glOptionsList"></datalist>
 <div id="st"><strong>Working...</strong></div>
 
 <script>
-    // --- THIS IS THE LINK TO YOUR GOOGLE ENGINE ---
-    const ENGINE_URL = "https://script.google.com/macros/s/AKfycbzjwMfWOjd-xzNu57KQyTi0Kefv05uFpw0VGWYlkxUA7n1cgM1yt6IqQlXQR0XGblVgPQ/exec";
+    // --- PASTE YOUR GOOGLE SCRIPT URL HERE ---
+    const ENGINE_URL = "https://script.google.com/a/macros/hcaconsulting.com/s/AKfycbzt9INdk8duSSEyhE48x3TDqbassYKizGQt0vocu96YA9RbuRskjffQFIkml0JQ7j3Fpg/exec";
 
     let currentClient = "";
 
@@ -146,27 +146,34 @@
 
     function renderDashboard(res) {
         document.getElementById('st').style.display = 'none';
+        if(res.error) { alert("Error: " + res.error); return; }
         showPane('dash');
         document.getElementById('activeTitle').innerText = currentClient;
+        
         const dl = document.getElementById('glOptionsList'); dl.innerHTML = "";
         res.glOptions.forEach(o => dl.innerHTML += `<option value="${o}">`);
+
         const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
-        let jeData = {}; let totalNet = 0;
+        let totalNet = 0; let jeData = {};
+
         res.staging.forEach(i => {
             sBody.innerHTML += `<tr><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td><input id="c${i.row}" list="glOptionsList" data-row="${i.row}" class="form-control form-control-sm mb-0 row-cat" value="${i.cat}"></td><td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td></tr>`;
             let val = parseFloat(i.amt.replace(/[^0-9.-]+/g,""));
-            jeData[i.cat] = (jeData[i.cat] || 0) + val; totalNet += val;
+            jeData[i.cat] = (jeData[i.cat] || 0) + val;
+            totalNet += val;
         });
+
         const jeDiv = document.getElementById('jeList');
         jeDiv.innerHTML = `<div class="je-item fw-bold"><span>Account</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
         for (let cat in jeData) {
             let dr = jeData[cat] < 0 ? Math.abs(jeData[cat]) : 0, cr = jeData[cat] > 0 ? jeData[cat] : 0;
-            jeDiv.innerHTML += `<div class="je-item"><span>${cat}</span><span class="dr">${dr?'$'+dr.toFixed(2):''}</span><span class="cr">${cr?'$'+cr.toFixed(2):''}</span></div>`;
+            jeDiv.innerHTML += `<div class="je-item"><span>${cat}</span><span class="dr">${dr?`$${dr.toFixed(2)}`:''}</span><span class="cr">${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
         }
         let bDr = totalNet > 0 ? totalNet : 0, bCr = totalNet < 0 ? Math.abs(totalNet) : 0;
-        jeDiv.innerHTML += `<div class="je-item fw-bold text-primary"><span>[Offset] Cash Account</span><span class="dr">${bDr?'$'+bDr.toFixed(2):''}</span><span class="cr">${bCr?'$'+bCr.toFixed(2):''}</span></div>`;
+        jeDiv.innerHTML += `<div class="je-item fw-bold text-primary"><span>[Offset] Cash Account</span><span class="dr">${bDr?`$${bDr.toFixed(2)}`:''}</span><span class="cr">${bCr?`$${bCr.toFixed(2)}`:''}</span></div>`;
+
         const hBody = document.getElementById('tb-history'); hBody.innerHTML = "";
-        res.history.forEach(i => { hBody.innerHTML += `<tr><td>${i[2]}</td><td>${i[3]}</td><td>$${i[4]}</td><td>${i[5]}</td><td>${i[6]}</td></tr>`; });
+        res.history.forEach(i => { hBody.innerHTML += `<tr><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; });
     }
 
     function switchTab(t) {
@@ -178,6 +185,7 @@
     }
 
     function approveAll() { document.querySelectorAll('.row-stat').forEach(s => s.value = "APPROVED"); }
+    
     async function saveAll() {
         let updates = [];
         document.querySelectorAll('.row-cat').forEach(inp => {
@@ -188,15 +196,18 @@
         await callEngine({action: "updateRows", client: currentClient, updateData: updates});
         loadDash();
     }
+
     async function pushQBO() {
         document.getElementById('st').style.display = 'block';
         const res = await callEngine({action: "pushQBO", client: currentClient});
         renderDashboard(res);
     }
+
     function showPane(p) {
         document.querySelectorAll('.view-pane, #launchpad').forEach(el => el.style.display = 'none');
         document.getElementById(p + (p.includes('Pane') ? '' : 'Pane')).style.display = 'block';
     }
+
     async function loadDash() {
         currentClient = document.getElementById('masterClient').value;
         document.getElementById('st').style.display = 'block';
