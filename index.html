@@ -4,157 +4,157 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root { --hca-sage: #C5D1B8; --hca-dark: #2C3E50; --hca-bg: #F4F7F6; }
-        body { background: var(--hca-bg); font-family: 'Segoe UI', sans-serif; padding-bottom: 50px; }
+        body { background: var(--hca-bg); font-family: 'Segoe UI', sans-serif; padding-bottom: 100px; }
         .hero { background: var(--hca-dark); color: white; padding: 40px; text-align: center; position: relative; }
-        .hero .sub-brand { position: absolute; bottom: 10px; right: 40px; font-weight: bold; color: var(--hca-sage); font-size: 0.8rem; }
-        .huge-btn { height: 180px; border-radius: 15px; border: none; background: var(--hca-sage); color: var(--hca-dark); font-weight: bold; font-size: 1.2rem; transition: 0.3s; }
-        .huge-btn:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .huge-btn { height: 160px; border-radius: 15px; border: none; background: var(--hca-sage); color: var(--hca-dark); font-weight: bold; font-size: 1.1rem; transition: 0.3s; }
         .view-pane { display: none; padding: 40px; }
-        #launchpad { display: block; }
         .app-nav { background: white; border-radius: 10px; display: flex; overflow: hidden; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .app-nav-btn { flex: 1; text-align: center; padding: 15px; cursor: pointer; font-weight: bold; }
         .app-nav-btn.active { background: var(--hca-sage); }
         #st { background: white; border-radius: 8px; padding: 15px; position: fixed; bottom: 20px; right: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: none; z-index: 1000; }
-        .je-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; font-family: monospace; }
+        /* Visual Console Style */
+        #visual-console { position: fixed; bottom: 0; left: 0; right: 0; height: 80px; background: #333; color: #0f0; font-family: monospace; font-size: 11px; padding: 10px; overflow-y: auto; border-top: 2px solid var(--hca-sage); z-index: 9999; }
     </style>
 </head>
 <body>
 
 <div id="launchpad">
-    <div class="hero"><h1>Automation Tool</h1><div class="sub-brand">By East Wing</div></div>
+    <div class="hero"><h1>Automation Tool</h1><p>By East Wing</p></div>
     <div class="container mt-5">
         <div id="keyGate" class="card p-4 border-0 shadow-sm mb-4 text-center">
-            <h5 class="mb-3">Enter Gemini API Key to Start</h5>
-            <input type="password" id="master_gk" class="form-control mb-3 text-center" placeholder="API KEY">
+            <input type="password" id="master_gk" class="form-control mb-3 text-center" placeholder="Paste Gemini Key">
             <button class="btn btn-dark w-100" onclick="lockKey()">Unlock Portal</button>
         </div>
         <div id="mainPortal" style="display:none">
             <div class="card p-4 border-0 shadow-sm mb-4">
                 <div class="d-flex justify-content-between align-items-center">
-                    <div class="w-50">
-                        <label class="fw-bold small">SELECT ACTIVE CLIENT</label>
-                        <select id="masterClient" class="form-select c-list"><option value="">-- Choose Client --</option></select>
-                    </div>
-                    <button class="btn btn-dark" onclick="showPane('config')">+ Add New Client Profile</button>
+                    <div class="w-50"><select id="masterClient" class="form-select c-list"><option value="">-- Choose Client --</option></select></div>
+                    <button class="btn btn-dark" onclick="showPane('config')">+ Add Client</button>
                 </div>
             </div>
             <div class="row g-4" id="actionButtons" style="opacity: 0.3; pointer-events: none;">
-                <div class="col-md-4">
-                    <button class="huge-btn w-100" onclick="triggerProcess('PDF')">🏦 BANK<br>STATEMENT</button>
-                    <input type="file" id="f_bank" style="display:none" onchange="handleFile(this, 'PDF')">
-                </div>
-                <div class="col-md-4">
-                    <button class="huge-btn w-100" onclick="triggerProcess('CC')">💳 CREDIT<br>CARD</button>
-                    <input type="file" id="f_cc" style="display:none" onchange="handleFile(this, 'CC')">
-                </div>
-                <div class="col-md-4">
-                    <button class="huge-btn w-100" onclick="loadDash()" style="background:#eee">📂 VIEW<br>DASHBOARD</button>
-                </div>
+                <div class="col-md-4"><button class="huge-btn w-100" onclick="triggerFile('PDF')">🏦 BANK</button></div>
+                <div class="col-md-4"><button class="huge-btn w-100" onclick="triggerFile('CC')">💳 CREDIT CARD</button></div>
+                <div class="col-md-4"><button class="huge-btn w-100" onclick="loadDash()" style="background:#eee">📂 DASHBOARD</button></div>
             </div>
+            <input type="file" id="f_bank" style="display:none" onchange="handleFile(this, 'PDF')">
+            <input type="file" id="f_cc" style="display:none" onchange="handleFile(this, 'CC')">
         </div>
     </div>
 </div>
 
 <div id="configPane" class="view-pane container">
     <div class="card p-5 border-0 shadow">
-        <h3>New Client Configuration</h3>
-        <hr>
-        <div class="row g-3">
-            <input id="n" class="form-control mb-3" placeholder="Client Name">
-            <textarea id="gl" class="form-control mb-3" placeholder="Paste GL Accounts (comma separated)" rows="5"></textarea>
-            <div class="d-flex gap-2">
-                <button onclick="save()" class="btn btn-primary w-100">Provision 100k Ledger</button>
-                <button onclick="showPane('launchpad')" class="btn btn-outline-secondary w-100">Cancel</button>
-            </div>
-        </div>
+        <h3>Client Setup</h3><hr>
+        <input id="n" class="form-control mb-3" placeholder="Client Name">
+        <textarea id="gl" class="form-control mb-3" placeholder="GL Accounts (comma separated)"></textarea>
+        <button onclick="save()" class="btn btn-primary w-100">Provision Ledger</button>
+        <button onclick="showPane('launchpad')" class="btn btn-link w-100">Cancel</button>
     </div>
 </div>
 
 <div id="dashPane" class="view-pane">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between mb-4">
         <h2 id="activeTitle" class="fw-bold">Dashboard</h2>
-        <div class="gap-2 d-flex">
-            <button class="btn btn-outline-primary btn-sm" onclick="approveAll()">Approve All</button>
-            <button class="btn btn-primary btn-sm" onclick="saveAll()">Save All</button>
-            <button class="btn btn-outline-danger btn-sm" onclick="showPane('launchpad')">Exit</button>
-        </div>
+        <button class="btn btn-outline-danger btn-sm" onclick="location.reload()">Exit</button>
     </div>
     <div class="app-nav">
         <div id="nav-review" class="app-nav-btn active" onclick="switchTab('review')">REVIEW</div>
         <div id="nav-history" class="app-nav-btn" onclick="switchTab('history')">HISTORY</div>
-        <div id="nav-je" class="app-nav-btn" onclick="switchTab('je')">JE VIEW</div>
     </div>
     <div id="tab-review" class="bg-white p-4 rounded shadow-sm">
-        <div class="d-flex justify-content-between mb-3"><h4>Staging</h4><button class="btn btn-dark btn-sm" onclick="pushQBO()">Push to QBO</button></div>
-        <table class="table table-hover table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Status</th><th></th></tr></thead><tbody id="tb-staging"></tbody></table>
+        <table class="table table-hover table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Status</th></tr></thead><tbody id="tb-staging"></tbody></table>
+        <button class="btn btn-primary mt-3" onclick="saveAll()">Save Changes</button>
     </div>
     <div id="tab-history" class="bg-white p-4 rounded shadow-sm" style="display:none;">
-        <h4>History</h4><table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync</th></tr></thead><tbody id="tb-history"></tbody></table>
+        <table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th></tr></thead><tbody id="tb-history"></tbody></table>
     </div>
-    <div id="tab-je" class="bg-white p-4 rounded shadow-sm" style="display:none;"><h4>Balanced Journal Entry</h4><div id="jeList" class="mt-3"></div></div>
 </div>
+
+<!-- Visual Console -->
+<div id="visual-console">LOG: System Initialized. Waiting for input...</div>
 
 <div id="st"><strong>Working...</strong></div>
 
 <script>
     let currentClient = "";
 
+    function log(msg) {
+        const consoleEl = document.getElementById('visual-console');
+        consoleEl.innerHTML += "<br>> " + msg;
+        consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
     function lockKey() {
         localStorage.setItem('hca_gk', document.getElementById('master_gk').value);
-        document.getElementById('keyGate').style.display = 'none';
-        document.getElementById('mainPortal').style.display = 'block';
+        location.reload();
     }
 
     window.onload = () => {
+        log("Checking API Key...");
         if(localStorage.getItem('hca_gk')) {
             document.getElementById('keyGate').style.display = 'none';
             document.getElementById('mainPortal').style.display = 'block';
+            log("API Key Found. Fetching clients...");
+            google.script.run.withSuccessHandler(l => {
+                log("Clients fetched: " + l.length);
+                const sel = document.getElementById('masterClient');
+                l.forEach(v => sel.innerHTML += `<option value="${v}">${v}</option>`);
+            }).getClientList();
         }
-        google.script.run.withSuccessHandler(l => {
-            const sel = document.getElementById('masterClient');
-            l.forEach(v => sel.innerHTML += `<option value="${v}">${v}</option>`);
-        }).getClientList();
     };
 
     document.getElementById('masterClient').onchange = function() {
         const val = this.value;
         document.getElementById('actionButtons').style.opacity = val ? "1" : "0.3";
         document.getElementById('actionButtons').style.pointerEvents = val ? "auto" : "none";
+        log("Active client changed to: " + val);
     };
 
     function save() {
         const n = document.getElementById('n').value;
         const gl = document.getElementById('gl').value;
+        log("Provisioning sheet for " + n + "...");
         document.getElementById('st').style.display = 'block';
-        google.script.run.withSuccessHandler(m => { alert(m.msg); location.reload(); }).saveClientSettings(n, {}, gl);
+        google.script.run.withSuccessHandler(m => { 
+            log("Backend Message: " + m.msg);
+            alert(m.msg); location.reload(); 
+        }).withFailureHandler(err => log("FATAL ERROR: " + err)).saveClientSettings(n, {}, gl);
     }
 
-    function triggerProcess(t) { document.getElementById(t === 'PDF' ? 'f_bank' : 'f_cc').click(); }
+    function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_bank' : 'f_cc').click(); }
 
     function handleFile(input, type) {
         currentClient = document.getElementById('masterClient').value;
         const gk = localStorage.getItem('hca_gk');
+        log("Uploading file for " + type + " processing...");
         document.getElementById('st').style.display = 'block';
         const reader = new FileReader();
         reader.onload = (e) => {
-            google.script.run.withSuccessHandler(renderDashboard).runProcess({
-                client: currentClient, 
-                source: type, 
-                fileData: e.target.result.split(',')[1], 
-                geminiKey: gk
-            });
+            log("File read success. Sending to Gemini...");
+            google.script.run
+                .withSuccessHandler(renderDashboard)
+                .withFailureHandler(err => {
+                    log("AI PROCESS FAILED: " + err);
+                    document.getElementById('st').style.display = 'none';
+                })
+                .runProcess({client: currentClient, source: type, fileData: e.target.result.split(',')[1], geminiKey: gk});
         };
         reader.readAsDataURL(input.files[0]);
     }
 
     function loadDash() {
         currentClient = document.getElementById('masterClient').value;
+        log("Opening Dashboard for " + currentClient);
         document.getElementById('st').style.display = 'block';
         google.script.run.withSuccessHandler(renderDashboard).getAppData(currentClient);
     }
 
     function renderDashboard(res) {
+        log("Rendering Dashboard Data...");
         document.getElementById('st').style.display = 'none';
+        if(res.error) { log("DATA ERROR: " + res.error); alert(res.error); return; }
+        
         document.getElementById('launchpad').style.display = 'none';
         document.getElementById('configPane').style.display = 'none';
         document.getElementById('dashPane').style.display = 'block';
@@ -163,12 +163,9 @@
         const sBody = document.getElementById('tb-staging');
         sBody.innerHTML = "";
         res.staging.forEach(i => {
-            sBody.innerHTML += `<tr><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td><input id="c${i.row}" class="form-control form-control-sm mb-0 row-cat" value="${i.cat}" data-row="${i.row}"></td><td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td></tr>`;
+            sBody.innerHTML += `<tr><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td><input id="c${i.row}" data-row="${i.row}" class="form-control form-control-sm mb-0 row-cat" value="${i.cat}"></td><td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td></tr>`;
         });
-
-        const hBody = document.getElementById('tb-history');
-        hBody.innerHTML = "";
-        res.history.forEach(i => { hBody.innerHTML += `<tr><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; });
+        log("Table render complete.");
     }
 
     function showPane(p) {
@@ -179,24 +176,8 @@
     function switchTab(t) {
         document.getElementById('tab-review').style.display = t === 'review' ? 'block' : 'none';
         document.getElementById('tab-history').style.display = t === 'history' ? 'block' : 'none';
-        document.getElementById('tab-je').style.display = t === 'je' ? 'block' : 'none';
         document.querySelectorAll('.app-nav-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('nav-' + t).classList.add('active');
-    }
-
-    function saveAll() {
-        let updates = [];
-        document.querySelectorAll('.row-cat').forEach(inp => {
-            let r = inp.getAttribute('data-row');
-            updates.push({ row: r, cat: inp.value, stat: document.getElementById('s'+r).value });
-        });
-        document.getElementById('st').style.display = 'block';
-        google.script.run.withSuccessHandler(() => loadDash()).bulkUpdateRows(currentClient, updates);
-    }
-    
-    function pushQBO() {
-        document.getElementById('st').style.display = 'block';
-        google.script.run.withSuccessHandler(renderDashboard).pushToQBO(currentClient);
     }
 </script>
 </body>
