@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Automation Portal</title>
+    <title>Financial Automation Portal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root { --hca-sage: #C5D1B8; --hca-dark: #2C3E50; --hca-bg: #F8F9FA; }
@@ -11,7 +11,7 @@
         .rounded-xl { border-radius: 12px !important; }
         .navbar { background: white; border-bottom: 2px solid var(--hca-sage); padding: 1rem 2rem; }
         .hero-section { background: linear-gradient(135deg, var(--hca-dark) 0%, #34495e 100%); color: white; padding: 60px 20px; text-align: center; margin-bottom: 40px; }
-        .card-custom { background: white; border: none; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); height: 100%; display: flex; flex-direction: column; }
+        .card-custom { background: white; border: none; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); height: 100%; display: flex; flex-direction: column; transition: 0.3s; }
         .card-custom:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
         .card-img-top { height: 180px; object-fit: cover; width: 100%; }
         .btn-hca { background: var(--hca-sage); color: var(--hca-dark); border: none; font-weight: bold; padding: 10px 20px; border-radius: 10px; cursor: pointer; }
@@ -23,7 +23,6 @@
         #st { background: white; border-radius: 12px; padding: 20px; position: fixed; bottom: 30px; right: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: none; z-index: 2000; border: 1px solid var(--hca-sage); }
         .dr { color: #2C3E50; width: 80px; text-align: right; font-weight: bold;}
         .cr { color: #d9534f; width: 80px; text-align: right; font-weight: bold;}
-        .je-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; font-family: monospace; }
     </style>
 </head>
 <body>
@@ -116,7 +115,7 @@
         <h2 id="activeTitle" class="fw-bold">Dashboard</h2>
         <div class="gap-2 d-flex">
             <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="approveAll()">Approve All</button>
-            <button class="btn btn-primary btn-sm rounded-pill px-3" onclick="saveAll()">Save All</button>
+            <button class="btn btn-primary btn-sm rounded-pill px-3" onclick="saveAll()">Save Changes</button>
             <button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="showPane('launchpad')">Exit</button>
         </div>
     </div>
@@ -127,11 +126,11 @@
         <div id="nav-meta" class="app-nav-btn" onclick="switchTab('meta')">CLIENT INFO</div>
     </div>
     <div id="tab-review" class="bg-white p-4 rounded-xl shadow-sm">
-        <div class="d-flex justify-content-between mb-3"><h5>Staging</h5><button class="btn btn-dark btn-sm rounded-pill" onclick="pushQBO()">Push to QBO</button></div>
+        <div class="d-flex justify-content-between mb-3 align-items-center"><h5>Staging</h5><button class="btn btn-dark btn-sm rounded-pill" onclick="pushQBO()">Push to QBO</button></div>
         <table class="table table-hover table-sm align-middle"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Status</th></tr></thead><tbody id="tb-staging"></tbody></table>
     </div>
     <div id="tab-history" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5>History</h5><table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync</th></tr></thead><tbody id="tb-history"></tbody></table></div>
-    <div id="tab-je" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5>JE View</h5><div id="jeList" class="mt-3"></div></div>
+    <div id="tab-je" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5>JE View</h5><div id="jeList" class="mt-3 font-monospace"></div></div>
     <div id="tab-meta" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5>Client Info</h5><div id="metaList"></div></div>
 </div>
 
@@ -139,12 +138,23 @@
 <div id="st"><div class="spinner-border spinner-border-sm text-primary me-2"></div><strong>Processing...</strong></div>
 
 <script>
-    const ENGINE_URL = "https://script.google.com/a/macros/hcaconsulting.com/s/AKfycby5y9emZwQbS35uk9UaA59DWDJhBKGdrotdC3-fmZRIGwqhDWDxqWgraLL_GX7Ier4Vsw/exec";
+    const ENGINE_URL = "https://script.google.com/a/macros/hcaconsulting.com/s/AKfycbwboq6IEX92aCZZr2kqO2H9b-LcKAdtkmEZKoBlsnCupINY3Yb6SYx_ln4LWo82JqE5Ag/exec";
     let currentClient = "";
 
     async function callEngine(payload) {
-        const response = await fetch(ENGINE_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload), redirect: 'follow' });
-        return await response.json();
+        try {
+            const response = await fetch(ENGINE_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload),
+                redirect: 'follow'
+            });
+            return await response.json();
+        } catch (e) {
+            console.error("Fetch Error:", e);
+            alert("Network Error: " + e.message);
+            document.getElementById('st').style.display = 'none';
+        }
     }
 
     function lockKey() { localStorage.setItem('hca_gk', document.getElementById('master_gk').value); location.reload(); }
@@ -156,7 +166,7 @@
             document.getElementById('nav-actions').style.display = 'block';
             const list = await callEngine({action: "getList"});
             const sel = document.getElementById('masterClient');
-            list.forEach(v => sel.innerHTML += `<option value="${v}">${v}</option>`);
+            if(list) list.forEach(v => sel.innerHTML += `<option value="${v}">${v}</option>`);
         }
     };
 
@@ -186,7 +196,7 @@
 
     function renderDashboard(res) {
         document.getElementById('st').style.display = 'none';
-        if(res.error) { alert("Error: " + res.error); return; }
+        if(!res || res.error) { alert("Error: " + (res ? res.error : "No data")); return; }
         showPane('dash');
         document.getElementById('activeTitle').innerText = currentClient;
         const dl = document.getElementById('glChoices'); dl.innerHTML = "";
@@ -198,16 +208,14 @@
             let val = parseFloat(i.amt.replace(/[^0-9.-]+/g,""));
             jeData[i.cat] = (jeData[i.cat] || 0) + val; totalNet += val;
         });
-        const jeDiv = document.getElementById('jeList'); jeDiv.innerHTML = `<div class="je-item fw-bold"><span>Account</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
+        const jeDiv = document.getElementById('jeList'); jeDiv.innerHTML = `<div>Account Name <span style="float:right">DR | CR</span></div><hr>`;
         for (let cat in jeData) {
             let dr = jeData[cat] < 0 ? Math.abs(jeData[cat]) : 0, cr = jeData[cat] > 0 ? jeData[cat] : 0;
-            jeDiv.innerHTML += `<div class="je-item"><span>${cat}</span><span class="dr">${dr?`$${dr.toFixed(2)}`:''}</span><span class="cr">${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
+            jeDiv.innerHTML += `<div>${cat} <span style="float:right">${dr?`$${dr.toFixed(2)}`:''} | ${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
         }
-        let bDr = totalNet > 0 ? totalNet : 0, bCr = totalNet < 0 ? Math.abs(totalNet) : 0;
-        jeDiv.innerHTML += `<div class="je-item fw-bold text-primary border-top pt-2"><span>[Offset] Bank/Card</span><span class="dr">${bDr?`$${bDr.toFixed(2)}`:''}</span><span class="cr">${bCr?`$${bCr.toFixed(2)}`:''}</span></div>`;
-        const hBody = document.getElementById('tb-history'); hBody.innerHTML = "";
+        let hBody = document.getElementById('tb-history'); hBody.innerHTML = "";
         res.history.forEach(i => { hBody.innerHTML += `<tr><td>${i[2]}</td><td>${i[3]}</td><td>$${i[4]}</td><td>${i[5]}</td><td>${i[6]}</td></tr>`; });
-        const mDiv = document.getElementById('metaList'); mDiv.innerHTML = "";
+        let mDiv = document.getElementById('metaList'); mDiv.innerHTML = "";
         res.metadata.forEach(m => mDiv.innerHTML += `<div class="small py-1 border-bottom"><strong>${m[0]}:</strong> <span class="text-muted">${m[1]}</span></div>`);
     }
 
