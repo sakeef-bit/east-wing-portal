@@ -6,32 +6,35 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root { --hca-sage: #C5D1B8; --hca-dark: #2C3E50; --hca-bg: #F8F9FA; }
-        body { background: var(--hca-bg); font-family: 'Segoe UI', system-ui, sans-serif; color: var(--hca-dark); padding-bottom: 60px; }
+        body { background: var(--hca-bg); font-family: 'Segoe UI', sans-serif; color: var(--hca-dark); padding-bottom: 60px; }
+        .rounded-xl { border-radius: 12px !important; }
         .navbar { background: white; border-bottom: 2px solid var(--hca-sage); padding: 1rem 2rem; }
-        .hero-section { background: var(--hca-dark); color: white; padding: 60px 20px; text-align: center; margin-bottom: 40px; }
-        .card-custom { background: white; border: none; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: 0.3s; height: 100%; display: flex; flex-direction: column; }
-        .card-custom:hover { transform: translateY(-5px); }
+        .hero-section { background: var(--hca-dark); color: white; padding: 40px; text-align: center; position: relative; margin-bottom: 40px; }
+        .hero .sub-brand { position: absolute; bottom: 10px; right: 40px; font-weight: bold; color: var(--hca-sage); font-size: 0.8rem; }
+        .card-custom { background: white; border: none; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); height: 100%; display: flex; flex-direction: column; transition: 0.3s; }
+        .card-custom:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
         .card-img-top { height: 180px; object-fit: cover; width: 100%; }
         .btn-hca { background: var(--hca-sage); color: var(--hca-dark); border: none; font-weight: bold; padding: 10px 20px; border-radius: 10px; cursor: pointer; }
+        .btn-hca:hover { background: #b5c4a7; }
         .btn-dark-hca { background: var(--hca-dark); color: white; border-radius: 10px; padding: 10px 20px; cursor: pointer; }
         .view-pane { display: none; }
         .app-nav { background: white; border-radius: 12px; display: flex; overflow: hidden; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .app-nav-btn { flex: 1; text-align: center; padding: 15px; cursor: pointer; font-weight: bold; border-right: 1px solid #eee; color: #7f8c8d; }
         .app-nav-btn.active { background: var(--hca-sage); color: var(--hca-dark); }
         #st { background: white; border-radius: 12px; padding: 20px; position: fixed; bottom: 30px; right: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: none; z-index: 2000; border: 1px solid var(--hca-sage); }
-        .je-table { font-family: 'Courier New', Courier, monospace; font-size: 0.9rem; }
+        .dr { color: #2C3E50; width: 80px; text-align: right; font-weight: bold;}
+        .cr { color: #d9534f; width: 80px; text-align: right; font-weight: bold;}
     </style>
 </head>
 <body>
 
 <nav class="navbar d-flex justify-content-between">
     <div class="fw-bold fs-4">HCA <span class="fw-light text-muted">Automation</span></div>
-    <div>
+    <div id="nav-actions" style="display:none">
         <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="location.reload()">Home</button>
     </div>
 </nav>
 
-<!-- MAIN HUB -->
 <div id="view-launchpad">
     <header class="hero-section">
         <h1 class="display-4 fw-bold">Financial Automation Portal</h1>
@@ -50,7 +53,7 @@
         </div>
 
         <div id="mainPortal" style="display:none">
-            <div class="card p-4 shadow-sm mb-4" style="background:white; border-radius:15px">
+            <div class="card p-4 rounded-xl border-0 shadow-sm mb-4" style="background:white; border-radius:15px">
                 <div class="row align-items-center">
                     <div class="col-md-8">
                         <label class="fw-bold small text-muted text-uppercase mb-2 d-block">Active Client Profile</label>
@@ -66,28 +69,23 @@
                 <div class="col-md-4">
                     <div class="card card-custom">
                         <img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80" class="card-img-top">
-                        <div class="card-body p-4 text-center">
-                            <h5 class="fw-bold">Bank Statement</h5>
-                            <button class="btn btn-hca w-100 mt-auto" onclick="triggerFile('PDF')">Process PDF</button>
-                        </div>
+                        <div class="card-body p-4"><h5 class="fw-bold">Bank Statement</h5>
+                        <button class="btn btn-hca w-100 mt-auto" onclick="triggerFile('PDF')">Process PDF</button></div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="card card-custom">
-                        <img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=600&q=80" class="card-img-top">
-                        <div class="card-body p-4 text-center">
-                            <h5 class="fw-bold">Credit Card</h5>
-                            <button class="btn btn-hca w-100 mt-auto" onclick="triggerFile('CC')">Process PDF</button>
-                        </div>
+                        <!-- FIX: Working CC Image URL -->
+                        <img src="https://images.unsplash.com/photo-1556742049-0a67568d0d9f?auto=format&fit=crop&w=600&q=80" class="card-img-top">
+                        <div class="card-body p-4"><h5 class="fw-bold">Credit Card</h5>
+                        <button class="btn btn-hca w-100 mt-auto" onclick="triggerFile('CC')">Process PDF</button></div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="card card-custom">
                         <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80" class="card-img-top">
-                        <div class="card-body p-4 text-center">
-                            <h5 class="fw-bold">Dashboard</h5>
-                            <button class="btn btn-hca w-100 mt-auto" onclick="loadDash()">Enter Dashboard</button>
-                        </div>
+                        <div class="card-body p-4"><h5 class="fw-bold">Dashboard</h5>
+                        <button class="btn btn-hca w-100 mt-auto" onclick="loadDash()">Enter Dashboard</button></div>
                     </div>
                 </div>
             </div>
@@ -97,8 +95,7 @@
     </div>
 </div>
 
-<!-- CLIENT CONFIGURATION -->
-<div id="view-config" class="view-pane container py-5">
+<div id="configPane" class="view-pane container py-5">
     <div class="row justify-content-center"><div class="col-md-8"><div class="card p-5 card-custom">
         <h3 class="fw-bold mb-4">Provision Client</h3>
         <div class="row g-3">
@@ -106,7 +103,7 @@
             <input id="nature" class="form-control rounded-pill" placeholder="Nature (e.g. Retail)">
             <input id="qi" class="form-control rounded-pill" placeholder="QBO ID">
             <input id="qs" type="password" class="form-control rounded-pill" placeholder="QBO Secret">
-            <textarea id="gl" class="form-control rounded-pill" rows="4" placeholder="GL Accounts (comma separated)"></textarea>
+            <textarea id="gl" class="form-control rounded-xl" rows="4" placeholder="GL Accounts (comma separated)"></textarea>
             <div class="col-12 d-flex gap-2 pt-3">
                 <button onclick="save()" class="btn btn-dark-hca flex-grow-1 rounded-pill">Save & Provision</button>
                 <button onclick="showPane('launchpad')" class="btn btn-outline-secondary rounded-pill">Exit</button>
@@ -115,8 +112,7 @@
     </div></div></div>
 </div>
 
-<!-- DASHBOARD -->
-<div id="view-dash" class="view-pane container-fluid px-5">
+<div id="dashPane" class="view-pane container-fluid px-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 id="activeTitle" class="fw-bold">Dashboard</h2>
         <div class="gap-2 d-flex">
@@ -131,20 +127,20 @@
         <div id="nav-je" class="app-nav-btn" onclick="switchTab('je')">JE VIEW</div>
         <div id="nav-meta" class="app-nav-btn" onclick="switchTab('meta')">CLIENT INFO</div>
     </div>
-    <div id="tab-review" class="bg-white p-4 rounded-pill shadow-sm" style="border-radius:15px !important">
+    <div id="tab-review" class="bg-white p-4 rounded-xl shadow-sm">
         <div class="d-flex justify-content-between mb-3 align-items-center"><h5>Staging</h5><button class="btn btn-dark btn-sm rounded-pill" onclick="pushQBO()">Push to QBO</button></div>
         <table class="table table-hover table-sm align-middle"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Status</th></tr></thead><tbody id="tb-staging"></tbody></table>
     </div>
-    <div id="tab-history" class="bg-white p-4 shadow-sm" style="display:none; border-radius:15px"><h5>History</h5><table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync</th></tr></thead><tbody id="tb-history"></tbody></table></div>
-    <div id="tab-je" class="bg-white p-4 shadow-sm" style="display:none; border-radius:15px"><h5>JE View</h5><div id="jeList" class="mt-3 font-monospace"></div></div>
-    <div id="tab-meta" class="bg-white p-4 shadow-sm" style="display:none; border-radius:15px"><h5>Client Info</h5><div id="metaList"></div></div>
+    <div id="tab-history" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5>History</h5><table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync</th></tr></thead><tbody id="tb-history"></tbody></table></div>
+    <div id="tab-je" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5>JE View</h5><div id="jeList" class="mt-3 font-monospace"></div></div>
+    <div id="tab-meta" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5>Client Info</h5><div id="metaList"></div></div>
 </div>
 
 <datalist id="glChoices"></datalist>
-<div id="st"><div class="spinner-border spinner-border-sm text-primary me-2"></div><strong>Working...</strong></div>
+<div id="st"><div class="spinner-border spinner-border-sm text-primary me-2"></div><strong>Processing Data...</strong></div>
 
 <script>
-    const ENGINE_URL = "https://script.google.com/macros/s/AKfycbxxitZXhWL5j6yKmUBKYmiDvk_jAAVBCv6j3NJpaVKyk8jseVUZAAcA1ni5Hcimc5_vYg/exec";
+    const ENGINE_URL = "https://script.google.com/macros/s/AKfycbzpV91SqhZeAn1tJMKjeI_eGDZrrVgankw1oJIfEl7lXRvNO-G1Si_CM_4XmN74OxEkPg/exec";
     let currentClient = "";
 
     async function callEngine(payload) {
@@ -158,7 +154,7 @@
             const text = await response.text();
             return JSON.parse(text);
         } catch (e) {
-            alert("Network Error");
+            alert("Network Error: Failed to fetch");
             document.getElementById('st').style.display = 'none';
         }
     }
@@ -169,6 +165,7 @@
         if(localStorage.getItem('hca_gk')) {
             document.getElementById('keyGate').style.display = 'none';
             document.getElementById('mainPortal').style.display = 'block';
+            document.getElementById('nav-actions').style.display = 'block';
             const list = await callEngine({action: "getList"});
             const sel = document.getElementById('masterClient');
             if(list && !list.error) list.forEach(v => sel.innerHTML += `<option value="${v}">${v}</option>`);
@@ -180,15 +177,11 @@
         document.getElementById('actionGrid').style.pointerEvents = this.value ? "auto" : "none";
     };
 
-    function showPane(p) {
-        document.querySelectorAll('.view-pane, #view-launchpad').forEach(el => el.style.display = 'none');
-        document.getElementById('view-' + p).style.display = 'block';
-    }
-
     async function save() {
         document.getElementById('st').style.display = 'block';
         const res = await callEngine({ action: "provision", clientName: document.getElementById('n').value, nature: document.getElementById('nature').value, keys: { QBO_ID: document.getElementById('qi').value, QBO_SEC: document.getElementById('qs').value }, glList: document.getElementById('gl').value });
-        alert(res.msg); location.reload();
+        if(res && res.msg) alert(res.msg);
+        location.reload();
     }
 
     function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
@@ -206,7 +199,7 @@
 
     function renderDashboard(res) {
         document.getElementById('st').style.display = 'none';
-        if(!res || res.error) { alert("Error: " + (res ? res.error : "No data")); return; }
+        if(!res || res.error) { alert("Error: " + (res ? res.error : "No data received")); return; }
         showPane('dash');
         document.getElementById('activeTitle').innerText = currentClient;
         
@@ -226,12 +219,14 @@
             let dr = jeData[cat] < 0 ? Math.abs(jeData[cat]) : 0, cr = jeData[cat] > 0 ? jeData[cat] : 0;
             jeDiv.innerHTML += `<div>${cat} <span style="float:right">${dr?`$${dr.toFixed(2)}`:''} | ${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
         }
-
-        document.getElementById('tb-history').innerHTML = "";
-        res.history.forEach(i => { document.getElementById('tb-history').innerHTML += `<tr><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; });
         
-        document.getElementById('metaList').innerHTML = "";
-        res.metadata.forEach(m => document.getElementById('metaList').innerHTML += `<div class="small py-1 border-bottom"><strong>${m[0]}:</strong> <span class="text-muted">${m[1]}</span></div>`);
+        const hBody = document.getElementById('tb-history'); hBody.innerHTML = "";
+        res.history.forEach(i => { 
+            hBody.innerHTML += `<tr><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; 
+        });
+
+        const mDiv = document.getElementById('metaList'); mDiv.innerHTML = "";
+        res.metadata.forEach(m => mDiv.innerHTML += `<div class="small py-1 border-bottom"><strong>${m[0]}:</strong> <span class="text-muted">${m[1]}</span></div>`);
     }
 
     function switchTab(t) {
@@ -257,6 +252,7 @@
         const res = await callEngine({action: "pushQBO", client: currentClient}); 
         renderDashboard(res); 
     }
+    function showPane(p) { document.querySelectorAll('.view-pane, #view-launchpad').forEach(el => el.style.display = 'none'); document.getElementById('view-' + p).style.display = 'block'; }
     async function loadDash() { 
         currentClient = document.getElementById('masterClient').value; 
         if(!currentClient) return alert("Select client first");
