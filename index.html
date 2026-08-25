@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LedgerIQ | Forensic Financial Automation</title>
+    <title>HCA LedgerIQ | Forensic Financial Automation</title>
     <!-- Dependencies -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -23,8 +23,10 @@
         body { background: var(--hca-bg); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--hca-dark); padding-bottom: 70px; }
         .rounded-xl { border-radius: 16px !important; }
         
+        /* Navbar & Branding */
         .navbar { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); border-bottom: 2px solid var(--hca-sage); padding: 0.8rem 2rem; }
-        .brand-logo { font-weight: 800; letter-spacing: -0.5px; }
+        .brand-logo-badge { background: var(--hca-dark); color: white; font-weight: 900; font-size: 0.9rem; padding: 4px 10px; border-radius: 8px; letter-spacing: 1px; }
+        .brand-logo-text { font-weight: 800; letter-spacing: -0.5px; }
         .brand-badge { background: var(--hca-sage); color: var(--hca-dark); font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; margin-left: 8px; letter-spacing: 0.5px; }
 
         .hero-section { background: var(--hca-dark); color: white; padding: 60px 20px 70px; text-align: center; border-radius: 0 0 32px 35px; margin-bottom: 40px; }
@@ -47,6 +49,7 @@
         .dot-red { background: #EF4444; box-shadow: 0 0 8px #EF4444; }
         @keyframes signalPulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
+        /* Assistant Widget (LUFFY) */
         #chat-trigger-bar { position: fixed; bottom: 25px; left: 25px; background: var(--hca-dark); color: white; border-radius: 30px; padding: 8px 18px 8px 12px; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; box-shadow: 0 10px 25px rgba(44,62,80,0.25); z-index: 3000; transition: all 0.25s ease; border: 1px solid rgba(255,255,255,0.1); }
         #chat-trigger-bar:hover { background: #1a252f; border-color: var(--hca-sage); transform: translateY(-2px); }
         .chat-bar-badge { background: var(--hca-sage); color: var(--hca-dark); font-size: 0.65rem; font-weight: 800; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -73,7 +76,7 @@
         .badge-dup { background: #EF4444; color: white; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px; }
         .filter-btn { border-radius: 20px; font-size: 0.8rem; font-weight: 600; padding: 4px 12px; }
 
-        /* VENDOR HOVER POPOVER STYLES */
+        /* Vendor Hover Tooltips */
         .vendor-cell { position: relative; }
         .vendor-hover {
             cursor: pointer;
@@ -102,8 +105,13 @@
 </head>
 <body>
 
+<!-- TOP NAVBAR WITH HCA BRANDING -->
 <nav class="navbar d-flex justify-content-between align-items-center">
-    <div class="fw-bold fs-4 brand-logo">Ledger<span class="fw-light text-muted">IQ</span> <span class="brand-badge">PRO</span></div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="brand-logo-badge">HCA</span>
+        <span class="fs-4 brand-logo-text">Ledger<span class="fw-light text-muted">IQ</span></span>
+        <span class="brand-badge">PRO</span>
+    </div>
     <div class="d-flex align-items-center gap-4">
         <div class="small fw-bold d-flex gap-3 status-pill">
             <div class="d-flex align-items-center"><span class="status-dot" id="dot-ledger"></span> Supabase</div>
@@ -173,11 +181,11 @@
                 </div></div>
             </div>
 
-            <!-- ADVANCED DOCUMENT CONVERTER BOX -->
+            <!-- DOC SHIFT STUDIO BOX -->
             <div class="card p-4 rounded-xl border-0 shadow-sm">
                 <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
                     <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-                    Advanced Document Converter
+                    Doc Shift Studio
                 </h5>
                 <div class="row g-3">
                     <div class="col-md-6">
@@ -354,10 +362,10 @@
     <div id="tab-meta" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5 class="fw-bold mb-3">Client Metadata</h5><div id="metaList"></div></div>
 </div>
 
-<!-- Command Action Bar for AuditPilot Assistant -->
+<!-- COMMAND ACTION BAR FOR LUFFY -->
 <div id="chat-trigger-bar" onclick="toggleChat()">
     <svg class="icon-svg" style="width:16px; height:16px;" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
-    <span class="fw-semibold small">AuditPilot</span>
+    <span class="fw-semibold small">LUFFY</span>
     <span class="chat-bar-badge">Assistant</span>
 </div>
 
@@ -365,11 +373,11 @@
     <div id="chat-header" class="d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center gap-2">
             <svg class="icon-svg" style="width:18px; height:18px;" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
-            <span>AuditPilot Assistant</span>
+            <span>LUFFY Assistant</span>
         </div>
         <button class="btn-close btn-close-white btn-sm" onclick="toggleChat()"></button>
     </div>
-    <div id="chat-content">AuditPilot active. Ask questions regarding workflow, classification, or ledger sync.</div>
+    <div id="chat-content">LUFFY active. Ask questions regarding workflow, classification, or ledger sync.</div>
     <div class="p-2 border-top"><input id="chat-input" class="form-control form-control-sm rounded-pill" placeholder="Type command..." onkeydown="if(event.key==='Enter') sendChat()"></div>
 </div>
 
@@ -412,7 +420,7 @@
         }
     };
 
-    // --- CONVERTER FUNCTION 1: PDF TO EXCEL (.XLSX) ---
+    // CONVERTER FUNCTION 1: PDF TO EXCEL (.XLSX)
     async function convertPDFToExcel(input) {
         const file = input.files[0];
         if (!file) return;
@@ -443,12 +451,10 @@ Return ONLY JSON array of arrays (rows with column values):
                 const rawText = jsonRes.candidates[0].content.parts[0].text;
                 const rowsData = JSON.parse(rawText.replace(/```json|```/g, '').trim());
 
-                // Convert to Excel workbook via SheetJS
                 const ws = XLSX.utils.aoa_to_sheet(rowsData);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Converted Statement");
 
-                // Download .xlsx file
                 XLSX.writeFile(wb, file.name.replace(/\.[^/.]+$/, "") + "_Converted.xlsx");
                 document.getElementById('st').style.display = 'none';
                 alert("✓ PDF converted to Excel successfully!");
@@ -460,7 +466,7 @@ Return ONLY JSON array of arrays (rows with column values):
         reader.readAsDataURL(file);
     }
 
-    // --- CONVERTER FUNCTION 2: EXCEL TO PDF (.PDF) ---
+    // CONVERTER FUNCTION 2: EXCEL TO PDF (.PDF)
     async function convertExcelToPDF(input) {
         const file = input.files[0];
         if (!file) return;
@@ -474,7 +480,6 @@ Return ONLY JSON array of arrays (rows with column values):
                 const workbook = XLSX.read(data, { type: 'array' });
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 
-                // Convert SheetJS rows into arrays
                 const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
                 if (!jsonData || jsonData.length === 0) {
@@ -485,11 +490,9 @@ Return ONLY JSON array of arrays (rows with column values):
                 const headers = jsonData[0];
                 const bodyRows = jsonData.slice(1);
 
-                // Initialize jsPDF document
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "letter" });
 
-                // Document Header
                 doc.setFontSize(14);
                 doc.setTextColor(44, 62, 80);
                 doc.text("Converted Financial Statement", 40, 40);
@@ -497,7 +500,6 @@ Return ONLY JSON array of arrays (rows with column values):
                 doc.setTextColor(100);
                 doc.text(`Source File: ${file.name} | Generated: ${new Date().toLocaleDateString()}`, 40, 55);
 
-                // Build Table via AutoTable
                 doc.autoTable({
                     head: [headers],
                     body: bodyRows,
@@ -507,7 +509,6 @@ Return ONLY JSON array of arrays (rows with column values):
                     styles: { fontSize: 8, cellPadding: 5 }
                 });
 
-                // Save PDF
                 doc.save(file.name.replace(/\.[^/.]+$/, "") + "_Converted.pdf");
                 document.getElementById('st').style.display = 'none';
                 alert("✓ Excel converted to PDF successfully!");
@@ -703,7 +704,7 @@ Return ONLY JSON array of arrays (rows with column values):
 
     function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
 
-    // ERROR-PROOF FILE PARSER (PASSES GL LIST + HISTORY + GEMINI 3.6 FLASH)
+    // FILE PARSER
     async function handleFile(input, type) { 
         currentClient = document.getElementById('masterClient').value; 
         if(!currentClient) return alert("Select client account first");
@@ -720,12 +721,10 @@ Return ONLY JSON array of arrays (rows with column values):
                     return alert("Missing Gemini API Key. Please authenticate.");
                 }
 
-                // Prepare GL Chart of Accounts Context
                 const glContext = appGLOptions.length > 0 
                     ? appGLOptions.join(", ") 
                     : "Standard GAAP Accounts (Office Supplies, Travel, Meals, Software, Professional Fees)";
 
-                // Prepare Past Categorized History Context
                 const pastHistoryContext = historyData.length > 0
                     ? historyData.slice(0, 30).map(h => `${h.vendor || h.desc} -> ${h.cat}`).join("\n")
                     : "No historical patterns recorded yet.";
@@ -792,7 +791,6 @@ Return ONLY JSON Object:
                 const rows = (extracted.transactions || []).map(t => {
                     let assignedCategory = t.category || "Uncategorized";
                     
-                    // Fallback to local Auto-Rules Engine
                     activeRules.forEach(rule => {
                         const targetText = ((t.vendor || "") + " " + (t.desc || "")).toLowerCase();
                         if(targetText.includes(rule.keyword.toLowerCase())) {
@@ -910,7 +908,6 @@ Return ONLY JSON Object:
             const receiptCell = i.receipt ? `✓ Verified` : `<button class="btn btn-xs btn-outline-secondary py-0" onclick="document.getElementById('rup${i.row}').click()">📁 Match</button><input type="file" id="rup${i.row}" style="display:none" onchange="handleReceiptUpload(this, ${i.row})">`;
             const popupId = `vpop_${i.row}`;
             
-            // Render interactive hover popover ONLY if Vendor is non-empty
             const vendorHtml = (i.vendor && i.vendor.trim() !== "") ? `
                 <span class="vendor-hover" onmouseenter="fetchVendorIntelligence('${i.vendor.replace(/'/g, "\\'")}', '${popupId}')">
                     ${i.vendor} ${dupBadge}
@@ -945,7 +942,6 @@ Return ONLY JSON Object:
         const popupEl = document.getElementById(targetElementId);
         if (!popupEl) return;
 
-        // 1. Check Supabase Cache First
         const { data: cached } = await db.from('vendor_knowledge').select('*').eq('vendor_name', vendorName).maybeSingle();
         if (cached && cached.description) {
             const linkHtml = cached.website ? `<br><a href="${cached.website}" target="_blank" class="small text-primary">${cached.website}</a>` : '';
@@ -953,7 +949,6 @@ Return ONLY JSON Object:
             return;
         }
 
-        // 2. Fetch Summary & URL via Gemini
         popupEl.innerHTML = `<em>Querying merchant intelligence...</em>`;
         const apiKey = localStorage.getItem('hca_gk');
         
@@ -985,7 +980,6 @@ Return ONLY JSON:
             const linkHtml = info.website ? `<br><a href="${info.website}" target="_blank" class="small text-primary">${info.website}</a>` : '';
             popupEl.innerHTML = `<span class="vendor-badge">AI MERCHANT SUMMARY</span><br><strong>${vendorName}</strong><br><span>${info.description}</span>${linkHtml}`;
 
-            // Cache in Supabase
             await db.from('vendor_knowledge').insert([{ vendor_name: vendorName, description: info.description, website: info.website || "" }]);
         } catch (e) {
             popupEl.innerHTML = `<strong>${vendorName}</strong><br><span class="text-muted">Merchant details unavailable.</span>`;
@@ -1131,7 +1125,7 @@ Return ONLY JSON:
         b.scrollTop = b.scrollHeight;
 
         const apiKey = localStorage.getItem('hca_gk');
-        const projectContext = "You are the AuditPilot support assistant. Current Client Context: " + (currentClient || "None Selected");
+        const projectContext = "You are LUFFY, the support assistant. Current Client Context: " + (currentClient || "None Selected");
 
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
             method: "POST",
