@@ -170,25 +170,35 @@
 <div id="chat-trigger" onclick="toggleChat()">🤖</div>
 <div id="chat-window">
     <div id="chat-header">HCA Navigator</div>
-    <div id="chat-content">Migrated to Supabase Cloud. Ready for input.</div>
+    <div id="chat-content">Ready for instructions.</div>
     <div class="p-3 border-top"><input id="chat-input" class="form-control form-control-sm rounded-pill" placeholder="Ask..." onkeydown="if(event.key==='Enter') sendChat()"></div>
 </div>
 
 <div id="st"><div class="spinner-border text-success mb-2"></div><div><strong>Syncing...</strong></div></div>
 
 <script>
-    // --- SUPABASE INTEGRATED CREDENTIALS ---
     const SUPABASE_URL = "https://oxhwhxnoysowuokdhmtr.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94aHdoeG5veXNvd3Vva2RobXRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NDU1MTEsImV4cCI6MjEwMzIyMTUxMX0.hQm9RsFit-TVz1pH0Y1Q3VITdbfwLUKA42uq2frZkyc";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
+    
+    let supabaseClient = null;
     const CLASS_OPTIONS = ["General", "Marketing", "Sales", "Operations", "NY-Office"];
     let currentClient = "", localData = [], appGLOptions = [], activeRules = [], historyData = [], stmtStart = 0, stmtEnd = 0, barChart, doughnutChart;
 
-    function lockKey() { localStorage.setItem('hca_gk', document.getElementById('master_gk').value); location.reload(); }
+    function lockKey() {
+        const val = document.getElementById('master_gk').value;
+        if(!val) return alert("API Key Required");
+        localStorage.setItem('hca_gk', val);
+        location.reload();
+    }
 
     window.onload = async () => {
-        if(localStorage.getItem('hca_gk')) {
+        try {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            }
+        } catch(e) { console.error("Supabase Init Error:", e); }
+
+        if (localStorage.getItem('hca_gk')) {
             document.getElementById('keyGate').style.display = 'none';
             document.getElementById('mainPortal').style.display = 'block';
             document.getElementById('dot-gemini').className = 'status-dot dot-green';
@@ -196,25 +206,32 @@
         }
     };
 
-    // --- SUPABASE CLOUD BACKEND FUNCTIONS ---
-
     async function getClientList() {
-        const { data, error } = await supabase.from('client_metadata').select('client_name');
-        const sel = document.getElementById('masterClient');
-        sel.innerHTML = '<option value="">-- Choose Client --</option>';
-        if (data) data.forEach(v => sel.innerHTML += `<option value="${v.client_name}">${v.client_name}</option>`);
+        if (!supabaseClient) return;
+        try {
+            const { data } = await supabaseClient.from('client_metadata').select('client_name');
+            const sel = document.getElementById('masterClient');
+            sel.innerHTML = '<option value="">-- Choose Client --</option>';
+            if (data && data.length) {
+                data.forEach(v => sel.innerHTML += `<option value="${v.client_name}">${v.client_name}</option>`);
+            }
+        } catch(e) { console.error("Error fetching clients:", e); }
     }
 
     async function save() {
+        if (!supabaseClient) return alert("Database connection offline");
+        const nameVal = document.getElementById('n').value;
+        if (!nameVal) return alert("Company Name is required");
+
         const payload = {
-            client_name: document.getElementById('n').value,
-            nature: document.getElementById('nature').value,
-            qbo_id: document.getElementById('qi').value,
-            qbo_sec: document.getElementById('qs').value,
+            client_name: nameVal,
+            nature: document.getElementById('nature').value || "General",
+            qbo_id: document.getElementById('qi').value || "",
+            qbo_sec: document.getElementById('qs').value || "",
             gl_list: appGLOptions.join(",")
         };
         document.getElementById('st').style.display = 'block';
-        await supabase.from('client_metadata').upsert(payload);
+        await supabaseClient.from('client_metadata').upsert(payload);
         location.reload();
     }
 
@@ -227,18 +244,18 @@
     }
 
     async function handleFile(input, type) {
-        if (!currentClient) return alert("Select client");
+        if (!currentClient) return alert("Select client first");
         document.getElementById('st').style.display = 'block';
         const reader = new FileReader();
         reader.onload = async (e) => {
-            const pdfData = e.target.result.split(',')[1];
-            const apiKey = localStorage.getItem('hca_gk');
-            
-            // 1. Call Gemini API directly
-            const prompt = `ACT AS: Forensic Accountant. 1. Extract starting_balance and ending_balance from header. 2. Extract transactions. Return ONLY JSON: {"starting_balance":0.0, "ending_balance":0.0, "transactions":[{"date":"YYYY-MM-DD","desc":"","amount":0.00,"category":""}]}`;
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-                method: "POST", headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({"contents": [{"parts": [{"text": prompt}, {"inline_data": {"mime_type": "application/pdf", "data": pdfData}}]}]})
-            });
-            const geminiJson = await res.json();
-            const extracted = JSON.parse(geminiJson.candidates[0].content.parts[0].text.replace(/```json|
+            try {
+                const pdfData = e.target.result.split(',')[1];
+                const apiKey = localStorage.getItem('hca_gk');
+                
+                const prompt = `ACT AS: Forensic Accountant. Extract all transactions. Return ONLY JSON array: [{"date":"YYYY-MM-DD","desc":"","amount":0.00,"category":""}]`;
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                    method: "POST", headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({"contents": [{"parts": [{"text": prompt}, {"inline_data": {"mime_type": "application/pdf", "data": pdfData}}]}]})
+                });
+                const geminiJson = await res.json();
+                const rawText = geminiJson.candidates[0].content.parts[0].text.replace(/```json|
