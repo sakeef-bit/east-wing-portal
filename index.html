@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Financial Automation Portal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --hca-sage: #C5D1B8; --hca-dark: #2C3E50; --hca-bg: #F8F9FA; }
         body { background: var(--hca-bg); font-family: 'Segoe UI', sans-serif; color: var(--hca-dark); padding-bottom: 60px; }
@@ -12,7 +13,6 @@
         .hero-section { background: var(--hca-dark); color: white; padding: 60px 20px; text-align: center; margin-bottom: 40px; }
         .card-custom { background: white; border: none; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); height: 100%; display: flex; flex-direction: column; transition: 0.3s; }
         .card-custom:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
-        .card-img-top { height: 180px; object-fit: cover; width: 100%; }
         .btn-hca { background: var(--hca-sage); color: var(--hca-dark); border: none; font-weight: bold; padding: 10px 20px; border-radius: 12px; cursor: pointer; }
         .btn-dark-hca { background: var(--hca-dark); color: white; border-radius: 10px; padding: 10px 20px; cursor: pointer; }
         .view-pane { display: none; }
@@ -21,25 +21,14 @@
         .app-nav-btn.active { background: var(--hca-sage); color: var(--hca-dark); }
         #st { background: white; border-radius: 12px; padding: 20px; position: fixed; bottom: 30px; right: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: none; z-index: 2000; border: 1px solid var(--hca-sage); }
         input, select, textarea, .form-control { border-radius: 12px !important; }
-        
-        /* MODULE: STATUS LIGHTS */
         .status-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 5px; background: #bbb; transition: 0.3s; }
-        .dot-green { background: #2ca01c; box-shadow: 0 0 8px #2ca01c; }
-        .dot-amber { background: #f0ad4e; box-shadow: 0 0 8px #f0ad4e; }
-        .dot-red { background: #d9534f; box-shadow: 0 0 8px #d9534f; }
-        
-        /* MODULE: CHAT WIDGET */
-        #chat-trigger { position: fixed; bottom: 20px; left: 20px; width: 50px; height: 50px; background: var(--hca-dark); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 3000; }
-        #chat-window { position: fixed; bottom: 80px; left: 20px; width: 320px; height: 400px; background: white; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: none; flex-direction: column; z-index: 3000; border: 1px solid #eee; overflow: hidden;}
+        .dot-green { background: #2ca01c; } .dot-amber { background: #f0ad4e; } .dot-red { background: #d9534f; }
+        .summary-card { background: white; border-radius: 15px; padding: 20px; border-left: 5px solid var(--hca-sage); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        #chat-trigger { position: fixed; bottom: 20px; left: 20px; width: 50px; height: 50px; background: var(--hca-dark); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 3000; }
+        #chat-window { position: fixed; bottom: 80px; left: 20px; width: 320px; height: 400px; background: white; border-radius: 15px; display: none; flex-direction: column; z-index: 3000; border: 1px solid #eee; overflow: hidden;}
         #chat-header { background: var(--hca-dark); color: white; padding: 15px; font-weight: bold; }
         #chat-content { flex-grow: 1; padding: 15px; overflow-y: auto; font-size: 0.9rem; line-height: 1.4; }
-        .chat-bubble { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
-        
-        .je-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; font-family: monospace; }
-        .dr { color: #2C3E50; width: 80px; text-align: right; font-weight: bold;}
-        .cr { color: #d9534f; width: 80px; text-align: right; font-weight: bold;}
-        .summary-card { background: white; border-radius: 15px; padding: 20px; border-left: 5px solid var(--hca-sage); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .batch-bar { background: #f1f3f5; padding: 15px; border-radius: 12px; border: 1px solid #e9ecef; }
+        .je-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; font-family: monospace; font-size: 0.85rem; }
     </style>
 </head>
 <body>
@@ -47,301 +36,205 @@
 <nav class="navbar d-flex justify-content-between">
     <div class="fw-bold fs-4">HCA <span class="fw-light text-muted">Automation</span></div>
     <div class="d-flex align-items-center gap-4">
-        <div class="small fw-bold d-flex gap-3">
-            <div><span class="status-dot" id="dot-ledger"></span> Ledger</div>
-            <div><span class="status-dot" id="dot-gemini"></span> AI</div>
-            <div><span class="status-dot" id="dot-qbo"></span> QBO</div>
-        </div>
+        <div class="small fw-bold"><span class="status-dot" id="dot-ledger"></span> Ldr &nbsp;<span class="status-dot" id="dot-gemini"></span> AI &nbsp;<span class="status-dot" id="dot-qbo"></span> QBO</div>
         <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="location.reload()">Home</button>
     </div>
 </nav>
 
 <div id="view-launchpad">
-    <header class="hero-section">
-        <h1 class="display-4 fw-bold">Financial Automation Portal</h1>
-        <p class="lead opacity-75">Professional Ledger Processing</p>
-    </header>
+    <header class="hero-section"><h1>Financial Automation Portal</h1><p class="lead">Professional Ledger Processing</p></header>
     <div class="container">
         <div id="keyGate" class="row justify-content-center">
-            <div class="col-md-5"><div class="card card-custom p-4 text-center">
-                <h5>Secure Access</h5>
-                <input type="password" id="master_gk" class="form-control mb-3 text-center" placeholder="Enter Gemini API Key">
-                <button class="btn btn-dark-hca w-100 rounded-pill" onclick="lockKey()">Open Portal</button>
-            </div></div>
+            <div class="col-md-5 text-center card card-custom p-4">
+                <input type="password" id="master_gk" class="form-control mb-3" placeholder="Enter Gemini API Key">
+                <button class="btn btn-dark-hca rounded-pill" onclick="lockKey()">Open Portal</button>
+            </div>
         </div>
         <div id="mainPortal" style="display:none">
-            <div class="card p-4 rounded-xl border-0 shadow-sm mb-4">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <select id="masterClient" class="form-select rounded-pill" onchange="pingStatus()"><option value="">-- Choose a Client --</option></select>
-                    </div>
-                    <div class="col-md-4 text-end pt-0"><button class="btn btn-dark-hca rounded-pill" onclick="showPane('config')">+ Add Client</button></div>
-                </div>
+            <div class="card p-4 rounded-xl border-0 shadow-sm mb-4 d-flex flex-row justify-content-between align-items-center">
+                <select id="masterClient" class="form-select rounded-pill w-75" onchange="pingStatus()"><option value="">-- Choose Client --</option></select>
+                <button class="btn btn-dark-hca rounded-pill" onclick="showPane('config')">⚙️ Settings</button>
             </div>
             <div class="row g-4" id="actionGrid" style="opacity:0.3; pointer-events:none;">
-                <div class="col-md-4"><div class="card card-custom">
-                    <img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80" class="card-img-top">
-                    <div class="card-body p-4 text-center"><button class="btn btn-hca w-100" onclick="triggerFile('PDF')">Process Bank PDF</button></div>
-                </div></div>
-                <div class="col-md-4"><div class="card card-custom">
-                    <img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=600&q=80" class="card-img-top">
-                    <div class="card-body p-4 text-center"><button class="btn btn-hca w-100" onclick="triggerFile('CC')">Process CC PDF</button></div>
-                </div></div>
-                <div class="col-md-4"><div class="card card-custom">
-                    <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80" class="card-img-top">
-                    <div class="card-body p-4 text-center"><button class="btn btn-hca w-100" onclick="loadDash()">Enter Dashboard</button></div>
-                </div></div>
+                <div class="col-md-4"><div class="card card-custom"><img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80" class="card-img-top"><button class="btn btn-hca w-100" onclick="triggerFile('PDF')">Process Bank PDF</button></div></div>
+                <div class="col-md-4"><div class="card card-custom"><img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=600&q=80" class="card-img-top"><button class="btn btn-hca w-100" onclick="triggerFile('CC')">Process CC PDF</button></div></div>
+                <div class="col-md-4"><div class="card card-custom"><img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80" class="card-img-top"><button class="btn btn-hca w-100" onclick="loadDash()">Enter Dashboard</button></div></div>
             </div>
-            <input type="file" id="f_pdf" style="display:none" onchange="handleFile(this, 'PDF')">
-            <input type="file" id="f_cc" style="display:none" onchange="handleFile(this, 'CC')">
+            <input type="file" id="f_pdf" style="display:none" onchange="handleFile(this, 'PDF')"><input type="file" id="f_cc" style="display:none" onchange="handleFile(this, 'CC')">
         </div>
     </div>
 </div>
 
 <div id="view-config" class="view-pane container py-5">
-    <div class="row justify-content-center"><div class="col-md-8"><div class="card p-5 card-custom">
-        <h3>Provision Client</h3>
-        <div class="row g-3">
-            <input id="n" class="form-control" placeholder="Company Name">
-            <input id="nature" class="form-control" placeholder="Nature">
-            <input id="qi" class="form-control" placeholder="QBO ID">
-            <input id="qs" type="password" class="form-control" placeholder="QBO Secret">
-            <div class="col-12 d-flex gap-2"><button onclick="save()" class="btn btn-dark-hca flex-grow-1">Save & Provision</button><button onclick="showPane('launchpad')" class="btn btn-outline-secondary">Exit</button></div>
-        </div>
-    </div></div></div>
+    <div class="row g-4">
+        <div class="col-md-6"><div class="card p-4 card-custom"><h3>Provision Client</h3>
+            <input id="n" class="form-control mb-2" placeholder="Company Name">
+            <input id="nature" class="form-control mb-2" placeholder="Nature">
+            <input id="qi" class="form-control mb-2" placeholder="QBO ID">
+            <input id="qs" type="password" class="form-control mb-3" placeholder="QBO Secret">
+            <label class="small fw-bold">Upload GL List (CSV)</label>
+            <input type="file" id="glFileInputConfig" accept=".csv" class="form-control mb-3" onchange="handleGLFileUpload(this)">
+            <button onclick="save()" class="btn btn-dark-hca w-100 mb-2">Save & Provision</button>
+            <button onclick="showPane('launchpad')" class="btn btn-outline-secondary w-100">Exit</button>
+        </div></div>
+        <div class="col-md-6"><div class="card p-4 card-custom"><h3>Mapping Rules</h3><div id="rulesList" class="mb-3"></div><div class="input-group mb-3"><input id="ruleKeyword" class="form-control" placeholder="Keyword"><select id="ruleAccount" class="form-select"></select><button class="btn btn-primary" onclick="addRuleRow()">Add</button></div><button class="btn btn-dark-hca w-100" onclick="saveRules()">Save Rules</button></div></div>
+    </div>
 </div>
 
 <div id="view-dash" class="view-pane container-fluid px-5">
-    <div class="d-flex justify-content-between align-items-center mb-4"><h2 id="activeTitle" class="fw-bold">Dashboard</h2><div class="gap-2 d-flex"><button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="approveAll()">Approve All</button><button class="btn btn-primary btn-sm rounded-pill px-3" onclick="saveAll()">Save All</button><button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="showPane('launchpad')">Exit</button></div></div>
-    <div class="app-nav"><div id="nav-review" class="app-nav-btn active" onclick="switchTab('review')">REVIEW</div><div id="nav-history" class="app-nav-btn" onclick="switchTab('history')">HISTORY</div><div id="nav-je" class="app-nav-btn" onclick="switchTab('je')">JE VIEW</div><div id="nav-meta" class="app-nav-btn" onclick="switchTab('meta')">CLIENT INFO</div></div>
-    <div id="tab-review" class="bg-white p-4 rounded-xl shadow-sm">
+    <div class="d-flex justify-content-between mb-4"><h2 id="activeTitle">Dashboard</h2><div class="gap-2 d-flex"><button class="btn btn-outline-primary btn-sm rounded-pill" onclick="approveAll()">Approve All</button><button class="btn btn-primary btn-sm rounded-pill" onclick="saveAll()">Save All</button><button class="btn btn-outline-danger btn-sm rounded-pill" onclick="showPane('launchpad')">Exit</button></div></div>
+    <div class="app-nav">
+        <div id="nav-review" class="app-nav-btn active" onclick="switchTab('review')">REVIEW</div>
+        <div id="nav-history" class="app-nav-btn" onclick="switchTab('history')">HISTORY</div>
+        <div id="nav-pnl" class="app-nav-btn" onclick="switchTab('pnl')">VISUAL P&L</div>
+        <div id="nav-je" class="app-nav-btn" onclick="switchTab('je')">JE VIEW</div>
+    </div>
+
+    <div id="tab-review" class="bg-white p-4 rounded-xl shadow-sm view-pane">
         <div class="d-flex justify-content-between mb-3 align-items-center">
-            <h5>Staging</h5>
             <div class="d-flex gap-2">
-                <button class="btn btn-outline-success btn-sm rounded-pill px-3" onclick="exportStagingCSV()">📥 Export CSV</button>
-                <button class="btn btn-dark btn-sm rounded-pill px-3" onclick="pushQBO()">Push to QBO</button>
+                <button class="btn btn-outline-success btn-sm px-3" onclick="exportStagingCSV()">📥 Export</button>
+                <button class="btn btn-outline-primary btn-sm px-3" onclick="document.getElementById('glFileInputDash').click()">📥 Update GL (CSV)</button>
+                <input type="file" id="glFileInputDash" style="display:none" accept=".csv" onchange="handleGLFileUpload(this)">
             </div>
+            <button class="btn btn-dark btn-sm px-3 sync-gate-btn" onclick="pushQBO()">Push QBO</button>
         </div>
-        <div class="batch-bar mb-4 row g-3">
-            <div class="col-md-5"><input type="text" id="batchSearchInput" class="form-control form-control-sm" placeholder="Search Vendor (e.g. Uber)"></div>
-            <div class="col-md-4"><select id="batchCategorySelect" class="form-select form-select-sm"><option value="Uncategorized">-- Assign Account --</option></select></div>
-            <div class="col-md-3"><button class="btn btn-hca btn-sm w-100" onclick="applyBatch()">Apply to All Matches</button></div>
-        </div>
-        <table class="table table-hover table-sm align-middle"><thead class="table-light"><tr><th>Source</th><th>Date</th><th>Description</th><th>Amount</th><th>Expense Account</th><th>Status</th><th>Bank Account</th></tr></thead><tbody id="tb-staging"></tbody></table>
+        <table class="table table-hover table-sm align-middle"><thead><tr><th>Src</th><th>Date</th><th>Description</th><th>Amount</th><th>Expense Account</th><th>Stat</th><th>Bank</th><th>Class</th><th>Rec</th></tr></thead><tbody id="tb-staging"></tbody></table>
     </div>
-    <div id="tab-history" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5>History</h5><table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync</th></tr></thead><tbody id="tb-history"></tbody></table></div>
-    <div id="tab-je" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
-        <div id="jeBalanceAlert" class="alert mb-4 text-center fw-bold"></div>
-        <div class="row g-3 mb-4">
-            <div class="col-md-3"><div class="summary-card"><h6>Bank Total</h6><h4 id="bankTotal">$0.00</h4></div></div>
-            <div class="col-md-3"><div class="summary-card"><h6>Bank Uncat.</h6><h4 id="bankUncat">$0.00</h4></div></div>
-            <div class="col-md-3"><div class="summary-card"><h6>CC Total</h6><h4 id="ccTotal">$0.00</h4></div></div>
-            <div class="col-md-3"><div class="summary-card"><h6>CC Uncat.</h6><h4 id="ccUncat">$0.00</h4></div></div>
-        </div>
-        <div id="jeList" class="mt-3 font-monospace"></div>
+
+    <div id="tab-pnl" class="bg-white p-4 rounded-xl shadow-sm view-pane" style="display:none;">
+        <div class="row g-3 mb-4"><div class="col-md-3"><div class="summary-card"><h6>Revenue</h6><h3 id="stat-rev">$0.00</h3></div></div><div class="col-md-3"><div class="summary-card"><h6>Expenses</h6><h3 id="stat-exp" class="text-danger">$0.00</h3></div></div><div class="col-md-3"><div class="summary-card"><h6>Net</h6><h3 id="stat-net">$0.00</h3></div></div><div class="col-md-3"><div class="summary-card"><h6>Margin</h6><h3 id="stat-margin">0%</h3></div></div></div>
+        <div class="row"><div class="col-md-8"><canvas id="chart-bar" height="150"></canvas></div><div class="col-md-4"><canvas id="chart-doughnut"></canvas></div></div>
     </div>
-    <div id="tab-meta" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5>Client Info</h5><div id="metaList"></div></div>
+    
+    <div id="tab-history" class="bg-white p-4 rounded-xl shadow-sm view-pane" style="display:none;"><h5>History</h5><table class="table table-sm"><tbody id="tb-history"></tbody></table></div>
+    <div id="tab-je" class="bg-white p-4 rounded-xl shadow-sm view-pane" style="display:none;"><div id="reconGateBanner" class="card p-3 mb-4 border-0"></div><div id="jeBalanceAlert" class="alert mb-4"></div><div id="jeList"></div></div>
 </div>
 
 <div id="chat-trigger" onclick="toggleChat()">🤖</div>
-<div id="chat-window">
-    <div id="chat-header">HCA Navigator</div>
-    <div id="chat-content">Ask me how to use the portal...</div>
-    <div class="p-2 border-top"><input id="chat-input" class="form-control form-control-sm" placeholder="Ask assistant..." onkeydown="if(event.key==='Enter') sendChat()"></div>
-</div>
-
-<datalist id="glChoices"></datalist>
+<div id="chat-window"><div id="chat-header">HCA Navigator</div><div id="chat-content"></div><div class="p-2 border-top"><input id="chat-input" class="form-control form-control-sm" placeholder="Ask assistant..." onkeydown="if(event.key==='Enter') sendChat()"></div></div>
 <div id="st"><strong>Processing...</strong></div>
+<datalist id="glChoices"></datalist>
 
 <script>
-    const ENGINE_URL = "https://script.google.com/macros/s/AKfycbxX4VBXudeOPnR_raq3K7fUo3QxLmyUM3p5mI4M02JLpvkcMGzFEPAxIVvHmpvBDkt-2w/exec";
-    let currentClient = "";
-    let localData = [];
+    const ENGINE_URL = "https://script.google.com/macros/s/AKfycbxmgz-yN_7sY-y-HUmDvTrnuWdw2JYpkEydiOtv35-cOdlmByP6Rb4Oe04qUHX5xNSIpA/exec";
+    const CLASS_OPTIONS = ["General", "Marketing", "Sales", "Operations", "NY-Office"];
+    let currentClient = ""; let localData = []; let appGLOptions = []; let activeRules = []; let historyData = [];
+    let barChart, doughnutChart, stmtStart = 0, stmtEnd = 0;
 
     async function callEngine(payload) {
-        try {
-            const response = await fetch(ENGINE_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload), redirect: 'follow' });
-            return await response.json();
-        } catch (e) { alert("Network Error"); document.getElementById('st').style.display = 'none'; }
+        try { const r = await fetch(ENGINE_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload), redirect: 'follow' }); return await r.json(); } 
+        catch (e) { alert("Network Error"); document.getElementById('st').style.display = 'none'; }
     }
 
     function lockKey() { localStorage.setItem('hca_gk', document.getElementById('master_gk').value); location.reload(); }
     window.onload = async () => {
         if(localStorage.getItem('hca_gk')) {
             document.getElementById('keyGate').style.display = 'none'; document.getElementById('mainPortal').style.display = 'block';
-            document.getElementById('dot-gemini').classList.add('dot-green');
-            const list = await callEngine({action: "getList"});
-            const sel = document.getElementById('masterClient');
+            const list = await callEngine({action: "getList"}); const sel = document.getElementById('masterClient');
             if(list && !list.error) list.forEach(v => sel.innerHTML += `<option value="${v}">${v}</option>`);
         }
     };
 
-    async function pingStatus() {
-        currentClient = document.getElementById('masterClient').value;
-        if(!currentClient) return;
-        document.getElementById('actionGrid').style.opacity = "1";
-        document.getElementById('actionGrid').style.pointerEvents = "auto";
-        const status = await callEngine({action: "checkStatus", client: currentClient});
-        document.getElementById('dot-ledger').className = status.ledger ? 'status-dot dot-green' : 'status-dot dot-red';
-        document.getElementById('dot-qbo').className = status.qbo === 'GREEN' ? 'status-dot dot-green' : (status.qbo === 'AMBER' ? 'status-dot dot-amber' : 'status-dot dot-red');
+    async function handleGLFileUpload(input) {
+        const file = input.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const lines = e.target.result.split(/\r?\n/);
+            // Assume first column is Account Name
+            appGLOptions = lines.map(l => l.split(',')[0].replace(/"/g, '').trim()).filter(v => v && v.toLowerCase() !== "account" && v !== "");
+            
+            // Update UI Datalist
+            const dl = document.getElementById('glChoices');
+            dl.innerHTML = appGLOptions.map(o => `<option value="${o}">`).join('');
+            
+            // Refresh visible dropdowns
+            document.querySelectorAll('.row-cat, .row-bnk, #ruleAccount').forEach(sel => {
+                const curVal = sel.value;
+                sel.innerHTML = `<option value="Uncategorized">Uncategorized</option>` + appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('');
+                if (appGLOptions.includes(curVal)) sel.value = curVal;
+            });
+            alert(`Parsed ${appGLOptions.length} Accounts. AI will now use this list for categorization.`);
+        };
+        reader.readAsText(file);
     }
 
-    async function save() { document.getElementById('st').style.display = 'block'; const res = await callEngine({ action: "provision", clientName: document.getElementById('n').value, nature: document.getElementById('nature').value, keys: { QBO_ID: document.getElementById('qi').value, QBO_SEC: document.getElementById('qs').value }, glList: "" }); alert(res.msg); location.reload(); }
-    function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
-    async function handleFile(input, type) { currentClient = document.getElementById('masterClient').value; document.getElementById('st').style.display = 'block'; const reader = new FileReader(); reader.onload = async (e) => { const res = await callEngine({action: "process", client: currentClient, source: type, fileData: e.target.result.split(',')[1], geminiKey: localStorage.getItem('hca_gk')}); renderDashboard(res); }; reader.readAsDataURL(input.files[0]); }
+    async function pingStatus() {
+        currentClient = document.getElementById('masterClient').value; if(!currentClient) return;
+        document.getElementById('actionGrid').style.opacity = "1"; document.getElementById('actionGrid').style.pointerEvents = "auto";
+        const s = await callEngine({action: "checkStatus", client: currentClient});
+        document.getElementById('dot-ledger').className = 'status-dot dot-green';
+        document.getElementById('dot-qbo').className = s.qbo === 'AMBER' ? 'status-dot dot-amber' : 'status-dot dot-red';
+    }
+
+    async function handleFile(input, type) {
+        currentClient = document.getElementById('masterClient').value; document.getElementById('st').style.display = 'block';
+        const r = new FileReader();
+        r.onload = async (e) => {
+            const res = await callEngine({
+                action: "process", 
+                client: currentClient, 
+                source: type, 
+                fileData: e.target.result.split(',')[1], 
+                geminiKey: localStorage.getItem('hca_gk'),
+                glListOverride: appGLOptions.join(",") // PASS DYNAMIC GL TO GEMINI
+            });
+            renderDashboard(res);
+        };
+        r.readAsDataURL(input.files[0]);
+    }
 
     function renderDashboard(res) {
-        document.getElementById('st').style.display = 'none'; if(!res || res.error) { alert("Error: " + (res ? res.error : "No data")); return; }
+        document.getElementById('st').style.display = 'none'; if(!res || res.error) return alert("Error loading data");
         showPane('dash'); document.getElementById('activeTitle').innerText = currentClient;
-        localData = res.staging;
+        localData = res.staging; appGLOptions = res.glOptions; activeRules = res.rules || []; historyData = res.history || [];
         
-        const historyMap = {};
-        res.history.forEach(h => {
-            const hKey = `${h.date}_${h.amt.replace(/[^0-9.-]+/g,"")}_${h.desc.toLowerCase().trim()}`;
-            historyMap[hKey] = true;
-        });
+        const s_meta = res.metadata.find(m => m[0] === "STMT_START"); const e_meta = res.metadata.find(m => m[0] === "STMT_END");
+        stmtStart = s_meta ? parseFloat(s_meta[1]) : 0; stmtEnd = e_meta ? parseFloat(e_meta[1]) : 0;
 
-        const batchCountMap = {};
-        res.staging.forEach(s => {
-            const sKey = `${s.date}_${s.amt.replace(/[^0-9.-]+/g,"")}_${s.desc.toLowerCase().trim()}`;
-            batchCountMap[sKey] = (batchCountMap[sKey] || 0) + 1;
-        });
-
-        const dl = document.getElementById('glChoices'); dl.innerHTML = ""; 
-        const batchSel = document.getElementById('batchCategorySelect'); batchSel.innerHTML = '<option value="Uncategorized">-- Assign Account --</option>';
-        res.glOptions.forEach(opt => { dl.innerHTML += `<option value="${opt}">`; batchSel.innerHTML += `<option value="${opt}">${opt}</option>`; });
-        
         const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
         res.staging.forEach(i => {
-            const itemKey = `${i.date}_${i.amt.replace(/[^0-9.-]+/g,"")}_${i.desc.toLowerCase().trim()}`;
-            const isDuplicate = (historyMap[itemKey] === true) || (batchCountMap[itemKey] > 1);
-            const rowClass = isDuplicate ? 'table-danger' : '';
-            const dupBadge = isDuplicate ? '<span class="badge bg-danger ms-2">Duplicate</span>' : '';
-
-            sBody.innerHTML += `<tr class="${rowClass}"><td>${i.src}</td><td>${i.date}</td><td>${i.desc}${dupBadge}</td><td>$${i.amt}</td><td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()" onkeydown="handleKeyNav(event, ${i.row}, 'c')"><option value="Uncategorized">Uncategorized</option>${res.glOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td><td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat" onkeydown="handleKeyNav(event, ${i.row}, 's')"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td><td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()" onkeydown="handleKeyNav(event, ${i.row}, 'b')"><option value="Uncategorized">Uncategorized</option>${res.glOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td></tr>`;
+            sBody.innerHTML += `<tr><td>${i.src[0]}</td><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm row-cat" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td><td><select id="s${i.row}" class="form-select form-select-sm" onchange="recalcJE()"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>P</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>A</option></select></td><td><select id="b${i.row}" class="form-select form-select-sm" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td><td><select id="l${i.row}" class="form-select form-select-sm row-cls" onchange="recalcJE()">${CLASS_OPTIONS.map(c => `<option value="${c}">${c}</option>`).join('')}</select></td><td id="rcell${i.row}"><button class="btn btn-xs btn-outline-secondary" onclick="document.getElementById('rup${i.row}').click()">📁</button><input type="file" id="rup${i.row}" style="display:none" onchange="handleReceiptUpload(this, ${i.row})"></td></tr>`;
         });
-        res.staging.forEach(i => { document.getElementById('c'+i.row).value = i.cat || "Uncategorized"; document.getElementById('b'+i.row).value = i.bnk || "Uncategorized"; });
-        document.getElementById('tb-history').innerHTML = ""; res.history.forEach(i => { document.getElementById('tb-history').innerHTML += `<tr><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; });
-        document.getElementById('metaList').innerHTML = ""; res.metadata.forEach(m => document.getElementById('metaList').innerHTML += `<div class="small py-1 border-bottom"><strong>${m[0]}:</strong> <span class="text-muted">${m[1]}</span></div>`);
-        recalcJE();
-    }
-
-    function applyBatch() {
-        const query = document.getElementById('batchSearchInput').value.toLowerCase();
-        const newCat = document.getElementById('batchCategorySelect').value;
-        if(!query) return alert("Please enter a search term");
-        localData.forEach(item => { if(item.desc.toLowerCase().includes(query)) { const target = document.getElementById('c' + item.row); if(target) target.value = newCat; } });
-        recalcJE();
-    }
-
-    function handleKeyNav(e, row, prefix) {
-        const prefixes = ['c', 's', 'b'];
-        let targetRow = row; let targetPrefix = prefix; let jump = false;
-        if (e.key === "Enter") { e.preventDefault(); targetRow = e.shiftKey ? row - 1 : row + 1; jump = true; }
-        else if (e.key === "ArrowDown") { e.preventDefault(); targetRow = row + 1; jump = true; }
-        else if (e.key === "ArrowUp") { e.preventDefault(); targetRow = row - 1; jump = true; }
-        else if (e.key === "ArrowRight") { let idx = prefixes.indexOf(prefix); if (idx < prefixes.length - 1) { e.preventDefault(); targetPrefix = prefixes[idx + 1]; jump = true; } }
-        else if (e.key === "ArrowLeft") { let idx = prefixes.indexOf(prefix); if (idx > 0) { e.preventDefault(); targetPrefix = prefixes[idx - 1]; jump = true; } }
-        if (jump) { const next = document.getElementById(targetPrefix + targetRow); if (next) next.focus(); }
+        res.staging.forEach(i => { document.getElementById('c'+i.row).value = i.cat || "Uncategorized"; document.getElementById('b'+i.row).value = i.bnk || "Uncategorized"; document.getElementById('l'+i.row).value = i.cls || "General"; });
+        recalcJE(); renderPnLCharts();
     }
 
     function recalcJE() {
-        let jeData = {}; let bT = 0, bU = 0, cT = 0, cU = 0;
+        let jeData = {}; let tDr = 0, tCr = 0, netAct = 0;
         document.querySelectorAll('.row-cat').forEach(inp => {
-            let r = inp.getAttribute('data-row'), item = localData.find(x => x.row == r), val = parseFloat(item.amt.replace(/[^0-9.-]+/g,"")), exp = inp.value, bnk = document.getElementById('b'+r).value;
-            if(item.src === "BANK") { bT += val; if(exp === "Uncategorized" || bnk === "Uncategorized") bU += val; } else { cT += val; if(exp === "Uncategorized" || bnk === "Uncategorized") cU += val; }
-            if(exp) jeData[exp] = (jeData[exp] || 0) + val; if(bnk) jeData[bnk] = (jeData[bnk] || 0) - val;
+            let r = inp.getAttribute('data-row'), item = localData.find(x => x.row == r), val = parseFloat(String(item.amt).replace(/[^0-9.-]+/g,"")), exp = inp.value, bnk = document.getElementById('b'+r).value, cls = document.getElementById('l'+r).value;
+            netAct += val; if(exp) jeData[exp+"|"+cls] = (jeData[exp+"|"+cls] || 0) + val; if(bnk) jeData[bnk+"|"+cls] = (jeData[bnk+"|"+cls] || 0) - val;
         });
-        document.getElementById('bankTotal').innerText = "$" + bT.toFixed(2); document.getElementById('bankUncat').innerText = "$" + bU.toFixed(2);
-        document.getElementById('ccTotal').innerText = "$" + cT.toFixed(2); document.getElementById('ccUncat').innerText = "$" + cU.toFixed(2);
-        
-        const jeDiv = document.getElementById('jeList'); jeDiv.innerHTML = `<div class="je-item fw-bold border-bottom"><span>Account</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
-        let totalDr = 0, totalCr = 0;
-        for (let acc in jeData) {
-            let bal = jeData[acc]; if(Math.abs(bal) < 0.01) continue;
-            let dr = bal < 0 ? Math.abs(bal) : 0, cr = bal > 0 ? bal : 0;
-            totalDr += dr; totalCr += cr;
-            jeDiv.innerHTML += `<div class="je-item"><span>${acc}</span><span class="dr">${dr?`$${dr.toFixed(2)}`:''}</span><span class="cr">${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
-        }
 
-        const alertBox = document.getElementById('jeBalanceAlert');
-        const diff = Math.abs(totalDr - totalCr);
-        if (diff < 0.01) {
-            alertBox.className = "alert alert-success mb-4 text-center fw-bold";
-            alertBox.innerText = `✓ Journal Entry Balanced ($${totalDr.toFixed(2)} DR / $${totalCr.toFixed(2)} CR)`;
-        } else {
-            alertBox.className = "alert alert-danger mb-4 text-center fw-bold";
-            alertBox.innerText = `⚠️ Out of Balance by $${diff.toFixed(2)} (DR: $${totalDr.toFixed(2)} | CR: $${totalCr.toFixed(2)})`;
+        const diff = Math.abs((stmtStart + netAct) - stmtEnd);
+        const banner = document.getElementById('reconGateBanner'); const syncBtns = document.querySelectorAll('.sync-gate-btn');
+        if(diff < 0.01) { banner.className = "card p-2 mb-3 bg-success text-white fw-bold small"; banner.innerText = "✓ Reconciled"; syncBtns.forEach(b => b.disabled = false); } 
+        else { banner.className = "card p-2 mb-3 bg-danger text-white fw-bold small"; banner.innerText = `⚠️ Unbalanced: $${diff.toFixed(2)}`; syncBtns.forEach(b => b.disabled = true); }
+
+        const div = document.getElementById('jeList'); div.innerHTML = "";
+        for (let k in jeData) {
+            let b = jeData[k]; if(Math.abs(b) < 0.01) continue;
+            let dr = b < 0 ? Math.abs(b) : 0, cr = b > 0 ? b : 0; tDr += dr; tCr += cr;
+            div.innerHTML += `<div class="je-item"><span>${k}</span><span>${dr?`$${dr.toFixed(2)}`:''}</span><span>${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
         }
     }
 
-    function exportStagingCSV() {
-        if (!localData.length) return alert("No data available to export.");
-        
-        const headers = ["Source", "Date", "Description", "Amount", "Expense Account", "Status", "Bank Account"];
-        const escape = (v) => `"${String(v).replace(/"/g, '""')}"`;
-        
-        let csvContent = headers.join(",") + "\n";
-        
-        localData.forEach(i => {
-            const rowData = [
-                i.src,
-                i.date,
-                i.desc,
-                i.amt,
-                document.getElementById('c'+i.row).value,
-                document.getElementById('s'+i.row).value,
-                document.getElementById('b'+i.row).value
-            ];
-            csvContent += rowData.map(escape).join(",") + "\n";
+    function renderPnLCharts() {
+        let months = {}, catExps = {}, tRev = 0, tExp = 0; const allData = [...historyData, ...localData];
+        allData.forEach(i => {
+            let val = parseFloat(String(i.amt).replace(/[^0-9.-]+/g,"")), m = i.date.substring(0, 7); if(!months[m]) months[m] = { inc: 0, exp: 0 };
+            if(val > 0) { months[m].inc += val; tRev += val; } else { months[m].exp += Math.abs(val); tExp += Math.abs(val); if(i.cat !== "Uncategorized") catExps[i.cat] = (catExps[i.cat] || 0) + Math.abs(val); }
         });
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const filename = `${currentClient.replace(/\s+/g, '_')}_Staging_Export_${new Date().toISOString().split('T')[0]}.csv`;
-        
-        link.setAttribute("href", URL.createObjectURL(blob));
-        link.setAttribute("download", filename);
-        link.click();
+        document.getElementById('stat-rev').innerText = `$${tRev.toLocaleString()}`; document.getElementById('stat-exp').innerText = `$${tExp.toLocaleString()}`;
+        const sorted = Object.keys(months).sort(); if(barChart) barChart.destroy();
+        barChart = new Chart(document.getElementById('chart-bar'), { type: 'bar', data: { labels: sorted, datasets: [{ label: 'Income', data: sorted.map(m => months[m].inc), backgroundColor: '#C5D1B8' },{ label: 'Expense', data: sorted.map(m => months[m].exp), backgroundColor: '#2C3E50' }]}});
     }
 
-    function toggleChat() { const c = document.getElementById('chat-window'); c.style.display = (c.style.display === 'flex') ? 'none' : 'flex'; }
-    async function sendChat() {
-        const i = document.getElementById('chat-input'), b = document.getElementById('chat-content'), q = i.value; if(!q) return; i.value = "";
-        b.innerHTML += `<div class="chat-bubble text-primary"><strong>You:</strong> ${q}</div>`;
-        b.innerHTML += `<div id="chat-thinking" class="chat-bubble text-muted small"><em>Navigator is thinking...</em></div>`;
-        b.scrollTop = b.scrollHeight;
-        const res = await callEngine({action: "chatBot", query: q, client: currentClient, gk: localStorage.getItem('hca_gk')});
-        const thinking = document.getElementById('chat-thinking'); if(thinking) thinking.remove();
-        const structuredReply = res.reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
-        b.innerHTML += `<div class="chat-bubble text-dark"><strong>AI:</strong><br>${structuredReply}</div>`; b.scrollTop = b.scrollHeight;
-    }
-
-    function switchTab(t) { document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none'); document.querySelectorAll('.app-nav-btn').forEach(el => el.classList.remove('active')); document.getElementById('tab-'+t).style.display = 'block'; document.getElementById('nav-'+t).classList.add('active'); }
-    function approveAll() { document.querySelectorAll('.row-stat').forEach(s => s.value = "APPROVED"); }
-    async function saveAll() {
-        let updates = []; document.querySelectorAll('.row-cat').forEach(inp => { let r = inp.getAttribute('data-row'); updates.push({ row: r, cat: inp.value, stat: document.getElementById('s'+r).value, bnk: document.getElementById('b'+r).value }); });
-        document.getElementById('st').style.display = 'block'; await callEngine({action: "updateRows", client: currentClient, updateData: updates}); loadDash();
-    }
-
-    async function pushQBO() {
-        let jeData = {}; let payload = []; let approvedCount = 0;
-        document.querySelectorAll('.row-cat').forEach(inp => {
-            let r = inp.getAttribute('data-row'); if(document.getElementById('s'+r).value !== "APPROVED") return;
-            approvedCount++; let item = localData.find(x => x.row == r); let val = parseFloat(item.amt.replace(/[^0-9.-]+/g,"")), exp = inp.value, bnk = document.getElementById('b'+r).value;
-            jeData[exp] = (jeData[exp] || 0) + val; jeData[bnk] = (jeData[bnk] || 0) - val;
-        });
-        if(approvedCount === 0) return alert("No rows marked as APPROVED.");
-        let checkSum = 0;
-        for (let acc in jeData) { checkSum += jeData[acc]; if(Math.abs(jeData[acc]) > 0.001) payload.push({ acc: acc, amt: jeData[acc], desc: "Balanced Sync Batch" }); }
-        if(Math.abs(checkSum) > 0.01) return alert("Error: Journal Entry is unbalanced.");
-        document.getElementById('st').style.display = 'block';
-        const res = await callEngine({action: "pushQBO", client: currentClient, jePayload: payload});
-        renderDashboard(res); alert("Success: Balanced Journal Entry Synced.");
-    }
-
+    function switchTab(t) { document.querySelectorAll('.view-pane').forEach(el => el.style.display = 'none'); document.querySelectorAll('.app-nav-btn').forEach(el => el.classList.remove('active')); document.getElementById('tab-'+t).style.display = 'block'; document.getElementById('nav-'+t).classList.add('active'); }
     function showPane(p) { document.querySelectorAll('.view-pane, #view-launchpad').forEach(el => el.style.display = 'none'); document.getElementById('view-' + p).style.display = 'block'; }
-    async function loadDash() { currentClient = document.getElementById('masterClient').value; if(!currentClient) return alert("Select client first"); document.getElementById('st').style.display = 'block'; const res = await callEngine({action: "getAppData", clientName: currentClient}); renderDashboard(res); pingStatus(); }
+    async function loadDash() { currentClient = document.getElementById('masterClient').value; if(!currentClient) return; document.getElementById('st').style.display = 'block'; const res = await callEngine({action: "getAppData", clientName: currentClient}); renderDashboard(res); pingStatus(); }
+    async function save() { document.getElementById('st').style.display = 'block'; await callEngine({ action: "provision", clientName: document.getElementById('n').value, nature: document.getElementById('nature').value, keys: { QBO_ID: document.getElementById('qi').value, QBO_SEC: document.getElementById('qs').value }, glList: appGLOptions.join(",") }); location.reload(); }
 </script>
 </body>
 </html>
