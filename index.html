@@ -68,7 +68,7 @@
         .badge-dup { background: #EF4444; color: white; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px; }
         .filter-btn { border-radius: 20px; font-size: 0.8rem; font-weight: 600; padding: 4px 12px; }
 
-        /* VENDOR HOVER POPOVER STYLES */
+        /* VENDOR HOVER POPOVER CARD STYLES */
         .vendor-cell { position: relative; }
         .vendor-hover {
             cursor: pointer;
@@ -560,7 +560,7 @@
 
     function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
 
-    // STRICT VENDOR FILTERING PARSER
+    // ERROR-PROOF FILE PARSER (STRICT VENDOR + CRASH PREVENTION)
     async function handleFile(input, type) { 
         currentClient = document.getElementById('masterClient').value; 
         if(!currentClient) return alert("Select client account first");
@@ -571,6 +571,11 @@
             try {
                 const pdfData = e.target.result.split(',')[1];
                 const apiKey = localStorage.getItem('hca_gk');
+
+                if (!apiKey) {
+                    document.getElementById('st').style.display = 'none';
+                    return alert("Missing Gemini API Key. Please authenticate.");
+                }
 
                 const behavior = type === "CC" ? "Spend is negative, Payments positive." : "Debits are negative, Credits positive.";
                 const prompt = `ACT AS: Senior Bookkeeper & Forensic Auditor. Extract all statement transactions.
@@ -592,6 +597,14 @@ Return ONLY JSON Object: {"starting_balance":0.0, "ending_balance":0.0, "transac
                 });
 
                 const jsonRes = await res.json();
+
+                if (jsonRes.error) {
+                    throw new Error("Gemini API Error: " + jsonRes.error.message);
+                }
+                if (!jsonRes.candidates?.[0]?.content?.parts?.[0]?.text) {
+                    throw new Error("Gemini returned invalid or empty candidates array.");
+                }
+
                 const rawText = jsonRes.candidates[0].content.parts[0].text;
                 const extracted = JSON.parse(rawText.replace(/```json|```/g, '').trim());
 
@@ -599,10 +612,10 @@ Return ONLY JSON Object: {"starting_balance":0.0, "ending_balance":0.0, "transac
                 stmtEnd = extracted.ending_balance || 0;
                 await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).eq('client_name', currentClient);
 
-                const rows = extracted.transactions.map(t => {
+                const rows = (extracted.transactions || []).map(t => {
                     let assignedCategory = t.category || "Uncategorized";
                     activeRules.forEach(rule => {
-                        const targetText = (t.vendor + " " + t.desc).toLowerCase();
+                        const targetText = ((t.vendor || "") + " " + (t.desc || "")).toLowerCase();
                         if(targetText.includes(rule.keyword.toLowerCase())) {
                             assignedCategory = rule.target_account;
                         }
@@ -612,7 +625,7 @@ Return ONLY JSON Object: {"starting_balance":0.0, "ending_balance":0.0, "transac
                         client_name: currentClient,
                         source: type === 'PDF' ? 'BANK' : 'CREDIT CARD',
                         txn_date: t.date,
-                        vendor: t.vendor || "", // Strictly empty string for non-merchants
+                        vendor: t.vendor || "", 
                         description: t.desc || "Statement Line",
                         amount: t.amount,
                         category: assignedCategory,
@@ -623,10 +636,15 @@ Return ONLY JSON Object: {"starting_balance":0.0, "ending_balance":0.0, "transac
                     };
                 });
 
+                if (rows.length === 0) {
+                    document.getElementById('st').style.display = 'none';
+                    return alert("No valid transactions found in statement.");
+                }
+
                 await db.from('review_staging').insert(rows);
                 await loadDash();
             } catch(err) {
-                alert("Gemini Processing Error: " + err.message);
+                alert("Processing Error: " + err.message);
                 document.getElementById('st').style.display = 'none';
             }
         }; 
@@ -713,7 +731,7 @@ Return ONLY JSON Object: {"starting_balance":0.0, "ending_balance":0.0, "transac
             const receiptCell = i.receipt ? `✓ Verified` : `<button class="btn btn-xs btn-outline-secondary py-0" onclick="document.getElementById('rup${i.row}').click()">📁 Match</button><input type="file" id="rup${i.row}" style="display:none" onchange="handleReceiptUpload(this, ${i.row})">`;
             const popupId = `vpop_${i.row}`;
             
-            // Render interactive hover popover ONLY if Vendor is present
+            // Render interactive hover popover ONLY if Vendor is non-empty
             const vendorHtml = (i.vendor && i.vendor.trim() !== "") ? `
                 <span class="vendor-hover" onmouseenter="fetchVendorIntelligence('${i.vendor.replace(/'/g, "\\'")}', '${popupId}')">
                     ${i.vendor} ${dupBadge}
@@ -756,12 +774,12 @@ Return ONLY JSON Object: {"starting_balance":0.0, "ending_balance":0.0, "transac
             return;
         }
 
-        // 2. Fetch Live Summary & URL via Gemini
+        // 2. Fetch Summary & URL via Gemini
         popupEl.innerHTML = `<em>Querying merchant intelligence...</em>`;
         const apiKey = localStorage.getItem('hca_gk');
         
         try {
-            const prompt = `ACT AS: Corporate Intelligence Agent. Provide details for the vendor "${vendorName}".
+            const prompt = `ACT AS: Corporate Intelligence Agent. Provide details for vendor "${vendorName}".
 Return ONLY JSON:
 {
   "description": "1-2 sentence business summary of what they sell or provide.",
@@ -778,6 +796,10 @@ Return ONLY JSON:
             });
 
             const jsonRes = await res.json();
+            if (!jsonRes.candidates?.[0]?.content?.parts?.[0]?.text) {
+                throw new Error("Invalid response");
+            }
+
             const rawText = jsonRes.candidates[0].content.parts[0].text;
             const info = JSON.parse(rawText.replace(/```json|```/g, '').trim());
 
@@ -941,7 +963,7 @@ Return ONLY JSON:
         const jsonRes = await res.json();
         const thinking = document.getElementById('chat-thinking'); if(thinking) thinking.remove();
         
-        const reply = jsonRes.candidates[0].content.parts[0].text;
+        const reply = jsonRes.candidates?.[0]?.content?.parts?.[0]?.text || "Unable to retrieve AI response.";
         const structuredReply = reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
         
         b.innerHTML += `<div class="chat-bubble text-dark"><strong>AI:</strong><br>${structuredReply}</div>`; 
