@@ -13,13 +13,14 @@
         body { background: var(--hca-bg); font-family: 'Segoe UI', sans-serif; color: var(--hca-dark); padding-bottom: 60px; }
         .rounded-xl { border-radius: 12px !important; }
         .navbar { background: white; border-bottom: 2px solid var(--hca-sage); padding: 1rem 2rem; }
+        .view-pane { display: none; }
+        .dash-tab { display: none; }
         .hero-section { background: var(--hca-dark); color: white; padding: 60px 20px; text-align: center; margin-bottom: 40px; }
         .card-custom { background: white; border: none; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); height: 100%; display: flex; flex-direction: column; transition: 0.3s; }
         .card-custom:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
         .card-img-top { height: 180px; object-fit: cover; width: 100%; }
         .btn-hca { background: var(--hca-sage); color: var(--hca-dark); border: none; font-weight: bold; padding: 10px 20px; border-radius: 12px; cursor: pointer; }
         .btn-dark-hca { background: var(--hca-dark); color: white; border-radius: 10px; padding: 10px 20px; cursor: pointer; }
-        .view-pane { display: none; }
         .app-nav { background: white; border-radius: 12px; display: flex; overflow: hidden; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .app-nav-btn { flex: 1; text-align: center; padding: 15px; cursor: pointer; font-weight: bold; border-right: 1px solid #eee; color: #7f8c8d; }
         .app-nav-btn.active { background: var(--hca-sage); color: var(--hca-dark); }
@@ -201,21 +202,35 @@
         const cName = document.getElementById('n').value.trim();
         if(!cName) return alert("Company Name is required");
 
-        document.getElementById('st').style.display = 'block'; 
-        
-        const { error } = await db.from('client_metadata').upsert({
+        document.getElementById('st').style.display = 'block';
+
+        const payload = {
             client_name: cName,
             nature: document.getElementById('nature').value || "General",
             qbo_id: document.getElementById('qi').value || "",
-            qbo_sec: document.getElementById('qs').value || ""
-        }, { onConflict: 'client_name' });
+            qbo_sec: document.getElementById('qs').value || "",
+            gl_list: (typeof appGLOptions !== 'undefined') ? appGLOptions.join(",") : ""
+        };
+
+        const { data: existing } = await db.from('client_metadata').select('client_name').eq('client_name', cName).maybeSingle();
+
+        let resultError = null;
+
+        if (existing) {
+            const { error } = await db.from('client_metadata').update(payload).eq('client_name', cName);
+            resultError = error;
+        } else {
+            const { error } = await db.from('client_metadata').insert([payload]);
+            resultError = error;
+        }
 
         document.getElementById('st').style.display = 'none';
 
-        if (error) {
-            alert("Error saving client: " + error.message);
+        if (resultError) {
+            alert("Supabase Write Error: " + resultError.message);
+            console.error("Save Error:", resultError);
         } else {
-            alert("Client synchronized successfully!");
+            alert("Client saved successfully to Supabase!");
             showPane('launchpad');
             await getClientList();
             document.getElementById('masterClient').value = cName;
@@ -318,6 +333,9 @@
         document.getElementById('st').style.display = 'none'; 
         showPane('dash'); 
         document.getElementById('activeTitle').innerText = currentClient;
+        
+        const dl = document.getElementById('glChoices'); dl.innerHTML = ""; 
+        const batchSel = document.getElementById('batchCategorySelect'); batchSel.innerHTML = '<option value="Uncategorized">-- Assign Account --</option>';
         
         const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
         localData.forEach(i => {
