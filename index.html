@@ -10,7 +10,6 @@
         .rounded-xl { border-radius: 12px !important; }
         .navbar { background: white; border-bottom: 2px solid var(--hca-sage); padding: 1rem 2rem; }
         .hero-section { background: var(--hca-dark); color: white; padding: 60px 20px; text-align: center; margin-bottom: 40px; }
-        .hero .sub-brand { position: absolute; bottom: 10px; right: 40px; font-weight: bold; color: var(--hca-sage); font-size: 0.8rem; }
         .card-custom { background: white; border: none; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); height: 100%; display: flex; flex-direction: column; transition: 0.3s; }
         .card-custom:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
         .card-img-top { height: 180px; object-fit: cover; width: 100%; }
@@ -142,7 +141,7 @@
 <div id="st"><strong>Processing...</strong></div>
 
 <script>
-    const ENGINE_URL = "https://script.google.com/macros/s/AKfycby6EZ4AMGf5UNJuzGSWf9DFyUqVSl48I4AnWKc39enVgbhStbhKZ6BgTLgqUHLMaihx-A/exec";
+    const ENGINE_URL = "https://script.google.com/macros/s/AKfycbzfYFnWhyw6po1ukEwnXzmNRpZXeCrd1twQ1QpkMXW4vsgAi5wuwZsjKPTtOioITagKdg/exec";
     let currentClient = "";
     let localData = [];
 
@@ -185,7 +184,7 @@
         const dl = document.getElementById('glChoices'); dl.innerHTML = ""; res.glOptions.forEach(opt => dl.innerHTML += `<option value="${opt}">`);
         const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
         res.staging.forEach(i => {
-            sBody.innerHTML += `<tr><td>${i.src}</td><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()" onkeydown="handleKeyNav(event, ${i.row}, 'c')"><option value="Uncategorized">Uncategorized</option>${res.glOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td><td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td><td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()" onkeydown="handleKeyNav(event, ${i.row}, 'b')"><option value="Uncategorized">Uncategorized</option>${res.glOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td></tr>`;
+            sBody.innerHTML += `<tr><td>${i.src}</td><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()" onkeydown="handleKeyNav(event, ${i.row}, 'c')"><option value="Uncategorized">Uncategorized</option>${res.glOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td><td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat" onkeydown="handleKeyNav(event, ${i.row}, 's')"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td><td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()" onkeydown="handleKeyNav(event, ${i.row}, 'b')"><option value="Uncategorized">Uncategorized</option>${res.glOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td></tr>`;
         });
         res.staging.forEach(i => { document.getElementById('c'+i.row).value = i.cat || "Uncategorized"; document.getElementById('b'+i.row).value = i.bnk || "Uncategorized"; });
         document.getElementById('tb-history').innerHTML = ""; res.history.forEach(i => { document.getElementById('tb-history').innerHTML += `<tr><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; });
@@ -193,7 +192,37 @@
         recalcJE();
     }
 
-    function handleKeyNav(e, row, prefix) { if (e.key === "Enter") { const next = document.getElementById(prefix + (row + 1)); if (next) next.focus(); } }
+    function handleKeyNav(e, row, prefix) {
+        const prefixes = ['c', 's', 'b'];
+        let targetRow = row;
+        let targetPrefix = prefix;
+        let jump = false;
+
+        if (e.key === "Enter") {
+            e.preventDefault();
+            targetRow = e.shiftKey ? row - 1 : row + 1;
+            jump = true;
+        } else if (e.key === "ArrowDown") {
+            e.preventDefault();
+            targetRow = row + 1;
+            jump = true;
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            targetRow = row - 1;
+            jump = true;
+        } else if (e.key === "ArrowRight") {
+            let idx = prefixes.indexOf(prefix);
+            if (idx < prefixes.length - 1) { e.preventDefault(); targetPrefix = prefixes[idx + 1]; jump = true; }
+        } else if (e.key === "ArrowLeft") {
+            let idx = prefixes.indexOf(prefix);
+            if (idx > 0) { e.preventDefault(); targetPrefix = prefixes[idx - 1]; jump = true; }
+        }
+
+        if (jump) {
+            const next = document.getElementById(targetPrefix + targetRow);
+            if (next) next.focus();
+        }
+    }
 
     function recalcJE() {
         let jeData = {}; let bT = 0, bU = 0, cT = 0, cU = 0;
@@ -225,10 +254,7 @@
         const thinking = document.getElementById('chat-thinking');
         if(thinking) thinking.remove();
         
-        // Structured text formatting logic
-        const structuredReply = res.reply
-            .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // Handle Bold
-            .replace(/\n/g, '<br>');               // Handle line breaks
+        const structuredReply = res.reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
             
         b.innerHTML += `<div class="chat-bubble text-dark"><strong>AI:</strong><br>${structuredReply}</div>`; 
         b.scrollTop = b.scrollHeight;
