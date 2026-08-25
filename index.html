@@ -9,52 +9,61 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --hca-sage: #C5D1B8; --hca-dark: #2C3E50; --hca-bg: #F8F9FA; }
-        body { background: var(--hca-bg); font-family: 'Segoe UI', sans-serif; color: var(--hca-dark); padding-bottom: 60px; }
+        :root { 
+            --hca-sage: #C5D1B8; 
+            --hca-dark: #2C3E50; 
+            --hca-bg: #F8F9FA; 
+            --hca-border: #E2E8F0;
+        }
+        body { background: var(--hca-bg); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--hca-dark); padding-bottom: 60px; }
         .rounded-xl { border-radius: 16px !important; }
         
         /* Glassmorphism Navbar */
-        .navbar { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-bottom: 2px solid var(--hca-sage); padding: 0.8rem 2rem; }
+        .navbar { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); border-bottom: 2px solid var(--hca-sage); padding: 0.8rem 2rem; }
         .brand-logo { font-weight: 800; letter-spacing: -0.5px; }
-        .brand-badge { background: var(--hca-sage); color: var(--hca-dark); font-size: 0.7rem; font-weight: bold; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; margin-left: 6px; }
+        .brand-badge { background: var(--hca-sage); color: var(--hca-dark); font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; margin-left: 8px; letter-spacing: 0.5px; }
 
-        /* Animated Hero Header */
-        .hero-section { background: var(--hca-dark); color: white; padding: 60px 20px 70px; text-align: center; border-radius: 0 0 35px 35px; margin-bottom: 40px; position: relative; overflow: hidden; }
-        .hero-section::before { content: "⚡"; position: absolute; font-size: 150px; opacity: 0.03; top: -20px; left: 10%; pointer-events: none; }
-        .hero-section::after { content: "📊"; position: absolute; font-size: 150px; opacity: 0.03; bottom: -30px; right: 10%; pointer-events: none; }
+        /* Modern Hero Header */
+        .hero-section { background: var(--hca-dark); color: white; padding: 60px 20px 70px; text-align: center; border-radius: 0 0 32px 35px; margin-bottom: 40px; }
         
-        /* Fun Action Cards */
-        .card-custom { background: white; border: none; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.04); height: 100%; display: flex; flex-direction: column; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; }
-        .card-custom:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 20px 40px rgba(44,62,80,0.12); }
-        .card-img-top { height: 170px; object-fit: cover; width: 100%; filter: brightness(0.95); transition: 0.3s; }
-        .card-custom:hover .card-img-top { filter: brightness(1.05); }
+        /* Action Cards & Hover Effects */
+        .card-custom { background: white; border: 1px solid var(--hca-border); border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03); height: 100%; display: flex; flex-direction: column; transition: all 0.25s ease-in-out; }
+        .card-custom:hover { transform: translateY(-6px); box-shadow: 0 16px 32px rgba(44,62,80,0.1); border-color: var(--hca-sage); }
+        .card-img-container { height: 170px; overflow: hidden; position: relative; }
+        .card-img-top { height: 100%; width: 100%; object-fit: cover; filter: brightness(0.95); transition: transform 0.3s ease; }
+        .card-custom:hover .card-img-top { transform: scale(1.05); filter: brightness(1.02); }
         
         /* Interactive Buttons */
-        .btn-hca { background: var(--hca-sage); color: var(--hca-dark); border: none; font-weight: 700; padding: 12px 20px; border-radius: 12px; transition: all 0.2s ease; box-shadow: 0 4px 10px rgba(197,209,184,0.4); }
-        .btn-hca:hover { background: #b4c2a5; transform: scale(1.03); color: var(--hca-dark); }
-        .btn-dark-hca { background: var(--hca-dark); color: white; border-radius: 12px; padding: 12px 20px; font-weight: 700; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(44,62,80,0.3); }
-        .btn-dark-hca:hover { background: #1a252f; transform: scale(1.03); color: white; }
+        .btn-hca { background: var(--hca-sage); color: var(--hca-dark); border: none; font-weight: 600; padding: 12px 20px; border-radius: 12px; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-hca:hover { background: #b5c2a5; color: var(--hca-dark); }
+        .btn-dark-hca { background: var(--hca-dark); color: white; border-radius: 12px; padding: 12px 20px; font-weight: 600; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-dark-hca:hover { background: #1a252f; color: white; }
         
-        /* Status Dots with Pulse Animation */
-        .status-pill { background: #f1f3f5; padding: 6px 14px; border-radius: 30px; border: 1px solid #e9ecef; }
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; background: #bbb; }
-        .dot-green { background: #2ca01c; box-shadow: 0 0 10px #2ca01c; animation: pulse 2s infinite; }
-        .dot-amber { background: #f0ad4e; box-shadow: 0 0 10px #f0ad4e; }
-        .dot-red { background: #d9534f; box-shadow: 0 0 10px #d9534f; }
-        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(44, 160, 28, 0.7); } 70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(44, 160, 28, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(44, 160, 28, 0); } }
+        /* Status Dot Indicator Styles */
+        .status-pill { background: white; padding: 6px 16px; border-radius: 30px; border: 1px solid var(--hca-border); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; background: #CBD5E1; }
+        .dot-green { background: #22C55E; box-shadow: 0 0 8px #22C55E; animation: signalPulse 2s infinite; }
+        .dot-amber { background: #F59E0B; box-shadow: 0 0 8px #F59E0B; }
+        .dot-red { background: #EF4444; box-shadow: 0 0 8px #EF4444; }
+        @keyframes signalPulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
-        /* Floating AI Companion Trigger */
-        #chat-trigger { position: fixed; bottom: 25px; left: 25px; width: 60px; height: 60px; background: var(--hca-dark); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 8px 25px rgba(0,0,0,0.25); z-index: 3000; font-size: 26px; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        #chat-trigger:hover { transform: scale(1.15) rotate(10deg); background: var(--hca-sage); color: var(--hca-dark); }
+        /* Floating Vector AI Trigger */
+        #chat-trigger { position: fixed; bottom: 25px; left: 25px; width: 56px; height: 56px; background: var(--hca-dark); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,0.2); z-index: 3000; transition: all 0.25s ease; }
+        #chat-trigger:hover { transform: scale(1.08); background: var(--hca-sage); color: var(--hca-dark); }
         
-        /* Other View Styles */
+        /* Views & Layout Scaffolding */
         .view-pane { display: none; }
         .dash-tab { display: none; }
-        .app-nav { background: white; border-radius: 14px; display: flex; overflow: hidden; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
-        .app-nav-btn { flex: 1; text-align: center; padding: 16px; cursor: pointer; font-weight: 700; border-right: 1px solid #f1f3f5; color: #7f8c8d; transition: 0.2s; }
+        .app-nav { background: white; border-radius: 14px; display: flex; overflow: hidden; margin-bottom: 30px; border: 1px solid var(--hca-border); }
+        .app-nav-btn { flex: 1; text-align: center; padding: 16px; cursor: pointer; font-weight: 600; border-right: 1px solid var(--hca-border); color: #64748B; transition: 0.2s; }
         .app-nav-btn.active { background: var(--hca-sage); color: var(--hca-dark); }
-        .summary-card { background: white; border-radius: 16px; padding: 22px; border-left: 6px solid var(--hca-sage); box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
-        #st { background: white; border-radius: 16px; padding: 25px 35px; position: fixed; bottom: 30px; right: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.15); display: none; z-index: 2000; border: 2px solid var(--hca-sage); }
+        .summary-card { background: white; border-radius: 16px; padding: 22px; border-left: 5px solid var(--hca-sage); border-top: 1px solid var(--hca-border); border-right: 1px solid var(--hca-border); border-bottom: 1px solid var(--hca-border); }
+        .upload-box { border: 2px dashed var(--hca-sage); background: #FAFDF7; border-radius: 14px; padding: 20px; }
+        #st { background: white; border-radius: 16px; padding: 20px 30px; position: fixed; bottom: 30px; right: 30px; box-shadow: 0 12px 32px rgba(0,0,0,0.12); display: none; z-index: 2000; border: 1px solid var(--hca-sage); }
+        .batch-bar { background: #F1F5F9; padding: 16px; border-radius: 14px; border: 1px solid var(--hca-border); }
+        
+        /* SVG Icon Alignment Utility */
+        .icon-svg { width: 18px; height: 18px; fill: currentColor; vertical-align: middle; }
     </style>
 </head>
 <body>
@@ -62,49 +71,80 @@
 <nav class="navbar d-flex justify-content-between align-items-center">
     <div class="fw-bold fs-4 brand-logo">Ledger<span class="fw-light text-muted">IQ</span> <span class="brand-badge">PRO</span></div>
     <div class="d-flex align-items-center gap-4">
-        <div class="small fw-bold d-flex gap-2 status-pill">
-            <div class="d-flex align-items-center me-2"><span class="status-dot" id="dot-ledger"></span> DB</div>
-            <div class="d-flex align-items-center me-2"><span class="status-dot" id="dot-gemini"></span> AI</div>
+        <div class="small fw-bold d-flex gap-3 status-pill">
+            <div class="d-flex align-items-center"><span class="status-dot" id="dot-ledger"></span> DB</div>
+            <div class="d-flex align-items-center"><span class="status-dot" id="dot-gemini"></span> AI</div>
             <div class="d-flex align-items-center"><span class="status-dot" id="dot-qbo"></span> QBO</div>
         </div>
-        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold" onclick="location.reload()">🏠 Home</button>
+        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold d-inline-flex align-items-center gap-2" onclick="location.reload()">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg> Home
+        </button>
     </div>
 </nav>
 
 <div id="view-launchpad">
     <header class="hero-section">
-        <h1 class="display-5 fw-bold mb-2">Smart Ledger Automation 🚀</h1>
-        <p class="lead opacity-75 mb-0">AI-Powered Forensic Processing & QBO Sync</p>
+        <h1 class="display-5 fw-bold mb-2">Financial Automation Portal</h1>
+        <p class="lead opacity-75 mb-0 fs-6">Professional Forensic Ledger Processing & Sync System</p>
     </header>
     <div class="container">
         <div id="keyGate" class="row justify-content-center">
             <div class="col-md-5"><div class="card card-custom p-4 text-center">
-                <h5 class="mb-3 fw-bold">🔑 Unlock Workspace</h5>
-                <input type="password" id="master_gk" class="form-control mb-3 text-center rounded-pill" placeholder="Paste Gemini API Key">
-                <button class="btn btn-dark-hca w-100 rounded-pill" onclick="lockKey()">Open Portal ✨</button>
+                <h5 class="mb-3 fw-bold">System Authorization</h5>
+                <input type="password" id="master_gk" class="form-control mb-3 text-center rounded-pill" placeholder="Enter Gemini API Key">
+                <button class="btn btn-dark-hca w-100 rounded-pill" onclick="lockKey()">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                    Authenticate Workspace
+                </button>
             </div></div>
         </div>
         <div id="mainPortal" style="display:none">
             <div class="card p-4 rounded-xl border-0 shadow-sm mb-4">
                 <div class="row align-items-center">
                     <div class="col-md-8">
-                        <select id="masterClient" class="form-select rounded-pill shadow-none" onchange="pingStatus()"><option value="">-- Choose Client Profile --</option></select>
+                        <select id="masterClient" class="form-select rounded-pill shadow-none" onchange="pingStatus()"><option value="">-- Select Client Account --</option></select>
                     </div>
-                    <div class="col-md-4 text-end pt-0"><button class="btn btn-dark-hca rounded-pill" onclick="showPane('config')">⚙️ Client Settings</button></div>
+                    <div class="col-md-4 text-end pt-0">
+                        <button class="btn btn-dark-hca rounded-pill" onclick="showPane('config')">
+                            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                            Client Settings
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="row g-4" id="actionGrid" style="opacity:0.3; pointer-events:none;">
                 <div class="col-md-4"><div class="card card-custom">
-                    <img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80" class="card-img-top">
-                    <div class="card-body p-4 text-center"><button class="btn btn-hca w-100" onclick="triggerFile('PDF')">📄 Process Bank PDF</button></div>
+                    <div class="card-img-container">
+                        <img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80" class="card-img-top">
+                    </div>
+                    <div class="card-body p-4 text-center">
+                        <button class="btn btn-hca w-100" onclick="triggerFile('PDF')">
+                            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                            Process Bank Statement
+                        </button>
+                    </div>
                 </div></div>
                 <div class="col-md-4"><div class="card card-custom">
-                    <img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=600&q=80" class="card-img-top">
-                    <div class="card-body p-4 text-center"><button class="btn btn-hca w-100" onclick="triggerFile('CC')">💳 Process CC PDF</button></div>
+                    <div class="card-img-container">
+                        <img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=600&q=80" class="card-img-top">
+                    </div>
+                    <div class="card-body p-4 text-center">
+                        <button class="btn btn-hca w-100" onclick="triggerFile('CC')">
+                            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
+                            Process Credit Card PDF
+                        </button>
+                    </div>
                 </div></div>
                 <div class="col-md-4"><div class="card card-custom">
-                    <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80" class="card-img-top">
-                    <div class="card-body p-4 text-center"><button class="btn btn-hca w-100" onclick="loadDash()">📊 Open Dashboard</button></div>
+                    <div class="card-img-container">
+                        <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80" class="card-img-top">
+                    </div>
+                    <div class="card-body p-4 text-center">
+                        <button class="btn btn-hca w-100" onclick="loadDash()">
+                            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>
+                            Open Review Dashboard
+                        </button>
+                    </div>
                 </div></div>
             </div>
             <input type="file" id="f_pdf" style="display:none" onchange="handleFile(this, 'PDF')">
@@ -113,7 +153,521 @@
     </div>
 </div>
 
-<div id="chat-trigger" onclick="toggleChat()">🤖</div>
+<div id="view-config" class="view-pane container py-5">
+    <div class="row justify-content-center"><div class="col-md-8"><div class="card p-5 card-custom">
+        <h3 class="fw-bold mb-4">Client Provisioning</h3>
+        <div class="row g-3">
+            <div class="col-12"><input id="n" class="form-control" placeholder="Company Legal Name"></div>
+            <div class="col-12"><input id="nature" class="form-control" placeholder="Business Industry / Nature"></div>
+            <div class="col-6"><input id="qi" class="form-control" placeholder="QuickBooks Client ID"></div>
+            <div class="col-6"><input id="qs" type="password" class="form-control" placeholder="QuickBooks Secret"></div>
+            
+            <div class="col-12 mt-3">
+                <div class="upload-box text-center">
+                    <h6 class="fw-bold mb-1">QuickBooks Chart of Accounts / GL Source</h6>
+                    <p class="small text-muted mb-3">Upload your QuickBooks export (.csv) to populate account choices.</p>
+                    <input type="file" id="glFileInputConfig" accept=".csv" class="form-control mb-3" onchange="handleGLFileUpload(this)">
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill fw-semibold" onclick="downloadQBTemplate()">
+                        Download QB GL Template
+                    </button>
+                    <div id="glCountBadge" class="small text-success mt-2 fw-bold" style="display:none;"></div>
+                </div>
+            </div>
 
+            <div class="col-12 d-flex gap-2 mt-4">
+                <button onclick="save()" class="btn btn-dark-hca flex-grow-1">Save & Provision Account</button>
+                <button onclick="showPane('launchpad')" class="btn btn-outline-secondary">Cancel</button>
+            </div>
+        </div>
+    </div></div></div>
+</div>
+
+<div id="view-dash" class="view-pane container-fluid px-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 id="activeTitle" class="fw-bold mb-0">Dashboard</h2>
+        <div class="gap-2 d-flex">
+            <button class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold" onclick="approveAll()">Approve All Rows</button>
+            <button class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold" onclick="saveAll()">Save Staging Updates</button>
+            <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold" onclick="showPane('launchpad')">Exit Dashboard</button>
+        </div>
+    </div>
+    
+    <div class="app-nav">
+        <div id="nav-review" class="app-nav-btn active" onclick="switchTab('review')">REVIEW STAGING</div>
+        <div id="nav-gl" class="app-nav-btn" onclick="switchTab('gl')">CHART OF ACCOUNTS</div>
+        <div id="nav-history" class="app-nav-btn" onclick="switchTab('history')">PERMANENT LEDGER</div>
+        <div id="nav-je" class="app-nav-btn" onclick="switchTab('je')">JOURNAL ENTRY VIEW</div>
+        <div id="nav-meta" class="app-nav-btn" onclick="switchTab('meta')">CLIENT METADATA</div>
+    </div>
+
+    <!-- TAB 1: REVIEW STAGING -->
+    <div id="tab-review" class="bg-white p-4 rounded-xl shadow-sm">
+        <div class="d-flex justify-content-between mb-3 align-items-center">
+            <h5 class="fw-bold mb-0">Staging Queue</h5>
+            <button class="btn btn-dark btn-sm rounded-pill px-4 fw-semibold" onclick="pushQBO()">Push Approved to QBO</button>
+        </div>
+        <div class="batch-bar mb-4 row g-3">
+            <div class="col-md-5"><input type="text" id="batchSearchInput" class="form-control form-control-sm" placeholder="Filter Vendor (e.g., Uber)"></div>
+            <div class="col-md-4"><select id="batchCategorySelect" class="form-select form-select-sm"><option value="Uncategorized">-- Assign Target Account --</option></select></div>
+            <div class="col-md-3"><button class="btn btn-hca btn-sm w-100 fw-semibold" onclick="applyBatch()">Apply Category Match</button></div>
+        </div>
+        <table class="table table-hover table-sm align-middle"><thead class="table-light"><tr><th>Source</th><th>Date</th><th>Description</th><th>Amount</th><th>Expense Account</th><th>Status</th><th>Bank Account</th></tr></thead><tbody id="tb-staging"></tbody></table>
+    </div>
+
+    <!-- TAB 2: CHART OF ACCOUNTS -->
+    <div id="tab-gl" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
+        <div class="d-flex justify-content-between mb-3 align-items-center">
+            <h5 class="fw-bold mb-0">Active Chart of Accounts</h5>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-primary btn-sm rounded-pill fw-semibold" onclick="document.getElementById('dashGLFileInput').click()">Upload New GL CSV</button>
+                <input type="file" id="dashGLFileInput" accept=".csv" style="display:none" onchange="uploadGLFromDash(this)">
+                <button class="btn btn-outline-secondary btn-sm rounded-pill fw-semibold" onclick="downloadQBTemplate()">Download Standard Template</button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle">
+                <thead class="table-light"><tr><th>Index</th><th>Account Name / Identifier</th></tr></thead>
+                <tbody id="tb-gl"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 3: HISTORY -->
+    <div id="tab-history" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5 class="fw-bold mb-3">Permanent Ledger History</h5><table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync Reference</th></tr></thead><tbody id="tb-history"></tbody></table></div>
+    
+    <!-- TAB 4: JOURNAL ENTRY VIEW -->
+    <div id="tab-je" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
+        <div id="jeBalanceAlert" class="alert mb-4 text-center fw-bold"></div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-3"><div class="summary-card"><h6>Bank Total</h6><h4 id="bankTotal" class="fw-bold mb-0">$0.00</h4></div></div>
+            <div class="col-md-3"><div class="summary-card"><h6>Bank Uncategorized</h6><h4 id="bankUncat" class="fw-bold mb-0">$0.00</h4></div></div>
+            <div class="col-md-3"><div class="summary-card"><h6>Credit Card Total</h6><h4 id="ccTotal" class="fw-bold mb-0">$0.00</h4></div></div>
+            <div class="col-md-3"><div class="summary-card"><h6>Credit Card Uncategorized</h6><h4 id="ccUncat" class="fw-bold mb-0">$0.00</h4></div></div>
+        </div>
+        <div id="jeList" class="mt-3 font-monospace"></div>
+    </div>
+
+    <!-- TAB 5: CLIENT METADATA -->
+    <div id="tab-meta" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5 class="fw-bold mb-3">Client Metadata</h5><div id="metaList"></div></div>
+</div>
+
+<!-- Floating Vector AI Navigator Button -->
+<div id="chat-trigger" onclick="toggleChat()">
+    <svg class="icon-svg" style="width:24px; height:24px;" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
+</div>
+
+<div id="chat-window">
+    <div id="chat-header" class="d-flex align-items-center justify-content-between">
+        <span>LedgerIQ Navigator</span>
+        <button class="btn-close btn-close-white btn-sm" onclick="toggleChat()"></button>
+    </div>
+    <div id="chat-content">Navigator active. Enter queries or instructions below.</div>
+    <div class="p-2 border-top"><input id="chat-input" class="form-control form-control-sm rounded-pill" placeholder="Ask Navigator..." onkeydown="if(event.key==='Enter') sendChat()"></div>
+</div>
+
+<datalist id="glChoices"></datalist>
+<div id="st"><strong>Processing Request...</strong></div>
+
+<script>
+    const SUPABASE_URL = "https://oxhwhxnoysowuokdhmtr.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94aHdoeG5veXNvd3Vva2RobXRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NDU1MTEsImV4cCI6MjEwMzIyMTUxMX0.hQm9RsFit-TVz1pH0Y1Q3VITdbfwLUKA42uq2frZkyc";
+    
+    let db = null;
+    let currentClient = "";
+    let localData = [];
+    let appGLOptions = [];
+
+    function lockKey() { 
+        const keyVal = document.getElementById('master_gk').value;
+        if(!keyVal) return alert("Please enter a Gemini API Key");
+        localStorage.setItem('hca_gk', keyVal); 
+        location.reload(); 
+    }
+
+    window.onload = async () => {
+        try {
+            if (window.supabase) {
+                db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            }
+        } catch(e) { console.error("Supabase Initialization Error:", e); }
+
+        if(localStorage.getItem('hca_gk')) {
+            document.getElementById('keyGate').style.display = 'none'; 
+            document.getElementById('mainPortal').style.display = 'block';
+            document.getElementById('dot-gemini').classList.add('dot-green');
+            await getClientList();
+        }
+    };
+
+    function downloadQBTemplate() {
+        const headers = "Account Name,Account Type,Sub Account\n";
+        const sampleRows = 
+            "1010 Operating Bank Account,Bank,No\n" +
+            "1020 Credit Card Account,Credit Card,No\n" +
+            "6010 Office Supplies & Expenses,Expense,No\n" +
+            "6020 Travel & Lodging,Expense,No\n" +
+            "6030 Meals & Entertainment,Expense,No\n" +
+            "6040 Software & Subscriptions,Expense,No\n" +
+            "6050 Professional Fees,Expense,No\n" +
+            "4010 Consulting Revenue,Income,No\n";
+        
+        const blob = new Blob([headers + sampleRows], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = "QuickBooks_GL_Template.csv";
+        a.click();
+    }
+
+    function handleGLFileUpload(input) {
+        const file = input.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const lines = e.target.result.split(/\r?\n/);
+            appGLOptions = lines
+                .map(l => l.split(',')[0].replace(/"/g, '').trim())
+                .filter(v => v && v.toLowerCase() !== "account name" && v.toLowerCase() !== "account");
+            
+            const badge = document.getElementById('glCountBadge');
+            badge.style.display = 'block';
+            badge.innerText = `Parsed ${appGLOptions.length} Accounts from CSV`;
+        };
+        reader.readAsText(file);
+    }
+
+    async function uploadGLFromDash(input) {
+        const file = input.files[0];
+        if (!file || !currentClient || !db) return;
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            document.getElementById('st').style.display = 'block';
+            const lines = e.target.result.split(/\r?\n/);
+            appGLOptions = lines
+                .map(l => l.split(',')[0].replace(/"/g, '').trim())
+                .filter(v => v && v.toLowerCase() !== "account name" && v.toLowerCase() !== "account");
+
+            const { error } = await db.from('client_metadata').update({ gl_list: appGLOptions.join(",") }).eq('client_name', currentClient);
+            document.getElementById('st').style.display = 'none';
+
+            if (error) {
+                alert("Error updating GL List: " + error.message);
+            } else {
+                alert(`Successfully updated ${appGLOptions.length} GL Accounts.`);
+                await loadDash();
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    async function getClientList() {
+        if (!db) return;
+        const { data, error } = await db.from('client_metadata').select('client_name');
+        if (error) console.error("Database fetch error:", error);
+
+        const sel = document.getElementById('masterClient');
+        sel.innerHTML = '<option value="">-- Select Client Account --</option>';
+        if (data && data.length > 0) {
+            data.forEach(v => {
+                sel.innerHTML += `<option value="${v.client_name}">${v.client_name}</option>`;
+            });
+        }
+    }
+
+    async function save() { 
+        if(!db) return alert("Database connection uninitialized");
+        const cName = document.getElementById('n').value.trim();
+        if(!cName) return alert("Company Name is required");
+
+        document.getElementById('st').style.display = 'block';
+
+        const payload = {
+            client_name: cName,
+            nature: document.getElementById('nature').value || "General",
+            qbo_id: document.getElementById('qi').value || "",
+            qbo_sec: document.getElementById('qs').value || "",
+            gl_list: (typeof appGLOptions !== 'undefined') ? appGLOptions.join(",") : ""
+        };
+
+        const { data: existing } = await db.from('client_metadata').select('client_name').eq('client_name', cName).maybeSingle();
+
+        let resultError = null;
+        if (existing) {
+            const { error } = await db.from('client_metadata').update(payload).eq('client_name', cName);
+            resultError = error;
+        } else {
+            const { error } = await db.from('client_metadata').insert([payload]);
+            resultError = error;
+        }
+
+        document.getElementById('st').style.display = 'none';
+
+        if (resultError) {
+            alert("Database Error: " + resultError.message);
+        } else {
+            alert("Client profile saved.");
+            showPane('launchpad');
+            await getClientList();
+            document.getElementById('masterClient').value = cName;
+            pingStatus();
+        }
+    }
+
+    async function pingStatus() {
+        currentClient = document.getElementById('masterClient').value;
+        if(!currentClient) return;
+        document.getElementById('actionGrid').style.opacity = "1";
+        document.getElementById('actionGrid').style.pointerEvents = "auto";
+        
+        if (db) {
+            const { data } = await db.from('client_metadata').select('*').eq('client_name', currentClient).maybeSingle();
+            document.getElementById('dot-ledger').className = 'status-dot dot-green';
+            document.getElementById('dot-qbo').className = (data && data.qbo_id) ? 'status-dot dot-amber' : 'status-dot dot-red';
+        }
+    }
+
+    function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
+
+    async function handleFile(input, type) { 
+        currentClient = document.getElementById('masterClient').value; 
+        if(!currentClient) return alert("Select client account first");
+
+        document.getElementById('st').style.display = 'block'; 
+        const reader = new FileReader(); 
+        reader.onload = async (e) => { 
+            try {
+                const pdfData = e.target.result.split(',')[1];
+                const apiKey = localStorage.getItem('hca_gk');
+
+                const behavior = type === "CC" ? "Spend is negative, Payments positive." : "Debits are negative, Credits positive.";
+                const prompt = "ACT AS: Expert Senior Bookkeeper. Extract all transactions from the TRANSACTION HISTORY table in the provided PDF. Extract Date, Description (Vendor), and Amount for every row. Match using GL accounts: [" + appGLOptions.join(",") + "]. " + behavior + " Return ONLY a JSON array. SCHEMA: [{'date': 'YYYY-MM-DD', 'desc': 'Merchant Name', 'amount': 0.00, 'category': 'Account Name'}]";
+
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        "contents": [{ "parts": [{ "text": prompt }, { "inline_data": { "mime_type": "application/pdf", "data": pdfData }}] }],
+                        "generationConfig": { "response_mime_type": "application/json" }
+                    })
+                });
+
+                const jsonRes = await res.json();
+                const rawText = jsonRes.candidates[0].content.parts[0].text;
+                const transactions = JSON.parse(rawText);
+
+                const rows = transactions.map(t => ({
+                    client_name: currentClient,
+                    source: type === 'PDF' ? 'BANK' : 'CREDIT CARD',
+                    txn_date: t.date,
+                    description: t.desc || t.description || "Unknown Vendor",
+                    amount: t.amount,
+                    category: t.category || "Uncategorized",
+                    status: "PENDING",
+                    bank_category: "Uncategorized",
+                    fingerprint: btoa(t.date + (t.desc || "") + t.amount)
+                }));
+
+                await db.from('review_staging').insert(rows);
+                await loadDash();
+            } catch(err) {
+                alert("Gemini Processing Error: " + err.message);
+                document.getElementById('st').style.display = 'none';
+            }
+        }; 
+        reader.readAsDataURL(input.files[0]); 
+    }
+
+    async function loadDash() { 
+        currentClient = document.getElementById('masterClient').value; 
+        if(!currentClient) return alert("Select client account first"); 
+
+        document.getElementById('st').style.display = 'block'; 
+        
+        const { data: staging } = await db.from('review_staging').select('*').eq('client_name', currentClient);
+        const { data: ledger } = await db.from('permanent_ledger').select('*').eq('client_name', currentClient).limit(100);
+        const { data: meta } = await db.from('client_metadata').select('*').eq('client_name', currentClient).maybeSingle();
+
+        localData = (staging || []).map(s => ({ 
+            row: s.id, 
+            src: s.source, 
+            date: s.txn_date, 
+            desc: s.description, 
+            amt: String(s.amount), 
+            cat: s.category || "Uncategorized", 
+            stat: s.status || "PENDING", 
+            bnk: s.bank_category || "Uncategorized" 
+        }));
+
+        if (meta && meta.gl_list) {
+            appGLOptions = meta.gl_list.split(',').filter(Boolean);
+        }
+
+        const historyList = (ledger || []).map(l => ({ date: l.txn_date, desc: l.description, amt: String(l.amount), cat: l.category, qbo: l.qbo_id || "SYNCED" }));
+        const metaList = meta ? [["Client", meta.client_name], ["Nature", meta.nature], ["QBO_ID", meta.qbo_id]] : [];
+
+        renderDashboard({ staging: localData, history: historyList, metadata: metaList }); 
+    }
+
+    function renderDashboard(res) {
+        document.getElementById('st').style.display = 'none'; 
+        showPane('dash'); 
+        document.getElementById('activeTitle').innerText = currentClient;
+        
+        const dl = document.getElementById('glChoices'); dl.innerHTML = ""; 
+        const batchSel = document.getElementById('batchCategorySelect'); batchSel.innerHTML = '<option value="Uncategorized">-- Assign Target Account --</option>';
+        appGLOptions.forEach(opt => {
+            dl.innerHTML += `<option value="${opt}">`;
+            batchSel.innerHTML += `<option value="${opt}">${opt}</option>`;
+        });
+
+        const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
+        localData.forEach(i => {
+            sBody.innerHTML += `<tr><td>${i.src}</td><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()" onkeydown="handleKeyNav(event, ${i.row}, 'c')"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td><td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat" onkeydown="handleKeyNav(event, ${i.row}, 's')"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td><td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()" onkeydown="handleKeyNav(event, ${i.row}, 'b')"><option value="Uncategorized">Uncategorized</option></select></td></tr>`;
+        });
+        
+        localData.forEach(i => { 
+            if(document.getElementById('c'+i.row)) document.getElementById('c'+i.row).value = i.cat || "Uncategorized"; 
+            if(document.getElementById('b'+i.row)) document.getElementById('b'+i.row).value = i.bnk || "Uncategorized"; 
+        });
+
+        const glBody = document.getElementById('tb-gl'); glBody.innerHTML = "";
+        appGLOptions.forEach((acc, idx) => {
+            glBody.innerHTML += `<tr><td>${idx + 1}</td><td class="fw-semibold">${acc}</td></tr>`;
+        });
+
+        document.getElementById('tb-history').innerHTML = ""; 
+        res.history.forEach(i => { document.getElementById('tb-history').innerHTML += `<tr><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; });
+        
+        document.getElementById('metaList').innerHTML = ""; 
+        res.metadata.forEach(m => document.getElementById('metaList').innerHTML += `<div class="small py-1 border-bottom"><strong>${m[0]}:</strong> <span class="text-muted">${m[1]}</span></div>`);
+        
+        recalcJE();
+    }
+
+    function applyBatch() {
+        const query = document.getElementById('batchSearchInput').value.toLowerCase();
+        const newCat = document.getElementById('batchCategorySelect').value;
+        if(!query) return alert("Please enter a search filter query");
+        localData.forEach(item => { if(item.desc.toLowerCase().includes(query)) { const target = document.getElementById('c' + item.row); if(target) target.value = newCat; } });
+        recalcJE();
+    }
+
+    function handleKeyNav(e, row, prefix) {
+        const prefixes = ['c', 's', 'b'];
+        let targetRow = row; let targetPrefix = prefix; let jump = false;
+        if (e.key === "Enter") { e.preventDefault(); targetRow = e.shiftKey ? row - 1 : row + 1; jump = true; }
+        else if (e.key === "ArrowDown") { e.preventDefault(); targetRow = row + 1; jump = true; }
+        else if (e.key === "ArrowUp") { e.preventDefault(); targetRow = row - 1; jump = true; }
+        else if (e.key === "ArrowRight") { let idx = prefixes.indexOf(prefix); if (idx < prefixes.length - 1) { e.preventDefault(); targetPrefix = prefixes[idx + 1]; jump = true; } }
+        else if (e.key === "ArrowLeft") { let idx = prefixes.indexOf(prefix); if (idx > 0) { e.preventDefault(); targetPrefix = prefixes[idx - 1]; jump = true; } }
+        if (jump) { const next = document.getElementById(targetPrefix + targetRow); if (next) next.focus(); }
+    }
+
+    function recalcJE() {
+        let jeData = {}; let bT = 0, bU = 0, cT = 0, cU = 0;
+        document.querySelectorAll('.row-cat').forEach(inp => {
+            let r = inp.getAttribute('data-row'), item = localData.find(x => x.row == r), val = parseFloat(item.amt.replace(/[^0-9.-]+/g,"")), exp = inp.value, bnk = document.getElementById('b'+r).value;
+            if(item.src === "BANK") { bT += val; if(exp === "Uncategorized" || bnk === "Uncategorized") bU += val; } else { cT += val; if(exp === "Uncategorized" || bnk === "Uncategorized") cU += val; }
+            if(exp) jeData[exp] = (jeData[exp] || 0) + val; if(bnk) jeData[bnk] = (jeData[bnk] || 0) - val;
+        });
+        document.getElementById('bankTotal').innerText = "$" + bT.toFixed(2); document.getElementById('bankUncat').innerText = "$" + bU.toFixed(2);
+        document.getElementById('ccTotal').innerText = "$" + cT.toFixed(2); document.getElementById('ccUncat').innerText = "$" + cU.toFixed(2);
+        
+        const jeDiv = document.getElementById('jeList'); jeDiv.innerHTML = `<div class="je-item fw-bold border-bottom"><span>Account Identifier</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
+        let totalDr = 0, totalCr = 0;
+        for (let acc in jeData) {
+            let bal = jeData[acc]; if(Math.abs(bal) < 0.01) continue;
+            let dr = bal < 0 ? Math.abs(bal) : 0, cr = bal > 0 ? bal : 0;
+            totalDr += dr; totalCr += cr;
+            jeDiv.innerHTML += `<div class="je-item"><span>${acc}</span><span class="dr">${dr?`$${dr.toFixed(2)}`:''}</span><span class="cr">${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
+        }
+
+        const alertBox = document.getElementById('jeBalanceAlert');
+        const diff = Math.abs(totalDr - totalCr);
+        if (diff < 0.01) {
+            alertBox.className = "alert alert-success mb-4 text-center fw-bold";
+            alertBox.innerText = `Journal Entry Balanced ($${totalDr.toFixed(2)} DR / $${totalCr.toFixed(2)} CR)`;
+        } else {
+            alertBox.className = "alert alert-danger mb-4 text-center fw-bold";
+            alertBox.innerText = `Out of Balance Variance: $${diff.toFixed(2)} (DR: $${totalDr.toFixed(2)} | CR: $${totalCr.toFixed(2)})`;
+        }
+    }
+
+    function toggleChat() { const c = document.getElementById('chat-window'); c.style.display = (c.style.display === 'flex') ? 'none' : 'flex'; }
+    
+    async function sendChat() {
+        const i = document.getElementById('chat-input'), b = document.getElementById('chat-content'), q = i.value; if(!q) return; i.value = "";
+        b.innerHTML += `<div class="chat-bubble text-primary"><strong>You:</strong> ${q}</div>`;
+        b.innerHTML += `<div id="chat-thinking" class="chat-bubble text-muted small"><em>Processing query...</em></div>`;
+        b.scrollTop = b.scrollHeight;
+
+        const apiKey = localStorage.getItem('hca_gk');
+        const projectContext = "You are the LedgerIQ Navigator support assistant. Current Client Context: " + (currentClient || "None Selected");
+
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ "contents": [{ "parts": [{ "text": projectContext + ". User Query: " + q }] }] })
+        });
+        
+        const jsonRes = await res.json();
+        const thinking = document.getElementById('chat-thinking'); if(thinking) thinking.remove();
+        
+        const reply = jsonRes.candidates[0].content.parts[0].text;
+        const structuredReply = reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+        
+        b.innerHTML += `<div class="chat-bubble text-dark"><strong>AI:</strong><br>${structuredReply}</div>`; 
+        b.scrollTop = b.scrollHeight;
+    }
+
+    function switchTab(t) { document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none'); document.querySelectorAll('.app-nav-btn').forEach(el => el.classList.remove('active')); document.getElementById('tab-'+t).style.display = 'block'; document.getElementById('nav-'+t).classList.add('active'); }
+    function approveAll() { document.querySelectorAll('.row-stat').forEach(s => s.value = "APPROVED"); }
+    
+    async function saveAll() {
+        if(!db) return;
+        document.getElementById('st').style.display = 'block'; 
+        for (let item of localData) {
+            const catVal = document.getElementById('c' + item.row) ? document.getElementById('c' + item.row).value : item.cat;
+            const statVal = document.getElementById('s' + item.row) ? document.getElementById('s' + item.row).value : item.stat;
+            const bnkVal = document.getElementById('b' + item.row) ? document.getElementById('b' + item.row).value : item.bnk;
+
+            await db.from('review_staging').update({
+                category: catVal,
+                status: statVal,
+                bank_category: bnkVal
+            }).eq('id', item.row);
+        }
+        await loadDash();
+    }
+
+    async function pushQBO() {
+        if(!db) return;
+        const { data: approved } = await db.from('review_staging').select('*').eq('client_name', currentClient).eq('status', 'APPROVED');
+        if(!approved || approved.length === 0) return alert("No rows marked as APPROVED.");
+
+        document.getElementById('st').style.display = 'block';
+        
+        const ledgerRows = approved.map(a => ({
+            client_name: a.client_name,
+            source: "JOURNAL",
+            nature: "General",
+            txn_date: a.txn_date,
+            description: a.description,
+            amount: a.amount,
+            category: a.category,
+            qbo_id: "SYNCED-ID",
+            bank_category: a.bank_category,
+            fingerprint: a.fingerprint
+        }));
+
+        await db.from('permanent_ledger').insert(ledgerRows);
+        await db.from('review_staging').delete().eq('client_name', currentClient).eq('status', 'APPROVED');
+
+        await loadDash();
+        alert("Success: Balanced Journal Entry Synced.");
+    }
+
+    function showPane(p) { document.querySelectorAll('.view-pane, #view-launchpad').forEach(el => el.style.display = 'none'); document.getElementById('view-' + p).style.display = 'block'; }
+</script>
 </body>
 </html>
