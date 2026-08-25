@@ -67,6 +67,31 @@
         .cr { color: #d9534f; width: 100px; text-align: right; font-weight: bold; }
         .badge-dup { background: #EF4444; color: white; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px; }
         .filter-btn { border-radius: 20px; font-size: 0.8rem; font-weight: 600; padding: 4px 12px; }
+
+        /* VENDOR HOVER POPOVER CARD STYLES */
+        .vendor-cell { position: relative; }
+        .vendor-hover {
+            cursor: pointer;
+            font-weight: 700;
+            color: var(--hca-dark);
+            text-decoration: underline dotted var(--hca-sage);
+        }
+        .vendor-card-popup {
+            display: none;
+            position: absolute;
+            bottom: 125%;
+            left: 0;
+            width: 280px;
+            background: white;
+            border: 1px solid var(--hca-sage);
+            border-radius: 14px;
+            padding: 14px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+            z-index: 1000;
+            font-size: 0.82rem;
+            color: var(--hca-dark);
+        }
+        .vendor-cell:hover .vendor-card-popup { display: block; }
     </style>
 </head>
 <body>
@@ -208,7 +233,7 @@
         <div id="nav-meta" class="app-nav-btn" onclick="switchTab('meta')">CLIENT METADATA</div>
     </div>
 
-    <!-- TAB 1: REVIEW STAGING WITH QUICK-FILTERS & RECEIPT OCR MATCH -->
+    <!-- TAB 1: REVIEW STAGING WITH VENDOR SEPARATION & HOVER POPOVERS -->
     <div id="tab-review" class="bg-white p-4 rounded-xl shadow-sm">
         <div class="d-flex justify-content-between mb-3 align-items-center">
             <h5 class="fw-bold mb-0">Staging Queue</h5>
@@ -230,7 +255,23 @@
             <div class="col-md-3"><button class="btn btn-hca btn-sm w-100 fw-semibold" onclick="applyBatch()">Apply Category Match</button></div>
         </div>
         
-        <table class="table table-hover table-sm align-middle"><thead class="table-light"><tr><th>Source</th><th>Date</th><th>Description</th><th>Amount</th><th>Expense Account</th><th>Status</th><th>Bank Account</th><th>Class Allocation</th><th>Receipt OCR</th></tr></thead><tbody id="tb-staging"></tbody></table>
+        <table class="table table-hover table-sm align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Src</th>
+                    <th>Date</th>
+                    <th>Vendor (Hover)</th>
+                    <th>Statement Line Item</th>
+                    <th>Amount</th>
+                    <th>Expense Account</th>
+                    <th>Stat</th>
+                    <th>Bank Account</th>
+                    <th>Class</th>
+                    <th>Receipt</th>
+                </tr>
+            </thead>
+            <tbody id="tb-staging"></tbody>
+        </table>
     </div>
 
     <!-- TAB 2: VISUAL P&L DASHBOARD -->
@@ -263,7 +304,7 @@
     </div>
 
     <!-- TAB 4: HISTORY -->
-    <div id="tab-history" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5 class="fw-bold mb-3">Permanent Ledger History</h5><table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync Reference</th></tr></thead><tbody id="tb-history"></tbody></table></div>
+    <div id="tab-history" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5 class="fw-bold mb-3">Permanent Ledger History</h5><table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Vendor</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync Reference</th></tr></thead><tbody id="tb-history"></tbody></table></div>
     
     <!-- TAB 5: JOURNAL ENTRY & RECONCILIATION GATE VIEW -->
     <div id="tab-je" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
@@ -518,6 +559,7 @@
 
     function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
 
+    // UPDATED PARSER: SEPARATES CLEAN VENDOR FROM RAW DESCRIPTION
     async function handleFile(input, type) { 
         currentClient = document.getElementById('masterClient').value; 
         if(!currentClient) return alert("Select client account first");
@@ -530,7 +572,11 @@
                 const apiKey = localStorage.getItem('hca_gk');
 
                 const behavior = type === "CC" ? "Spend is negative, Payments positive." : "Debits are negative, Credits positive.";
-                const prompt = `ACT AS: Forensic Accountant. 1. Extract starting_balance and ending_balance from header. 2. Extract transactions. Match using GL accounts: [${appGLOptions.join(",")}]. ${behavior} Return ONLY JSON Object: {"starting_balance":0.0, "ending_balance":0.0, "transactions":[{"date":"YYYY-MM-DD","desc":"","amount":0.00,"category":""}]}`;
+                const prompt = `ACT AS: Forensic Accountant. 
+1. Extract starting_balance and ending_balance from header. 
+2. Extract transactions separating 'desc' (raw statement line) and 'vendor' (clean merchant name). 
+Match using GL accounts: [${appGLOptions.join(",")}]. ${behavior} 
+Return ONLY JSON Object: {"starting_balance":0.0, "ending_balance":0.0, "transactions":[{"date":"YYYY-MM-DD","desc":"","vendor":"","amount":0.00,"category":""}]}`;
 
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                     method: "POST",
@@ -543,7 +589,7 @@
 
                 const jsonRes = await res.json();
                 const rawText = jsonRes.candidates[0].content.parts[0].text;
-                const extracted = JSON.parse(rawText);
+                const extracted = JSON.parse(rawText.replace(/```json|```/g, '').trim());
 
                 stmtStart = extracted.starting_balance || 0;
                 stmtEnd = extracted.ending_balance || 0;
@@ -551,9 +597,9 @@
 
                 const rows = extracted.transactions.map(t => {
                     let assignedCategory = t.category || "Uncategorized";
-                    // Apply Auto-Rules Engine matching
                     activeRules.forEach(rule => {
-                        if(t.desc && t.desc.toLowerCase().includes(rule.keyword.toLowerCase())) {
+                        const targetText = (t.vendor || t.desc || "").toLowerCase();
+                        if(targetText.includes(rule.keyword.toLowerCase())) {
                             assignedCategory = rule.target_account;
                         }
                     });
@@ -562,7 +608,8 @@
                         client_name: currentClient,
                         source: type === 'PDF' ? 'BANK' : 'CREDIT CARD',
                         txn_date: t.date,
-                        description: t.desc || t.description || "Unknown Vendor",
+                        vendor: t.vendor || t.desc || "Unknown Vendor",
+                        description: t.desc || "Unknown Vendor",
                         amount: t.amount,
                         category: assignedCategory,
                         status: "PENDING",
@@ -592,7 +639,6 @@
         const { data: ledger } = await db.from('permanent_ledger').select('*').eq('client_name', currentClient).limit(100);
         const { data: meta } = await db.from('client_metadata').select('*').eq('client_name', currentClient).maybeSingle();
 
-        // DUPLICATE DETECTOR LOGIC
         const seenFingerprints = {};
         localData = (staging || []).map(s => {
             const fp = s.fingerprint || btoa(s.txn_date + s.description + s.amount);
@@ -603,7 +649,8 @@
                 row: s.id, 
                 src: s.source, 
                 date: s.txn_date, 
-                desc: s.description, 
+                vendor: s.vendor || s.description || "Unknown Vendor",
+                desc: s.description || "", 
                 amt: String(s.amount), 
                 cat: s.category || "Uncategorized", 
                 stat: s.status || "PENDING", 
@@ -620,7 +667,7 @@
             if (meta.gl_list) appGLOptions = meta.gl_list.split(',').filter(Boolean);
         }
 
-        historyData = (ledger || []).map(l => ({ date: l.txn_date, desc: l.description, amt: String(l.amount), cat: l.category, qbo: l.qbo_id || "SYNCED" }));
+        historyData = (ledger || []).map(l => ({ date: l.txn_date, vendor: l.vendor || l.description, desc: l.description, amt: String(l.amount), cat: l.category, qbo: l.qbo_id || "SYNCED" }));
         const metaList = meta ? [["Client", meta.client_name], ["Nature", meta.nature], ["QBO_ID", meta.qbo_id]] : [];
 
         renderDashboard({ staging: localData, history: historyData, metadata: metaList }); 
@@ -646,7 +693,7 @@
         });
 
         document.getElementById('tb-history').innerHTML = ""; 
-        res.history.forEach(i => { document.getElementById('tb-history').innerHTML += `<tr><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; });
+        res.history.forEach(i => { document.getElementById('tb-history').innerHTML += `<tr><td>${i.date}</td><td class="fw-bold">${i.vendor}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; });
         
         document.getElementById('metaList').innerHTML = ""; 
         res.metadata.forEach(m => document.getElementById('metaList').innerHTML += `<div class="small py-1 border-bottom"><strong>${m[0]}:</strong> <span class="text-muted">${m[1]}</span></div>`);
@@ -655,13 +702,33 @@
         renderPnLCharts();
     }
 
+    // RENDER STAGING TABLE WITH SEPARATE VENDOR COLUMN & HOVER POPOVERS
     function renderStagingTable(dataRows) {
         const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
         dataRows.forEach(i => {
             const dupBadge = i.dup ? `<span class="badge-dup">DUP</span>` : '';
             const receiptCell = i.receipt ? `✓ Verified` : `<button class="btn btn-xs btn-outline-secondary py-0" onclick="document.getElementById('rup${i.row}').click()">📁 Match</button><input type="file" id="rup${i.row}" style="display:none" onchange="handleReceiptUpload(this, ${i.row})">`;
+            const vendorClean = i.vendor || "Unknown Vendor";
+            const popupId = `vpop_${i.row}`;
 
-            sBody.innerHTML += `<tr><td>${i.src}</td><td>${i.date}</td><td>${i.desc} ${dupBadge}</td><td>$${i.amt}</td><td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td><td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td><td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option></select></td><td><select id="l${i.row}" class="form-select form-select-sm">${CLASS_OPTIONS.map(c => `<option value="${c}" ${i.cls==c?'selected':''}>${c}</option>`).join('')}</select></td><td>${receiptCell}</td></tr>`;
+            sBody.innerHTML += `
+                <tr>
+                    <td>${i.src}</td>
+                    <td>${i.date}</td>
+                    <td class="vendor-cell">
+                        <span class="vendor-hover" onmouseenter="fetchVendorInfo('${vendorClean.replace(/'/g, "\\'")}', '${popupId}')">
+                            ${vendorClean} ${dupBadge}
+                        </span>
+                        <div class="vendor-card-popup" id="${popupId}">Hovering vendor info...</div>
+                    </td>
+                    <td><small class="text-muted">${i.desc}</small></td>
+                    <td class="fw-bold">$${i.amt}</td>
+                    <td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td>
+                    <td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td>
+                    <td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option></select></td>
+                    <td><select id="l${i.row}" class="form-select form-select-sm">${CLASS_OPTIONS.map(c => `<option value="${c}" ${i.cls==c?'selected':''}>${c}</option>`).join('')}</select></td>
+                    <td>${receiptCell}</td>
+                </tr>`;
         });
         
         dataRows.forEach(i => { 
@@ -670,7 +737,45 @@
         });
     }
 
-    // QUICK-FILTER BAR FUNCTION
+    // VENDOR KNOWLEDGE LOOKUP & SUPABASE CACHING ENGINE
+    async function fetchVendorInfo(vendorName, targetElementId) {
+        if (!vendorName || vendorName === "Unknown Vendor" || !db) return;
+        
+        const popupEl = document.getElementById(targetElementId);
+        if (!popupEl) return;
+
+        // 1. Check Supabase Cache First
+        const { data: cached } = await db.from('vendor_knowledge').select('description').eq('vendor_name', vendorName).maybeSingle();
+        if (cached && cached.description) {
+            popupEl.innerHTML = `<strong>${vendorName}</strong><br><span class="text-muted">${cached.description}</span>`;
+            return;
+        }
+
+        // 2. Fetch On-the-Fly Summary from Gemini API
+        popupEl.innerHTML = `<em>Querying vendor details...</em>`;
+        const apiKey = localStorage.getItem('hca_gk');
+        
+        try {
+            const prompt = `Provide a 1-2 sentence concise summary describing what the company "${vendorName}" sells or does. Return ONLY a JSON object: {"description": ""}`;
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ "contents": [{ "parts": [{ "text": prompt }] }] })
+            });
+            
+            const jsonRes = await res.json();
+            const rawText = jsonRes.candidates[0].content.parts[0].text;
+            const info = JSON.parse(rawText.replace(/```json|```/g, '').trim());
+            
+            popupEl.innerHTML = `<strong>${vendorName}</strong><br><span>${info.description}</span>`;
+
+            // Cache result in Supabase vendor_knowledge table
+            await db.from('vendor_knowledge').insert([{ vendor_name: vendorName, description: info.description }]);
+        } catch (e) {
+            popupEl.innerHTML = `<strong>${vendorName}</strong><br><span class="text-muted">Vendor description unavailable.</span>`;
+        }
+    }
+
     function filterStagingRows(filterType) {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         event.target.classList.add('active');
@@ -681,7 +786,6 @@
         else if(filterType === 'HIGH') renderStagingTable(localData.filter(r => Math.abs(parseFloat(r.amt)) > 1000));
     }
 
-    // OCR RECEIPT & INVOICE MATCHING FUNCTION
     async function handleReceiptUpload(input, rowId) {
         const file = input.files[0];
         if(!file) return;
@@ -727,7 +831,7 @@
         const query = document.getElementById('batchSearchInput').value.toLowerCase();
         const newCat = document.getElementById('batchCategorySelect').value;
         if(!query) return alert("Please enter a search filter query");
-        localData.forEach(item => { if(item.desc.toLowerCase().includes(query)) { const target = document.getElementById('c' + item.row); if(target) target.value = newCat; } });
+        localData.forEach(item => { if((item.vendor + " " + item.desc).toLowerCase().includes(query)) { const target = document.getElementById('c' + item.row); if(target) target.value = newCat; } });
         recalcJE();
     }
 
@@ -863,6 +967,7 @@
             source: "JOURNAL",
             nature: "General",
             txn_date: a.txn_date,
+            vendor: a.vendor || a.description,
             description: a.description,
             amount: a.amount,
             category: a.category,
