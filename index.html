@@ -560,7 +560,7 @@
 
     function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
 
-    // ERROR-PROOF FILE PARSER (STRICT VENDOR + CRASH PREVENTION)
+    // ERROR-PROOF FILE PARSER (PASSES GL LIST + HISTORY + GEMINI 3.6 FLASH)
     async function handleFile(input, type) { 
         currentClient = document.getElementById('masterClient').value; 
         if(!currentClient) return alert("Select client account first");
@@ -577,15 +577,49 @@
                     return alert("Missing Gemini API Key. Please authenticate.");
                 }
 
+                // Prepare GL Chart of Accounts Context
+                const glContext = appGLOptions.length > 0 
+                    ? appGLOptions.join(", ") 
+                    : "Standard GAAP Accounts (Office Supplies, Travel, Meals, Software, Professional Fees)";
+
+                // Prepare Past Categorized History Context
+                const pastHistoryContext = historyData.length > 0
+                    ? historyData.slice(0, 30).map(h => `${h.vendor || h.desc} -> ${h.cat}`).join("\n")
+                    : "No historical patterns recorded yet.";
+
                 const behavior = type === "CC" ? "Spend is negative, Payments positive." : "Debits are negative, Credits positive.";
+                
                 const prompt = `ACT AS: Senior Bookkeeper & Forensic Auditor. Extract all statement transactions.
 
+CHART OF ACCOUNTS (STRICT MANDATE):
+You MUST match and assign the 'category' field ONLY using this exact list of allowed GL accounts:
+[${glContext}]
+
+HISTORICAL CATEGORIZATION PATTERNS (LEARN AND APPLY THESE):
+${pastHistoryContext}
+
 STRICT VENDOR EXTRACTION RULES:
-1. 'vendor': Extract ONLY true commercial merchants or business vendors (e.g., 'Adobe', 'Uber', 'Amazon Web Services', 'Shell', 'Delta Air Lines', 'Marriott', 'The Capital Grille', 'Office Depot').
+1. 'vendor': Extract ONLY true commercial merchants or business vendors (e.g. 'Adobe', 'Uber', 'Amazon Web Services', 'Shell', 'Delta Air Lines', 'Marriott', 'The Capital Grille', 'Office Depot').
 2. SET 'vendor' TO AN EMPTY STRING ("") if the item is a payroll transaction ('Payroll Direct Deposit'), rent payment ('Monthly Apartment Rent'), transfer/payment ('Auto-Pay Received'), utility bill ('Electric & Gas Utility'), supermarket/freelance payment, or cashback reward.
 3. 'desc': Store the exact raw statement line text.
+4. 'category': Match the merchant against Historical Patterns and select the MOST APPLICABLE account from the provided CHART OF ACCOUNTS. Do NOT leave 'category' empty if an applicable GL Account exists.
 
-Return ONLY JSON Object: {"starting_balance":0.0, "ending_balance":0.0, "transactions":[{"date":"YYYY-MM-DD", "desc":"raw statement line", "vendor":"Clean Merchant Name OR empty string", "amount":0.00, "category":""}]}`;
+${behavior}
+
+Return ONLY JSON Object:
+{
+  "starting_balance": 0.0,
+  "ending_balance": 0.0,
+  "transactions": [
+    {
+      "date": "YYYY-MM-DD",
+      "desc": "raw statement line",
+      "vendor": "Clean Merchant Name OR empty string",
+      "amount": 0.00,
+      "category": "Selected GL Account Name"
+    }
+  ]
+}`;
 
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
                     method: "POST",
@@ -614,6 +648,8 @@ Return ONLY JSON Object: {"starting_balance":0.0, "ending_balance":0.0, "transac
 
                 const rows = (extracted.transactions || []).map(t => {
                     let assignedCategory = t.category || "Uncategorized";
+                    
+                    // Fallback to local Auto-Rules Engine
                     activeRules.forEach(rule => {
                         const targetText = ((t.vendor || "") + " " + (t.desc || "")).toLowerCase();
                         if(targetText.includes(rule.keyword.toLowerCase())) {
