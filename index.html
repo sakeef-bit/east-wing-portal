@@ -15,7 +15,7 @@
         .card-custom:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
         .card-img-top { height: 180px; object-fit: cover; width: 100%; }
         .btn-hca { background: var(--hca-sage); color: var(--hca-dark); border: none; font-weight: bold; padding: 10px 20px; border-radius: 12px; cursor: pointer; }
-        .btn-dark-hca { background: var(--hca-dark); color: white; border-radius: 10px; padding: 10px 20px; cursor: pointer; }
+        .btn-dark-hca { background: var(--hca-dark); color: white; border-radius: 12px; padding: 10px 20px; cursor: pointer; }
         .view-pane { display: none; }
         .app-nav { background: white; border-radius: 12px; display: flex; overflow: hidden; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .app-nav-btn { flex: 1; text-align: center; padding: 15px; cursor: pointer; font-weight: bold; border-right: 1px solid #eee; color: #7f8c8d; }
@@ -38,14 +38,14 @@
 <div id="view-launchpad">
     <header class="hero-section">
         <h1 class="display-4 fw-bold">Financial Automation Portal</h1>
-        <div class="sub-brand">By East Wing</div>
+        <p class="lead opacity-75">Professional Ledger Processing</p>
     </header>
 
     <div class="container">
         <div id="keyGate" class="row justify-content-center">
             <div class="col-md-5"><div class="card card-custom p-4 text-center">
                 <h5 class="mb-3 text-uppercase fw-bold">Secure Access</h5>
-                <input type="password" id="master_gk" class="form-control mb-3 text-center" placeholder="Enter Gemini API Key">
+                <input type="password" id="master_gk" class="form-control mb-3 rounded-pill text-center" placeholder="Enter Gemini API Key">
                 <button class="btn btn-dark-hca w-100 rounded-pill" onclick="lockKey()">Open Portal</button>
             </div></div>
         </div>
@@ -179,9 +179,11 @@
         let glHtml = `<option value="Uncategorized">Uncategorized</option>`;
         res.glOptions.forEach(opt => glHtml += `<option value="${opt}">${opt}</option>`);
 
-        const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
+        const sBody = document.getElementById('tb-staging');
+        let tableRowsHtml = "";
+        
         res.staging.forEach(i => {
-            sBody.innerHTML += `<tr>
+            tableRowsHtml += `<tr>
                 <td>${i.src}</td>
                 <td>${i.date}</td>
                 <td>${i.desc}</td>
@@ -190,8 +192,14 @@
                 <td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td>
                 <td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()">${glHtml}</select></td>
             </tr>`;
+        });
+        
+        sBody.innerHTML = tableRowsHtml;
+        
+        // After DOM injection, set values to match AI suggestions
+        res.staging.forEach(i => {
             document.getElementById('c'+i.row).value = i.cat || "Uncategorized";
-            document.getElementById('b'+i.row).value = i.bnk || "";
+            document.getElementById('b'+i.row).value = i.bnk || "Uncategorized";
         });
         
         document.getElementById('tb-history').innerHTML = ""; res.history.forEach(i => { document.getElementById('tb-history').innerHTML += `<tr><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; });
@@ -207,7 +215,7 @@
             let val = parseFloat(item.amt.replace(/[^0-9.-]+/g,""));
             let expAcc = inp.value;
             let bnkAcc = document.getElementById('b'+r).value;
-            if(item.src === "BANK") { bankTotal += val; if(expAcc === "Uncategorized" || expAcc === "" || bnkAcc === "") bankUncat += val; }
+            if(item.src === "BANK") { bankTotal += val; if(expAcc === "Uncategorized" || expAcc === "" || bnkAcc === "Uncategorized" || bnkAcc === "") bankUncat += val; }
             if(expAcc) jeData[expAcc] = (jeData[expAcc] || 0) + val;
             if(bnkAcc) jeData[bnkAcc] = (jeData[bnkAcc] || 0) - val;
         });
