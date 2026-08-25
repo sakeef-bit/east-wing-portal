@@ -141,7 +141,7 @@
 <div id="st"><strong>Processing...</strong></div>
 
 <script>
-    const ENGINE_URL = "https://script.google.com/macros/s/AKfycbwPh1yp7xSQXXd8xWWxci9YHTpmfh9HQeY6jubi2OqbdHsXuoCaSb2vOdJfNfoq3ECoww/exec";
+    const ENGINE_URL = "https://script.google.com/macros/s/AKfycbxQB2QUWScC2U05Lnuoj1JjG6jrGEZi2TSheul8XautLG7v8QGR0BDQYmcwerOTClFTzg/exec";
     let currentClient = "";
     let localData = [];
 
@@ -156,7 +156,6 @@
     window.onload = async () => {
         if(localStorage.getItem('hca_gk')) {
             document.getElementById('keyGate').style.display = 'none'; document.getElementById('mainPortal').style.display = 'block';
-            document.getElementById('nav-actions').style.display = 'block';
             document.getElementById('dot-gemini').classList.add('dot-green');
             const list = await callEngine({action: "getList"});
             const sel = document.getElementById('masterClient');
@@ -214,10 +213,19 @@
 
     function toggleChat() { const c = document.getElementById('chat-window'); c.style.display = (c.style.display === 'flex') ? 'none' : 'flex'; }
     async function sendChat() {
-        const i = document.getElementById('chat-input'), b = document.getElementById('chat-content'), q = i.value; i.value = "";
+        const i = document.getElementById('chat-input'), b = document.getElementById('chat-content'), q = i.value; 
+        if(!q) return; i.value = "";
         b.innerHTML += `<div class="mt-2 text-primary"><strong>You:</strong> ${q}</div>`;
+        b.innerHTML += `<div id="chat-thinking" class="mt-2 text-muted small"><em>Navigator is thinking...</em></div>`;
+        b.scrollTop = b.scrollHeight;
+        
         const res = await callEngine({action: "chatBot", query: q, client: currentClient, gk: localStorage.getItem('hca_gk')});
-        b.innerHTML += `<div class="mt-2 text-dark"><strong>AI:</strong> ${res.reply}</div>`; b.scrollTop = b.scrollHeight;
+        
+        const thinking = document.getElementById('chat-thinking');
+        if(thinking) thinking.remove();
+        
+        b.innerHTML += `<div class="mt-2 text-dark"><strong>AI:</strong> ${res.reply}</div>`; 
+        b.scrollTop = b.scrollHeight;
     }
 
     function switchTab(t) { document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none'); document.querySelectorAll('.app-nav-btn').forEach(el => el.classList.remove('active')); document.getElementById('tab-'+t).style.display = 'block'; document.getElementById('nav-'+t).classList.add('active'); }
