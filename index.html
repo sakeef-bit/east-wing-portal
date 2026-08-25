@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LedgerIQ | Financial Automation</title>
+    <title>LedgerIQ | Forensic Financial Automation</title>
     <!-- Dependencies -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -65,6 +65,8 @@
         .je-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; font-family: monospace; }
         .dr { color: #2C3E50; width: 100px; text-align: right; font-weight: bold; }
         .cr { color: #d9534f; width: 100px; text-align: right; font-weight: bold; }
+        .badge-dup { background: #EF4444; color: white; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px; }
+        .filter-btn { border-radius: 20px; font-size: 0.8rem; font-weight: 600; padding: 4px 12px; }
     </style>
 </head>
 <body>
@@ -146,30 +148,45 @@
 </div>
 
 <div id="view-config" class="view-pane container py-5">
-    <div class="row justify-content-center"><div class="col-md-8"><div class="card p-5 card-custom">
-        <h3 class="fw-bold mb-4">Client Provisioning</h3>
-        <div class="row g-3">
-            <div class="col-12"><input id="n" class="form-control" placeholder="Company Legal Name"></div>
-            <div class="col-12"><input id="nature" class="form-control" placeholder="Business Industry / Nature"></div>
-            <div class="col-6"><input id="qi" class="form-control" placeholder="QuickBooks Client ID"></div>
-            <div class="col-6"><input id="qs" type="password" class="form-control" placeholder="QuickBooks Secret"></div>
-            
-            <div class="col-12 mt-3">
-                <div class="upload-box text-center">
-                    <h6 class="fw-bold mb-1">QuickBooks Chart of Accounts / GL Source</h6>
-                    <p class="small text-muted mb-3">Upload your QuickBooks export (.csv) to populate account choices.</p>
-                    <input type="file" id="glFileInputConfig" accept=".csv" class="form-control mb-3" onchange="handleGLFileUpload(this)">
-                    <button class="btn btn-sm btn-outline-secondary rounded-pill fw-semibold" onclick="downloadQBTemplate()">Download QB GL Template</button>
-                    <div id="glCountBadge" class="small text-success mt-2 fw-bold" style="display:none;"></div>
+    <div class="row g-4">
+        <div class="col-md-6"><div class="card p-4 card-custom">
+            <h4 class="fw-bold mb-3">Client Provisioning</h4>
+            <div class="row g-3">
+                <div class="col-12"><input id="n" class="form-control" placeholder="Company Legal Name"></div>
+                <div class="col-12"><input id="nature" class="form-control" placeholder="Business Industry / Nature"></div>
+                <div class="col-6"><input id="qi" class="form-control" placeholder="QuickBooks Client ID"></div>
+                <div class="col-6"><input id="qs" type="password" class="form-control" placeholder="QuickBooks Secret"></div>
+                
+                <div class="col-12 mt-2">
+                    <div class="upload-box text-center">
+                        <h6 class="fw-bold mb-1">QuickBooks Chart of Accounts Source</h6>
+                        <p class="small text-muted mb-2">Upload your QuickBooks export (.csv).</p>
+                        <input type="file" id="glFileInputConfig" accept=".csv" class="form-control mb-2" onchange="handleGLFileUpload(this)">
+                        <button class="btn btn-sm btn-outline-secondary rounded-pill fw-semibold" onclick="downloadQBTemplate()">Download Template</button>
+                        <div id="glCountBadge" class="small text-success mt-2 fw-bold" style="display:none;"></div>
+                    </div>
+                </div>
+
+                <div class="col-12 d-flex gap-2 mt-3">
+                    <button onclick="save()" class="btn btn-dark-hca flex-grow-1">Save Account</button>
+                    <button onclick="showPane('launchpad')" class="btn btn-outline-secondary">Cancel</button>
                 </div>
             </div>
+        </div></div>
 
-            <div class="col-12 d-flex gap-2 mt-4">
-                <button onclick="save()" class="btn btn-dark-hca flex-grow-1">Save & Provision Account</button>
-                <button onclick="showPane('launchpad')" class="btn btn-outline-secondary">Cancel</button>
+        <!-- CATEGORY AUTO-RULES ENGINE UI -->
+        <div class="col-md-6"><div class="card p-4 card-custom">
+            <h4 class="fw-bold mb-2">Category Auto-Rules Engine</h4>
+            <p class="small text-muted mb-3">Automatically categorize future transactions by vendor keywords.</p>
+            <div id="rulesList" class="mb-3" style="max-height: 180px; overflow-y: auto;"></div>
+            <div class="input-group mb-3">
+                <input id="ruleKeyword" class="form-control form-control-sm" placeholder="Keyword (e.g. Uber)">
+                <select id="ruleAccount" class="form-select form-select-sm"></select>
+                <button class="btn btn-primary btn-sm" onclick="addRuleRow()">Add Rule</button>
             </div>
-        </div>
-    </div></div></div>
+            <button class="btn btn-dark-hca w-100" onclick="saveRules()">Save Rules Matrix</button>
+        </div></div>
+    </div>
 </div>
 
 <div id="view-dash" class="view-pane container-fluid px-5">
@@ -191,18 +208,29 @@
         <div id="nav-meta" class="app-nav-btn" onclick="switchTab('meta')">CLIENT METADATA</div>
     </div>
 
-    <!-- TAB 1: REVIEW STAGING -->
+    <!-- TAB 1: REVIEW STAGING WITH QUICK-FILTERS & RECEIPT OCR MATCH -->
     <div id="tab-review" class="bg-white p-4 rounded-xl shadow-sm">
         <div class="d-flex justify-content-between mb-3 align-items-center">
             <h5 class="fw-bold mb-0">Staging Queue</h5>
             <button class="btn btn-dark btn-sm rounded-pill px-4 fw-semibold sync-gate-btn" onclick="pushQBO()">Push Approved to QBO</button>
         </div>
+
+        <!-- SMART QUICK-FILTER BAR -->
+        <div class="d-flex gap-2 mb-3 align-items-center">
+            <span class="small fw-bold text-muted me-1">Quick Filters:</span>
+            <button class="btn btn-outline-secondary filter-btn active" onclick="filterStagingRows('ALL')">Show All</button>
+            <button class="btn btn-outline-secondary filter-btn" onclick="filterStagingRows('UNCAT')">Uncategorized Only</button>
+            <button class="btn btn-outline-danger filter-btn" onclick="filterStagingRows('DUP')">Duplicates Only</button>
+            <button class="btn btn-outline-primary filter-btn" onclick="filterStagingRows('HIGH')">High Value (> $1,000)</button>
+        </div>
+
         <div class="batch-bar mb-4 row g-3">
             <div class="col-md-5"><input type="text" id="batchSearchInput" class="form-control form-control-sm" placeholder="Filter Vendor (e.g., Uber)"></div>
             <div class="col-md-4"><select id="batchCategorySelect" class="form-select form-select-sm"><option value="Uncategorized">-- Assign Target Account --</option></select></div>
             <div class="col-md-3"><button class="btn btn-hca btn-sm w-100 fw-semibold" onclick="applyBatch()">Apply Category Match</button></div>
         </div>
-        <table class="table table-hover table-sm align-middle"><thead class="table-light"><tr><th>Source</th><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Stat</th><th>Bank</th><th>Class</th></tr></thead><tbody id="tb-staging"></tbody></table>
+        
+        <table class="table table-hover table-sm align-middle"><thead class="table-light"><tr><th>Source</th><th>Date</th><th>Description</th><th>Amount</th><th>Expense Account</th><th>Status</th><th>Bank Account</th><th>Class Allocation</th><th>Receipt OCR</th></tr></thead><tbody id="tb-staging"></tbody></table>
     </div>
 
     <!-- TAB 2: VISUAL P&L DASHBOARD -->
@@ -278,6 +306,7 @@
     let currentClient = "";
     let localData = [];
     let appGLOptions = [];
+    let activeRules = [];
     let historyData = [];
     let stmtStart = 0, stmtEnd = 0, barChart = null;
 
@@ -295,7 +324,7 @@
             if (window.supabase) {
                 db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
             }
-        } catch(e) { console.error("Supabase Error:", e); }
+        } catch(e) { console.error("Supabase Initialization Error:", e); }
 
         if(localStorage.getItem('hca_gk')) {
             document.getElementById('keyGate').style.display = 'none'; 
@@ -337,6 +366,7 @@
             const badge = document.getElementById('glCountBadge');
             badge.style.display = 'block';
             badge.innerText = `Parsed ${appGLOptions.length} Accounts from CSV`;
+            populateRuleSelects();
         };
         reader.readAsText(file);
     }
@@ -368,11 +398,15 @@
 
     async function getClientList() {
         if (!db) return;
-        const { data } = await db.from('client_metadata').select('client_name');
+        const { data, error } = await db.from('client_metadata').select('client_name');
+        if (error) console.error("Database fetch error:", error);
+
         const sel = document.getElementById('masterClient');
         sel.innerHTML = '<option value="">-- Select Client Account --</option>';
         if (data && data.length > 0) {
-            data.forEach(v => sel.innerHTML += `<option value="${v.client_name}">${v.client_name}</option>`);
+            data.forEach(v => {
+                sel.innerHTML += `<option value="${v.client_name}">${v.client_name}</option>`;
+            });
         }
     }
 
@@ -425,7 +459,61 @@
             const { data } = await db.from('client_metadata').select('*').eq('client_name', currentClient).maybeSingle();
             document.getElementById('dot-ledger').className = 'status-dot dot-green';
             document.getElementById('dot-qbo').className = (data && data.qbo_id) ? 'status-dot dot-amber' : 'status-dot dot-red';
+            await loadRules();
         }
+    }
+
+    // AUTO-RULES ENGINE FUNCTIONS
+    async function loadRules() {
+        if (!db || !currentClient) return;
+        const { data } = await db.from('category_rules').select('*').eq('client_name', currentClient);
+        activeRules = data || [];
+        renderRulesUI();
+    }
+
+    function renderRulesUI() {
+        const listDiv = document.getElementById('rulesList');
+        listDiv.innerHTML = activeRules.map((r, i) => `
+            <div class="d-flex justify-content-between align-items-center bg-light p-2 mb-1 rounded">
+                <span class="small fw-semibold">${r.keyword} &rarr; <span class="text-primary">${r.target_account}</span></span>
+                <button onclick="removeRule(${i})" class="btn btn-xs btn-outline-danger py-0 px-1">&times;</button>
+            </div>
+        `).join('');
+        populateRuleSelects();
+    }
+
+    function populateRuleSelects() {
+        const sel = document.getElementById('ruleAccount');
+        sel.innerHTML = appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('');
+    }
+
+    function addRuleRow() {
+        const kw = document.getElementById('ruleKeyword').value.trim();
+        const acc = document.getElementById('ruleAccount').value;
+        if(!kw) return alert("Enter a keyword");
+        activeRules.push({ client_name: currentClient, keyword: kw, target_account: acc });
+        document.getElementById('ruleKeyword').value = '';
+        renderRulesUI();
+    }
+
+    async function removeRule(idx) {
+        if(activeRules[idx].id) {
+            await db.from('category_rules').delete().eq('id', activeRules[idx].id);
+        }
+        activeRules.splice(idx, 1);
+        renderRulesUI();
+    }
+
+    async function saveRules() {
+        if(!db || !currentClient) return;
+        document.getElementById('st').style.display = 'block';
+        await db.from('category_rules').delete().eq('client_name', currentClient);
+        if(activeRules.length > 0) {
+            const rows = activeRules.map(r => ({ client_name: currentClient, keyword: r.keyword, target_account: r.target_account }));
+            await db.from('category_rules').insert(rows);
+        }
+        document.getElementById('st').style.display = 'none';
+        alert("Rules saved.");
     }
 
     function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
@@ -457,23 +545,32 @@
                 const rawText = jsonRes.candidates[0].content.parts[0].text;
                 const extracted = JSON.parse(rawText);
 
-                // Save Statement Balances to Metadata
                 stmtStart = extracted.starting_balance || 0;
                 stmtEnd = extracted.ending_balance || 0;
                 await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).eq('client_name', currentClient);
 
-                const rows = extracted.transactions.map(t => ({
-                    client_name: currentClient,
-                    source: type === 'PDF' ? 'BANK' : 'CREDIT CARD',
-                    txn_date: t.date,
-                    description: t.desc || t.description || "Unknown Vendor",
-                    amount: t.amount,
-                    category: t.category || "Uncategorized",
-                    status: "PENDING",
-                    bank_category: "Uncategorized",
-                    class_name: "General",
-                    fingerprint: btoa(t.date + (t.desc || "") + t.amount)
-                }));
+                const rows = extracted.transactions.map(t => {
+                    let assignedCategory = t.category || "Uncategorized";
+                    // Apply Auto-Rules Engine matching
+                    activeRules.forEach(rule => {
+                        if(t.desc && t.desc.toLowerCase().includes(rule.keyword.toLowerCase())) {
+                            assignedCategory = rule.target_account;
+                        }
+                    });
+
+                    return {
+                        client_name: currentClient,
+                        source: type === 'PDF' ? 'BANK' : 'CREDIT CARD',
+                        txn_date: t.date,
+                        description: t.desc || t.description || "Unknown Vendor",
+                        amount: t.amount,
+                        category: assignedCategory,
+                        status: "PENDING",
+                        bank_category: "Uncategorized",
+                        class_name: "General",
+                        fingerprint: btoa(t.date + (t.desc || "") + t.amount)
+                    };
+                });
 
                 await db.from('review_staging').insert(rows);
                 await loadDash();
@@ -495,17 +592,27 @@
         const { data: ledger } = await db.from('permanent_ledger').select('*').eq('client_name', currentClient).limit(100);
         const { data: meta } = await db.from('client_metadata').select('*').eq('client_name', currentClient).maybeSingle();
 
-        localData = (staging || []).map(s => ({ 
-            row: s.id, 
-            src: s.source, 
-            date: s.txn_date, 
-            desc: s.description, 
-            amt: String(s.amount), 
-            cat: s.category || "Uncategorized", 
-            stat: s.status || "PENDING", 
-            bnk: s.bank_category || "Uncategorized",
-            cls: s.class_name || "General"
-        }));
+        // DUPLICATE DETECTOR LOGIC
+        const seenFingerprints = {};
+        localData = (staging || []).map(s => {
+            const fp = s.fingerprint || btoa(s.txn_date + s.description + s.amount);
+            const isDup = !!seenFingerprints[fp];
+            seenFingerprints[fp] = true;
+
+            return { 
+                row: s.id, 
+                src: s.source, 
+                date: s.txn_date, 
+                desc: s.description, 
+                amt: String(s.amount), 
+                cat: s.category || "Uncategorized", 
+                stat: s.status || "PENDING", 
+                bnk: s.bank_category || "Uncategorized",
+                cls: s.class_name || "General",
+                dup: isDup,
+                receipt: s.receipt_linked || false
+            };
+        });
 
         if (meta) {
             stmtStart = parseFloat(meta.stmt_start || 0);
@@ -531,15 +638,7 @@
             batchSel.innerHTML += `<option value="${opt}">${opt}</option>`;
         });
 
-        const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
-        localData.forEach(i => {
-            sBody.innerHTML += `<tr><td>${i.src}</td><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td><td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td><td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td><td><select id="l${i.row}" class="form-select form-select-sm">${CLASS_OPTIONS.map(c => `<option value="${c}" ${i.cls==c?'selected':''}>${c}</option>`).join('')}</select></td></tr>`;
-        });
-        
-        localData.forEach(i => { 
-            if(document.getElementById('c'+i.row)) document.getElementById('c'+i.row).value = i.cat || "Uncategorized"; 
-            if(document.getElementById('b'+i.row)) document.getElementById('b'+i.row).value = i.bnk || "Uncategorized"; 
-        });
+        renderStagingTable(localData);
 
         const glBody = document.getElementById('tb-gl'); glBody.innerHTML = "";
         appGLOptions.forEach((acc, idx) => {
@@ -554,6 +653,74 @@
         
         recalcJE();
         renderPnLCharts();
+    }
+
+    function renderStagingTable(dataRows) {
+        const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
+        dataRows.forEach(i => {
+            const dupBadge = i.dup ? `<span class="badge-dup">DUP</span>` : '';
+            const receiptCell = i.receipt ? `✓ Verified` : `<button class="btn btn-xs btn-outline-secondary py-0" onclick="document.getElementById('rup${i.row}').click()">📁 Match</button><input type="file" id="rup${i.row}" style="display:none" onchange="handleReceiptUpload(this, ${i.row})">`;
+
+            sBody.innerHTML += `<tr><td>${i.src}</td><td>${i.date}</td><td>${i.desc} ${dupBadge}</td><td>$${i.amt}</td><td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td><td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td><td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option></select></td><td><select id="l${i.row}" class="form-select form-select-sm">${CLASS_OPTIONS.map(c => `<option value="${c}" ${i.cls==c?'selected':''}>${c}</option>`).join('')}</select></td><td>${receiptCell}</td></tr>`;
+        });
+        
+        dataRows.forEach(i => { 
+            if(document.getElementById('c'+i.row)) document.getElementById('c'+i.row).value = i.cat || "Uncategorized"; 
+            if(document.getElementById('b'+i.row)) document.getElementById('b'+i.row).value = i.bnk || "Uncategorized"; 
+        });
+    }
+
+    // QUICK-FILTER BAR FUNCTION
+    function filterStagingRows(filterType) {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+
+        if(filterType === 'ALL') renderStagingTable(localData);
+        else if(filterType === 'UNCAT') renderStagingTable(localData.filter(r => r.cat === 'Uncategorized'));
+        else if(filterType === 'DUP') renderStagingTable(localData.filter(r => r.dup));
+        else if(filterType === 'HIGH') renderStagingTable(localData.filter(r => Math.abs(parseFloat(r.amt)) > 1000));
+    }
+
+    // OCR RECEIPT & INVOICE MATCHING FUNCTION
+    async function handleReceiptUpload(input, rowId) {
+        const file = input.files[0];
+        if(!file) return;
+
+        document.getElementById('st').style.display = 'block';
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const imgData = e.target.result.split(',')[1];
+                const apiKey = localStorage.getItem('hca_gk');
+
+                const prompt = "Extract JSON: {'vendor':'', 'amount':0.00}";
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ "contents": [{ "parts": [{ "text": prompt }, { "inline_data": { "mime_type": "image/jpeg", "data": imgData }}] }] })
+                });
+
+                const jsonRes = await res.json();
+                const extracted = JSON.parse(jsonRes.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim());
+
+                const rowItem = localData.find(r => r.row == rowId);
+                const targetAmt = Math.abs(parseFloat(rowItem.amt));
+                const matchAmt = Math.abs(parseFloat(extracted.amount));
+
+                if(Math.abs(targetAmt - matchAmt) <= (targetAmt * 0.02)) {
+                    await db.from('review_staging').update({ receipt_linked: true }).eq('id', rowId);
+                    alert("✓ Receipt Verified & Linked!");
+                    await loadDash();
+                } else {
+                    alert(`Mismatch! Statement: $${targetAmt} vs Receipt: $${matchAmt}`);
+                    document.getElementById('st').style.display = 'none';
+                }
+            } catch(err) {
+                alert("Receipt OCR Error: " + err.message);
+                document.getElementById('st').style.display = 'none';
+            }
+        };
+        reader.readAsDataURL(file);
     }
 
     function applyBatch() {
@@ -575,7 +742,6 @@
             if(bnk) jeData[bnk + "|" + cls] = (jeData[bnk + "|" + cls] || 0) - val;
         });
 
-        // RECONCILIATION GATE BALANCING CALCULATION
         const calcEnd = stmtStart + netAct;
         const diff = Math.abs(calcEnd - stmtEnd);
         const banner = document.getElementById('reconGateBanner');
