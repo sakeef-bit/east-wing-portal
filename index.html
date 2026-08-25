@@ -43,6 +43,7 @@
         .cr { color: #d9534f; width: 80px; text-align: right; font-weight: bold;}
         .summary-card { background: white; border-radius: 15px; padding: 20px; border-left: 5px solid var(--hca-sage); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .batch-bar { background: #f1f3f5; padding: 15px; border-radius: 12px; border: 1px solid #e9ecef; }
+        .upload-box { border: 2px dashed var(--hca-sage); background: #fafcf8; border-radius: 12px; padding: 15px; }
     </style>
 </head>
 <body>
@@ -109,14 +110,38 @@
             <input id="nature" class="form-control" placeholder="Nature">
             <input id="qi" class="form-control" placeholder="QBO ID">
             <input id="qs" type="password" class="form-control" placeholder="QBO Secret">
-            <div class="col-12 d-flex gap-2"><button onclick="save()" class="btn btn-dark-hca flex-grow-1">Save & Provision</button><button onclick="showPane('launchpad')" class="btn btn-outline-secondary">Exit</button></div>
+            
+            <!-- DEDICATED QUICKBOOKS GL LEDGER UPLOAD BOX -->
+            <div class="col-12 mt-3">
+                <div class="upload-box text-center">
+                    <h6 class="fw-bold mb-1">QuickBooks Chart of Accounts / GL Source</h6>
+                    <p class="small text-muted mb-2">Upload your QuickBooks export (.CSV) to populate account options for this client.</p>
+                    <input type="file" id="glFileInputConfig" accept=".csv" class="form-control mb-2" onchange="handleGLFileUpload(this)">
+                    <button class="btn btn-sm btn-outline-success rounded-pill" onclick="downloadQBTemplate()">📥 Download QB GL Template</button>
+                    <div id="glCountBadge" class="small text-success mt-2 fw-bold" style="display:none;"></div>
+                </div>
+            </div>
+
+            <div class="col-12 d-flex gap-2 mt-4">
+                <button onclick="save()" class="btn btn-dark-hca flex-grow-1">Save & Provision</button>
+                <button onclick="showPane('launchpad')" class="btn btn-outline-secondary">Exit</button>
+            </div>
         </div>
     </div></div></div>
 </div>
 
 <div id="view-dash" class="view-pane container-fluid px-5">
     <div class="d-flex justify-content-between align-items-center mb-4"><h2 id="activeTitle" class="fw-bold">Dashboard</h2><div class="gap-2 d-flex"><button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="approveAll()">Approve All</button><button class="btn btn-primary btn-sm rounded-pill px-3" onclick="saveAll()">Save All</button><button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="showPane('launchpad')">Exit</button></div></div>
-    <div class="app-nav"><div id="nav-review" class="app-nav-btn active" onclick="switchTab('review')">REVIEW</div><div id="nav-history" class="app-nav-btn" onclick="switchTab('history')">HISTORY</div><div id="nav-je" class="app-nav-btn" onclick="switchTab('je')">JE VIEW</div><div id="nav-meta" class="app-nav-btn" onclick="switchTab('meta')">CLIENT INFO</div></div>
+    
+    <div class="app-nav">
+        <div id="nav-review" class="app-nav-btn active" onclick="switchTab('review')">REVIEW</div>
+        <div id="nav-gl" class="app-nav-btn" onclick="switchTab('gl')">CHART OF ACCOUNTS</div>
+        <div id="nav-history" class="app-nav-btn" onclick="switchTab('history')">HISTORY</div>
+        <div id="nav-je" class="app-nav-btn" onclick="switchTab('je')">JE VIEW</div>
+        <div id="nav-meta" class="app-nav-btn" onclick="switchTab('meta')">CLIENT INFO</div>
+    </div>
+
+    <!-- TAB 1: REVIEW STAGING -->
     <div id="tab-review" class="bg-white p-4 rounded-xl shadow-sm">
         <div class="d-flex justify-content-between mb-3 align-items-center">
             <h5>Staging</h5>
@@ -129,7 +154,25 @@
         </div>
         <table class="table table-hover table-sm align-middle"><thead class="table-light"><tr><th>Source</th><th>Date</th><th>Description</th><th>Amount</th><th>Expense Account</th><th>Status</th><th>Bank Account</th></tr></thead><tbody id="tb-staging"></tbody></table>
     </div>
+
+    <!-- TAB 2: CHART OF ACCOUNTS / GL LEDGER VIEW -->
+    <div id="tab-gl" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
+        <div class="d-flex justify-content-between mb-3 align-items-center">
+            <h5>Loaded Chart of Accounts / GL List</h5>
+            <button class="btn btn-outline-success btn-sm rounded-pill" onclick="downloadQBTemplate()">📥 Download Template</button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle">
+                <thead class="table-light"><tr><th>#</th><th>Account Name / Number</th></tr></thead>
+                <tbody id="tb-gl"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 3: HISTORY -->
     <div id="tab-history" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5>History</h5><table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync</th></tr></thead><tbody id="tb-history"></tbody></table></div>
+    
+    <!-- TAB 4: JE VIEW -->
     <div id="tab-je" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <div id="jeBalanceAlert" class="alert mb-4 text-center fw-bold"></div>
         <div class="row g-3 mb-4">
@@ -140,6 +183,8 @@
         </div>
         <div id="jeList" class="mt-3 font-monospace"></div>
     </div>
+
+    <!-- TAB 5: CLIENT META -->
     <div id="tab-meta" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5>Client Info</h5><div id="metaList"></div></div>
 </div>
 
@@ -160,6 +205,7 @@
     let db = null;
     let currentClient = "";
     let localData = [];
+    let appGLOptions = [];
 
     function lockKey() { 
         const keyVal = document.getElementById('master_gk').value;
@@ -182,6 +228,44 @@
             await getClientList();
         }
     };
+
+    // --- QUICKBOOKS GL TEMPLATE GENERATOR ---
+    function downloadQBTemplate() {
+        const headers = "Account Name,Account Type,Sub Account\n";
+        const sampleRows = 
+            "1010 Operating Bank Account,Bank,No\n" +
+            "1020 Apex Credit Card,Credit Card,No\n" +
+            "6010 Office Supplies & Expenses,Expense,No\n" +
+            "6020 Travel & Lodging,Expense,No\n" +
+            "6030 Meals & Entertainment,Expense,No\n" +
+            "6040 Software & Subscriptions,Expense,No\n" +
+            "6050 Professional & Legal Fees,Expense,No\n" +
+            "4010 Consulting Revenue,Income,No\n";
+        
+        const blob = new Blob([headers + sampleRows], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = "QuickBooks_GL_Chart_of_Accounts_Template.csv";
+        a.click();
+    }
+
+    // --- PARSE UPLOADED GL CSV ---
+    function handleGLFileUpload(input) {
+        const file = input.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const lines = e.target.result.split(/\r?\n/);
+            appGLOptions = lines
+                .map(l => l.split(',')[0].replace(/"/g, '').trim())
+                .filter(v => v && v.toLowerCase() !== "account name" && v.toLowerCase() !== "account");
+            
+            const badge = document.getElementById('glCountBadge');
+            badge.style.display = 'block';
+            badge.innerText = `✓ Loaded ${appGLOptions.length} Accounts from CSV`;
+        };
+        reader.readAsText(file);
+    }
 
     async function getClientList() {
         if (!db) return;
@@ -209,7 +293,7 @@
             nature: document.getElementById('nature').value || "General",
             qbo_id: document.getElementById('qi').value || "",
             qbo_sec: document.getElementById('qs').value || "",
-            gl_list: (typeof appGLOptions !== 'undefined') ? appGLOptions.join(",") : ""
+            gl_list: appGLOptions.join(",")
         };
 
         const { data: existing } = await db.from('client_metadata').select('client_name').eq('client_name', cName).maybeSingle();
@@ -228,9 +312,8 @@
 
         if (resultError) {
             alert("Supabase Write Error: " + resultError.message);
-            console.error("Save Error:", resultError);
         } else {
-            alert("Client saved successfully to Supabase!");
+            alert("Client saved successfully!");
             showPane('launchpad');
             await getClientList();
             document.getElementById('masterClient').value = cName;
@@ -265,7 +348,7 @@
                 const apiKey = localStorage.getItem('hca_gk');
 
                 const behavior = type === "CC" ? "Spend is negative, Payments positive." : "Debits are negative, Credits positive.";
-                const prompt = "ACT AS: Expert Senior Bookkeeper. Extract all transactions from the TRANSACTION HISTORY table in the provided PDF. Extract Date, Description (Vendor), and Amount for every row. " + behavior + " Return ONLY a JSON array. SCHEMA: [{'date': 'YYYY-MM-DD', 'desc': 'Merchant Name', 'amount': 0.00, 'category': 'Account Name'}]";
+                const prompt = "ACT AS: Expert Senior Bookkeeper. Extract all transactions from the TRANSACTION HISTORY table in the provided PDF. Extract Date, Description (Vendor), and Amount for every row. Match using GL accounts: [" + appGLOptions.join(",") + "]. " + behavior + " Return ONLY a JSON array. SCHEMA: [{'date': 'YYYY-MM-DD', 'desc': 'Merchant Name', 'amount': 0.00, 'category': 'Account Name'}]";
 
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
                     method: "POST",
@@ -323,10 +406,14 @@
             bnk: s.bank_category || "Uncategorized" 
         }));
 
+        if (meta && meta.gl_list) {
+            appGLOptions = meta.gl_list.split(',').filter(Boolean);
+        }
+
         const historyList = (ledger || []).map(l => ({ date: l.txn_date, desc: l.description, amt: String(l.amount), cat: l.category, qbo: l.qbo_id || "SYNCED" }));
         const metaList = meta ? [["Client", meta.client_name], ["Nature", meta.nature], ["QBO_ID", meta.qbo_id]] : [];
 
-        renderDashboard({ staging: localData, history: historyList, metadata: metaList, glOptions: [] }); 
+        renderDashboard({ staging: localData, history: historyList, metadata: metaList }); 
     }
 
     function renderDashboard(res) {
@@ -334,17 +421,29 @@
         showPane('dash'); 
         document.getElementById('activeTitle').innerText = currentClient;
         
+        // Render Datalist & Batch Select
         const dl = document.getElementById('glChoices'); dl.innerHTML = ""; 
         const batchSel = document.getElementById('batchCategorySelect'); batchSel.innerHTML = '<option value="Uncategorized">-- Assign Account --</option>';
-        
+        appGLOptions.forEach(opt => {
+            dl.innerHTML += `<option value="${opt}">`;
+            batchSel.innerHTML += `<option value="${opt}">${opt}</option>`;
+        });
+
+        // Render Staging Table
         const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
         localData.forEach(i => {
-            sBody.innerHTML += `<tr><td>${i.src}</td><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()" onkeydown="handleKeyNav(event, ${i.row}, 'c')"><option value="Uncategorized">Uncategorized</option></select></td><td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat" onkeydown="handleKeyNav(event, ${i.row}, 's')"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td><td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()" onkeydown="handleKeyNav(event, ${i.row}, 'b')"><option value="Uncategorized">Uncategorized</option></select></td></tr>`;
+            sBody.innerHTML += `<tr><td>${i.src}</td><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()" onkeydown="handleKeyNav(event, ${i.row}, 'c')"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td><td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat" onkeydown="handleKeyNav(event, ${i.row}, 's')"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td><td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()" onkeydown="handleKeyNav(event, ${i.row}, 'b')"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td></tr>`;
         });
         
         localData.forEach(i => { 
             if(document.getElementById('c'+i.row)) document.getElementById('c'+i.row).value = i.cat || "Uncategorized"; 
             if(document.getElementById('b'+i.row)) document.getElementById('b'+i.row).value = i.bnk || "Uncategorized"; 
+        });
+
+        // Render GL Table Tab
+        const glBody = document.getElementById('tb-gl'); glBody.innerHTML = "";
+        appGLOptions.forEach((acc, idx) => {
+            glBody.innerHTML += `<tr><td>${idx + 1}</td><td class="fw-bold">${acc}</td></tr>`;
         });
 
         document.getElementById('tb-history').innerHTML = ""; 
@@ -414,7 +513,7 @@
         b.scrollTop = b.scrollHeight;
 
         const apiKey = localStorage.getItem('hca_gk');
-        const projectContext = "You are the HCA Navigator, an AI support agent for the HCA Financial Automation Engine. You help users navigate the dashboard, process PDFs, and prepare Journal Entries. Current Client: " + (currentClient || "None Selected");
+        const projectContext = "You are the HCA Navigator, an AI support agent for the HCA Financial Automation Engine. Current Client: " + (currentClient || "None Selected");
 
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
             method: "POST",
