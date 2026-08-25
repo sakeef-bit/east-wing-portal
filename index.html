@@ -39,6 +39,7 @@
         .dr { color: #2C3E50; width: 80px; text-align: right; font-weight: bold;}
         .cr { color: #d9534f; width: 80px; text-align: right; font-weight: bold;}
         .summary-card { background: white; border-radius: 15px; padding: 20px; border-left: 5px solid var(--hca-sage); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .batch-bar { background: #f1f3f5; padding: 15px; border-radius: 12px; border: 1px solid #e9ecef; }
     </style>
 </head>
 <body>
@@ -114,11 +115,23 @@
     <div class="d-flex justify-content-between align-items-center mb-4"><h2 id="activeTitle" class="fw-bold">Dashboard</h2><div class="gap-2 d-flex"><button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="approveAll()">Approve All</button><button class="btn btn-primary btn-sm rounded-pill px-3" onclick="saveAll()">Save All</button><button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="showPane('launchpad')">Exit</button></div></div>
     <div class="app-nav"><div id="nav-review" class="app-nav-btn active" onclick="switchTab('review')">REVIEW</div><div id="nav-history" class="app-nav-btn" onclick="switchTab('history')">HISTORY</div><div id="nav-je" class="app-nav-btn" onclick="switchTab('je')">JE VIEW</div><div id="nav-meta" class="app-nav-btn" onclick="switchTab('meta')">CLIENT INFO</div></div>
     <div id="tab-review" class="bg-white p-4 rounded-xl shadow-sm">
-        <div class="d-flex justify-content-between mb-3"><h5>Staging</h5><button class="btn btn-dark btn-sm rounded-pill" onclick="pushQBO()">Push to QBO</button></div>
+        <div class="d-flex justify-content-between mb-3 align-items-center">
+            <h5>Staging</h5>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-success btn-sm rounded-pill px-3" onclick="exportStagingCSV()">📥 Export CSV</button>
+                <button class="btn btn-dark btn-sm rounded-pill px-3" onclick="pushQBO()">Push to QBO</button>
+            </div>
+        </div>
+        <div class="batch-bar mb-4 row g-3">
+            <div class="col-md-5"><input type="text" id="batchSearchInput" class="form-control form-control-sm" placeholder="Search Vendor (e.g. Uber)"></div>
+            <div class="col-md-4"><select id="batchCategorySelect" class="form-select form-select-sm"><option value="Uncategorized">-- Assign Account --</option></select></div>
+            <div class="col-md-3"><button class="btn btn-hca btn-sm w-100" onclick="applyBatch()">Apply to All Matches</button></div>
+        </div>
         <table class="table table-hover table-sm align-middle"><thead class="table-light"><tr><th>Source</th><th>Date</th><th>Description</th><th>Amount</th><th>Expense Account</th><th>Status</th><th>Bank Account</th></tr></thead><tbody id="tb-staging"></tbody></table>
     </div>
     <div id="tab-history" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5>History</h5><table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync</th></tr></thead><tbody id="tb-history"></tbody></table></div>
     <div id="tab-je" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
+        <div id="jeBalanceAlert" class="alert mb-4 text-center fw-bold"></div>
         <div class="row g-3 mb-4">
             <div class="col-md-3"><div class="summary-card"><h6>Bank Total</h6><h4 id="bankTotal">$0.00</h4></div></div>
             <div class="col-md-3"><div class="summary-card"><h6>Bank Uncat.</h6><h4 id="bankUncat">$0.00</h4></div></div>
@@ -141,7 +154,7 @@
 <div id="st"><strong>Processing...</strong></div>
 
 <script>
-    const ENGINE_URL = "https://script.google.com/macros/s/AKfycbzfYFnWhyw6po1ukEwnXzmNRpZXeCrd1twQ1QpkMXW4vsgAi5wuwZsjKPTtOioITagKdg/exec";
+    const ENGINE_URL = "https://script.google.com/macros/s/AKfycbxX4VBXudeOPnR_raq3K7fUo3QxLmyUM3p5mI4M02JLpvkcMGzFEPAxIVvHmpvBDkt-2w/exec";
     let currentClient = "";
     let localData = [];
 
@@ -181,10 +194,31 @@
         document.getElementById('st').style.display = 'none'; if(!res || res.error) { alert("Error: " + (res ? res.error : "No data")); return; }
         showPane('dash'); document.getElementById('activeTitle').innerText = currentClient;
         localData = res.staging;
-        const dl = document.getElementById('glChoices'); dl.innerHTML = ""; res.glOptions.forEach(opt => dl.innerHTML += `<option value="${opt}">`);
+        
+        const historyMap = {};
+        res.history.forEach(h => {
+            const hKey = `${h.date}_${h.amt.replace(/[^0-9.-]+/g,"")}_${h.desc.toLowerCase().trim()}`;
+            historyMap[hKey] = true;
+        });
+
+        const batchCountMap = {};
+        res.staging.forEach(s => {
+            const sKey = `${s.date}_${s.amt.replace(/[^0-9.-]+/g,"")}_${s.desc.toLowerCase().trim()}`;
+            batchCountMap[sKey] = (batchCountMap[sKey] || 0) + 1;
+        });
+
+        const dl = document.getElementById('glChoices'); dl.innerHTML = ""; 
+        const batchSel = document.getElementById('batchCategorySelect'); batchSel.innerHTML = '<option value="Uncategorized">-- Assign Account --</option>';
+        res.glOptions.forEach(opt => { dl.innerHTML += `<option value="${opt}">`; batchSel.innerHTML += `<option value="${opt}">${opt}</option>`; });
+        
         const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
         res.staging.forEach(i => {
-            sBody.innerHTML += `<tr><td>${i.src}</td><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()" onkeydown="handleKeyNav(event, ${i.row}, 'c')"><option value="Uncategorized">Uncategorized</option>${res.glOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td><td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat" onkeydown="handleKeyNav(event, ${i.row}, 's')"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td><td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()" onkeydown="handleKeyNav(event, ${i.row}, 'b')"><option value="Uncategorized">Uncategorized</option>${res.glOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td></tr>`;
+            const itemKey = `${i.date}_${i.amt.replace(/[^0-9.-]+/g,"")}_${i.desc.toLowerCase().trim()}`;
+            const isDuplicate = (historyMap[itemKey] === true) || (batchCountMap[itemKey] > 1);
+            const rowClass = isDuplicate ? 'table-danger' : '';
+            const dupBadge = isDuplicate ? '<span class="badge bg-danger ms-2">Duplicate</span>' : '';
+
+            sBody.innerHTML += `<tr class="${rowClass}"><td>${i.src}</td><td>${i.date}</td><td>${i.desc}${dupBadge}</td><td>$${i.amt}</td><td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()" onkeydown="handleKeyNav(event, ${i.row}, 'c')"><option value="Uncategorized">Uncategorized</option>${res.glOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td><td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat" onkeydown="handleKeyNav(event, ${i.row}, 's')"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td><td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()" onkeydown="handleKeyNav(event, ${i.row}, 'b')"><option value="Uncategorized">Uncategorized</option>${res.glOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td></tr>`;
         });
         res.staging.forEach(i => { document.getElementById('c'+i.row).value = i.cat || "Uncategorized"; document.getElementById('b'+i.row).value = i.bnk || "Uncategorized"; });
         document.getElementById('tb-history').innerHTML = ""; res.history.forEach(i => { document.getElementById('tb-history').innerHTML += `<tr><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; });
@@ -192,36 +226,23 @@
         recalcJE();
     }
 
+    function applyBatch() {
+        const query = document.getElementById('batchSearchInput').value.toLowerCase();
+        const newCat = document.getElementById('batchCategorySelect').value;
+        if(!query) return alert("Please enter a search term");
+        localData.forEach(item => { if(item.desc.toLowerCase().includes(query)) { const target = document.getElementById('c' + item.row); if(target) target.value = newCat; } });
+        recalcJE();
+    }
+
     function handleKeyNav(e, row, prefix) {
         const prefixes = ['c', 's', 'b'];
-        let targetRow = row;
-        let targetPrefix = prefix;
-        let jump = false;
-
-        if (e.key === "Enter") {
-            e.preventDefault();
-            targetRow = e.shiftKey ? row - 1 : row + 1;
-            jump = true;
-        } else if (e.key === "ArrowDown") {
-            e.preventDefault();
-            targetRow = row + 1;
-            jump = true;
-        } else if (e.key === "ArrowUp") {
-            e.preventDefault();
-            targetRow = row - 1;
-            jump = true;
-        } else if (e.key === "ArrowRight") {
-            let idx = prefixes.indexOf(prefix);
-            if (idx < prefixes.length - 1) { e.preventDefault(); targetPrefix = prefixes[idx + 1]; jump = true; }
-        } else if (e.key === "ArrowLeft") {
-            let idx = prefixes.indexOf(prefix);
-            if (idx > 0) { e.preventDefault(); targetPrefix = prefixes[idx - 1]; jump = true; }
-        }
-
-        if (jump) {
-            const next = document.getElementById(targetPrefix + targetRow);
-            if (next) next.focus();
-        }
+        let targetRow = row; let targetPrefix = prefix; let jump = false;
+        if (e.key === "Enter") { e.preventDefault(); targetRow = e.shiftKey ? row - 1 : row + 1; jump = true; }
+        else if (e.key === "ArrowDown") { e.preventDefault(); targetRow = row + 1; jump = true; }
+        else if (e.key === "ArrowUp") { e.preventDefault(); targetRow = row - 1; jump = true; }
+        else if (e.key === "ArrowRight") { let idx = prefixes.indexOf(prefix); if (idx < prefixes.length - 1) { e.preventDefault(); targetPrefix = prefixes[idx + 1]; jump = true; } }
+        else if (e.key === "ArrowLeft") { let idx = prefixes.indexOf(prefix); if (idx > 0) { e.preventDefault(); targetPrefix = prefixes[idx - 1]; jump = true; } }
+        if (jump) { const next = document.getElementById(targetPrefix + targetRow); if (next) next.focus(); }
     }
 
     function recalcJE() {
@@ -233,31 +254,67 @@
         });
         document.getElementById('bankTotal').innerText = "$" + bT.toFixed(2); document.getElementById('bankUncat').innerText = "$" + bU.toFixed(2);
         document.getElementById('ccTotal').innerText = "$" + cT.toFixed(2); document.getElementById('ccUncat').innerText = "$" + cU.toFixed(2);
+        
         const jeDiv = document.getElementById('jeList'); jeDiv.innerHTML = `<div class="je-item fw-bold border-bottom"><span>Account</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
+        let totalDr = 0, totalCr = 0;
         for (let acc in jeData) {
             let bal = jeData[acc]; if(Math.abs(bal) < 0.01) continue;
             let dr = bal < 0 ? Math.abs(bal) : 0, cr = bal > 0 ? bal : 0;
+            totalDr += dr; totalCr += cr;
             jeDiv.innerHTML += `<div class="je-item"><span>${acc}</span><span class="dr">${dr?`$${dr.toFixed(2)}`:''}</span><span class="cr">${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
         }
+
+        const alertBox = document.getElementById('jeBalanceAlert');
+        const diff = Math.abs(totalDr - totalCr);
+        if (diff < 0.01) {
+            alertBox.className = "alert alert-success mb-4 text-center fw-bold";
+            alertBox.innerText = `✓ Journal Entry Balanced ($${totalDr.toFixed(2)} DR / $${totalCr.toFixed(2)} CR)`;
+        } else {
+            alertBox.className = "alert alert-danger mb-4 text-center fw-bold";
+            alertBox.innerText = `⚠️ Out of Balance by $${diff.toFixed(2)} (DR: $${totalDr.toFixed(2)} | CR: $${totalCr.toFixed(2)})`;
+        }
+    }
+
+    function exportStagingCSV() {
+        if (!localData.length) return alert("No data available to export.");
+        
+        const headers = ["Source", "Date", "Description", "Amount", "Expense Account", "Status", "Bank Account"];
+        const escape = (v) => `"${String(v).replace(/"/g, '""')}"`;
+        
+        let csvContent = headers.join(",") + "\n";
+        
+        localData.forEach(i => {
+            const rowData = [
+                i.src,
+                i.date,
+                i.desc,
+                i.amt,
+                document.getElementById('c'+i.row).value,
+                document.getElementById('s'+i.row).value,
+                document.getElementById('b'+i.row).value
+            ];
+            csvContent += rowData.map(escape).join(",") + "\n";
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const filename = `${currentClient.replace(/\s+/g, '_')}_Staging_Export_${new Date().toISOString().split('T')[0]}.csv`;
+        
+        link.setAttribute("href", URL.createObjectURL(blob));
+        link.setAttribute("download", filename);
+        link.click();
     }
 
     function toggleChat() { const c = document.getElementById('chat-window'); c.style.display = (c.style.display === 'flex') ? 'none' : 'flex'; }
     async function sendChat() {
-        const i = document.getElementById('chat-input'), b = document.getElementById('chat-content'), q = i.value; 
-        if(!q) return; i.value = "";
+        const i = document.getElementById('chat-input'), b = document.getElementById('chat-content'), q = i.value; if(!q) return; i.value = "";
         b.innerHTML += `<div class="chat-bubble text-primary"><strong>You:</strong> ${q}</div>`;
         b.innerHTML += `<div id="chat-thinking" class="chat-bubble text-muted small"><em>Navigator is thinking...</em></div>`;
         b.scrollTop = b.scrollHeight;
-        
         const res = await callEngine({action: "chatBot", query: q, client: currentClient, gk: localStorage.getItem('hca_gk')});
-        
-        const thinking = document.getElementById('chat-thinking');
-        if(thinking) thinking.remove();
-        
+        const thinking = document.getElementById('chat-thinking'); if(thinking) thinking.remove();
         const structuredReply = res.reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
-            
-        b.innerHTML += `<div class="chat-bubble text-dark"><strong>AI:</strong><br>${structuredReply}</div>`; 
-        b.scrollTop = b.scrollHeight;
+        b.innerHTML += `<div class="chat-bubble text-dark"><strong>AI:</strong><br>${structuredReply}</div>`; b.scrollTop = b.scrollHeight;
     }
 
     function switchTab(t) { document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none'); document.querySelectorAll('.app-nav-btn').forEach(el => el.classList.remove('active')); document.getElementById('tab-'+t).style.display = 'block'; document.getElementById('nav-'+t).classList.add('active'); }
@@ -266,7 +323,23 @@
         let updates = []; document.querySelectorAll('.row-cat').forEach(inp => { let r = inp.getAttribute('data-row'); updates.push({ row: r, cat: inp.value, stat: document.getElementById('s'+r).value, bnk: document.getElementById('b'+r).value }); });
         document.getElementById('st').style.display = 'block'; await callEngine({action: "updateRows", client: currentClient, updateData: updates}); loadDash();
     }
-    async function pushQBO() { document.getElementById('st').style.display = 'block'; const res = await callEngine({action: "pushQBO", client: currentClient}); renderDashboard(res); }
+
+    async function pushQBO() {
+        let jeData = {}; let payload = []; let approvedCount = 0;
+        document.querySelectorAll('.row-cat').forEach(inp => {
+            let r = inp.getAttribute('data-row'); if(document.getElementById('s'+r).value !== "APPROVED") return;
+            approvedCount++; let item = localData.find(x => x.row == r); let val = parseFloat(item.amt.replace(/[^0-9.-]+/g,"")), exp = inp.value, bnk = document.getElementById('b'+r).value;
+            jeData[exp] = (jeData[exp] || 0) + val; jeData[bnk] = (jeData[bnk] || 0) - val;
+        });
+        if(approvedCount === 0) return alert("No rows marked as APPROVED.");
+        let checkSum = 0;
+        for (let acc in jeData) { checkSum += jeData[acc]; if(Math.abs(jeData[acc]) > 0.001) payload.push({ acc: acc, amt: jeData[acc], desc: "Balanced Sync Batch" }); }
+        if(Math.abs(checkSum) > 0.01) return alert("Error: Journal Entry is unbalanced.");
+        document.getElementById('st').style.display = 'block';
+        const res = await callEngine({action: "pushQBO", client: currentClient, jePayload: payload});
+        renderDashboard(res); alert("Success: Balanced Journal Entry Synced.");
+    }
+
     function showPane(p) { document.querySelectorAll('.view-pane, #view-launchpad').forEach(el => el.style.display = 'none'); document.getElementById('view-' + p).style.display = 'block'; }
     async function loadDash() { currentClient = document.getElementById('masterClient').value; if(!currentClient) return alert("Select client first"); document.getElementById('st').style.display = 'block'; const res = await callEngine({action: "getAppData", clientName: currentClient}); renderDashboard(res); pingStatus(); }
 </script>
