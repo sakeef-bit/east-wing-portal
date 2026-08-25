@@ -111,7 +111,7 @@
             <input id="qi" class="form-control" placeholder="QBO ID">
             <input id="qs" type="password" class="form-control" placeholder="QBO Secret">
             
-            <!-- DEDICATED QUICKBOOKS GL LEDGER UPLOAD BOX -->
+            <!-- QUICKBOOKS GL LEDGER UPLOAD BOX (PROVISION SCREEN) -->
             <div class="col-12 mt-3">
                 <div class="upload-box text-center">
                     <h6 class="fw-bold mb-1">QuickBooks Chart of Accounts / GL Source</h6>
@@ -155,11 +155,15 @@
         <table class="table table-hover table-sm align-middle"><thead class="table-light"><tr><th>Source</th><th>Date</th><th>Description</th><th>Amount</th><th>Expense Account</th><th>Status</th><th>Bank Account</th></tr></thead><tbody id="tb-staging"></tbody></table>
     </div>
 
-    <!-- TAB 2: CHART OF ACCOUNTS / GL LEDGER VIEW -->
+    <!-- TAB 2: CHART OF ACCOUNTS / GL LEDGER VIEW & DASHBOARD UPLOAD -->
     <div id="tab-gl" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <div class="d-flex justify-content-between mb-3 align-items-center">
             <h5>Loaded Chart of Accounts / GL List</h5>
-            <button class="btn btn-outline-success btn-sm rounded-pill" onclick="downloadQBTemplate()">📥 Download Template</button>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-primary btn-sm rounded-pill" onclick="document.getElementById('dashGLFileInput').click()">📤 Upload GL CSV</button>
+                <input type="file" id="dashGLFileInput" accept=".csv" style="display:none" onchange="uploadGLFromDash(this)">
+                <button class="btn btn-outline-success btn-sm rounded-pill" onclick="downloadQBTemplate()">📥 Download Template</button>
+            </div>
         </div>
         <div class="table-responsive">
             <table class="table table-sm table-striped align-middle">
@@ -249,7 +253,7 @@
         a.click();
     }
 
-    // --- PARSE UPLOADED GL CSV ---
+    // --- PARSE UPLOADED GL CSV (PROVISIONING SCREEN) ---
     function handleGLFileUpload(input) {
         const file = input.files[0];
         if(!file) return;
@@ -263,6 +267,34 @@
             const badge = document.getElementById('glCountBadge');
             badge.style.display = 'block';
             badge.innerText = `✓ Loaded ${appGLOptions.length} Accounts from CSV`;
+        };
+        reader.readAsText(file);
+    }
+
+    // --- DASHBOARD DIRECT GL CSV UPLOAD ---
+    async function uploadGLFromDash(input) {
+        const file = input.files[0];
+        if (!file || !currentClient || !db) return;
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            document.getElementById('st').style.display = 'block';
+            const lines = e.target.result.split(/\r?\n/);
+            appGLOptions = lines
+                .map(l => l.split(',')[0].replace(/"/g, '').trim())
+                .filter(v => v && v.toLowerCase() !== "account name" && v.toLowerCase() !== "account");
+
+            // Save new GL list straight to Supabase
+            const { error } = await db.from('client_metadata').update({ gl_list: appGLOptions.join(",") }).eq('client_name', currentClient);
+
+            document.getElementById('st').style.display = 'none';
+
+            if (error) {
+                alert("Error updating GL List: " + error.message);
+            } else {
+                alert(`Successfully uploaded ${appGLOptions.length} GL Accounts!`);
+                await loadDash();
+            }
         };
         reader.readAsText(file);
     }
@@ -293,7 +325,7 @@
             nature: document.getElementById('nature').value || "General",
             qbo_id: document.getElementById('qi').value || "",
             qbo_sec: document.getElementById('qs').value || "",
-            gl_list: appGLOptions.join(",")
+            gl_list: (typeof appGLOptions !== 'undefined') ? appGLOptions.join(",") : ""
         };
 
         const { data: existing } = await db.from('client_metadata').select('client_name').eq('client_name', cName).maybeSingle();
@@ -421,7 +453,7 @@
         showPane('dash'); 
         document.getElementById('activeTitle').innerText = currentClient;
         
-        // Render Datalist & Batch Select
+        // Render Datalist & Batch Select Options
         const dl = document.getElementById('glChoices'); dl.innerHTML = ""; 
         const batchSel = document.getElementById('batchCategorySelect'); batchSel.innerHTML = '<option value="Uncategorized">-- Assign Account --</option>';
         appGLOptions.forEach(opt => {
