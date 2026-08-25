@@ -15,7 +15,7 @@
             --hca-bg: #F8F9FA; 
             --hca-border: #E2E8F0;
         }
-        body { background: var(--hca-bg); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--hca-dark); padding-bottom: 60px; }
+        body { background: var(--hca-bg); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--hca-dark); padding-bottom: 70px; }
         .rounded-xl { border-radius: 16px !important; }
         
         /* Glassmorphism Navbar */
@@ -47,10 +47,17 @@
         .dot-red { background: #EF4444; box-shadow: 0 0 8px #EF4444; }
         @keyframes signalPulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
-        /* Floating Vector AI Trigger */
-        #chat-trigger { position: fixed; bottom: 25px; left: 25px; width: 56px; height: 56px; background: var(--hca-dark); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,0.2); z-index: 3000; transition: all 0.25s ease; }
-        #chat-trigger:hover { transform: scale(1.08); background: var(--hca-sage); color: var(--hca-dark); }
-        
+        /* Sleek Command Action Bar for AuditPilot */
+        #chat-trigger-bar { position: fixed; bottom: 25px; left: 25px; background: var(--hca-dark); color: white; border-radius: 30px; padding: 8px 18px 8px 12px; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; box-shadow: 0 10px 25px rgba(44,62,80,0.25); z-index: 3000; transition: all 0.25s ease; border: 1px solid rgba(255,255,255,0.1); }
+        #chat-trigger-bar:hover { background: #1a252f; border-color: var(--hca-sage); transform: translateY(-2px); }
+        .chat-bar-badge { background: var(--hca-sage); color: var(--hca-dark); font-size: 0.65rem; font-weight: 800; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Assistant Drawer Window */
+        #chat-window { position: fixed; bottom: 80px; left: 25px; width: 360px; height: 480px; background: white; border-radius: 20px; box-shadow: 0 16px 40px rgba(0,0,0,0.15); display: none; flex-direction: column; z-index: 3000; border: 1px solid var(--hca-border); overflow: hidden; }
+        #chat-header { background: var(--hca-dark); color: white; padding: 16px 20px; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        #chat-content { flex-grow: 1; padding: 18px; overflow-y: auto; font-size: 0.88rem; line-height: 1.5; }
+        .chat-bubble { margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #F1F5F9; }
+
         /* Views & Layout Scaffolding */
         .view-pane { display: none; }
         .dash-tab { display: none; }
@@ -62,7 +69,6 @@
         #st { background: white; border-radius: 16px; padding: 20px 30px; position: fixed; bottom: 30px; right: 30px; box-shadow: 0 12px 32px rgba(0,0,0,0.12); display: none; z-index: 2000; border: 1px solid var(--hca-sage); }
         .batch-bar { background: #F1F5F9; padding: 16px; border-radius: 14px; border: 1px solid var(--hca-border); }
         
-        /* SVG Icon Alignment Utility */
         .icon-svg { width: 18px; height: 18px; fill: currentColor; vertical-align: middle; }
     </style>
 </head>
@@ -72,7 +78,7 @@
     <div class="fw-bold fs-4 brand-logo">Ledger<span class="fw-light text-muted">IQ</span> <span class="brand-badge">PRO</span></div>
     <div class="d-flex align-items-center gap-4">
         <div class="small fw-bold d-flex gap-3 status-pill">
-            <div class="d-flex align-items-center"><span class="status-dot" id="dot-ledger"></span> DB</div>
+            <div class="d-flex align-items-center"><span class="status-dot" id="dot-ledger"></span> Supabase</div>
             <div class="d-flex align-items-center"><span class="status-dot" id="dot-gemini"></span> AI</div>
             <div class="d-flex align-items-center"><span class="status-dot" id="dot-qbo"></span> QBO</div>
         </div>
@@ -251,18 +257,23 @@
     <div id="tab-meta" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5 class="fw-bold mb-3">Client Metadata</h5><div id="metaList"></div></div>
 </div>
 
-<!-- Floating Vector AI Navigator Button -->
-<div id="chat-trigger" onclick="toggleChat()">
-    <svg class="icon-svg" style="width:24px; height:24px;" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
+<!-- Command Action Bar for AuditPilot Assistant -->
+<div id="chat-trigger-bar" onclick="toggleChat()">
+    <svg class="icon-svg" style="width:16px; height:16px;" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
+    <span class="fw-semibold small">AuditPilot</span>
+    <span class="chat-bar-badge">Assistant</span>
 </div>
 
 <div id="chat-window">
     <div id="chat-header" class="d-flex align-items-center justify-content-between">
-        <span>LedgerIQ Navigator</span>
+        <div class="d-flex align-items-center gap-2">
+            <svg class="icon-svg" style="width:18px; height:18px;" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+            <span>AuditPilot Assistant</span>
+        </div>
         <button class="btn-close btn-close-white btn-sm" onclick="toggleChat()"></button>
     </div>
-    <div id="chat-content">Navigator active. Enter queries or instructions below.</div>
-    <div class="p-2 border-top"><input id="chat-input" class="form-control form-control-sm rounded-pill" placeholder="Ask Navigator..." onkeydown="if(event.key==='Enter') sendChat()"></div>
+    <div id="chat-content">AuditPilot active. Ask questions regarding workflow, classification, or ledger sync.</div>
+    <div class="p-2 border-top"><input id="chat-input" class="form-control form-control-sm rounded-pill" placeholder="Type command..." onkeydown="if(event.key==='Enter') sendChat()"></div>
 </div>
 
 <datalist id="glChoices"></datalist>
@@ -602,7 +613,7 @@
         b.scrollTop = b.scrollHeight;
 
         const apiKey = localStorage.getItem('hca_gk');
-        const projectContext = "You are the LedgerIQ Navigator support assistant. Current Client Context: " + (currentClient || "None Selected");
+        const projectContext = "You are the AuditPilot support assistant. Current Client Context: " + (currentClient || "None Selected");
 
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
             method: "POST",
