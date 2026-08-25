@@ -9,7 +9,7 @@
         body { background: var(--hca-bg); font-family: 'Segoe UI', sans-serif; color: var(--hca-dark); padding-bottom: 60px; }
         .rounded-xl { border-radius: 12px !important; }
         .navbar { background: white; border-bottom: 2px solid var(--hca-sage); padding: 1rem 2rem; }
-        .hero-section { background: var(--hca-dark); color: white; padding: 40px; text-align: center; margin-bottom: 40px; }
+        .hero-section { background: var(--hca-dark); color: white; padding: 60px 20px; text-align: center; margin-bottom: 40px; }
         .hero .sub-brand { position: absolute; bottom: 10px; right: 40px; font-weight: bold; color: var(--hca-sage); font-size: 0.8rem; }
         .card-custom { background: white; border: none; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); height: 100%; display: flex; flex-direction: column; transition: 0.3s; }
         .card-custom:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
@@ -38,7 +38,7 @@
 <div id="view-launchpad">
     <header class="hero-section">
         <h1 class="display-4 fw-bold">Financial Automation Portal</h1>
-        <p class="lead opacity-75">Professional Ledger Processing</p>
+        <div class="sub-brand">By East Wing</div>
     </header>
 
     <div class="container">
@@ -46,7 +46,7 @@
             <div class="col-md-5"><div class="card card-custom p-4 text-center">
                 <h5 class="mb-3 text-uppercase fw-bold">Secure Access</h5>
                 <input type="password" id="master_gk" class="form-control mb-3 rounded-pill text-center" placeholder="Enter Gemini API Key">
-                <button class="btn btn-dark-hca w-100 rounded-pill" onclick="lockKey()">Open Portal</button>
+                <button class="btn btn-dark-hca w-100" onclick="lockKey()">Open Portal</button>
             </div></div>
         </div>
 
@@ -89,10 +89,7 @@
             <input id="nature" class="form-control rounded-pill" placeholder="Nature">
             <input id="qi" class="form-control rounded-pill" placeholder="QBO ID">
             <input id="qs" type="password" class="form-control rounded-pill" placeholder="QBO Secret">
-            <div class="col-12 d-flex gap-2 pt-3">
-                <button onclick="save()" class="btn btn-dark-hca flex-grow-1 rounded-pill">Save & Provision</button>
-                <button onclick="showPane('launchpad')" class="btn btn-outline-secondary rounded-pill">Exit</button>
-            </div>
+            <div class="col-12 d-flex gap-2 pt-3"><button onclick="save()" class="btn btn-dark-hca flex-grow-1">Save & Provision</button><button onclick="showPane('launchpad')" class="btn btn-outline-secondary">Exit</button></div>
         </div>
     </div></div></div>
 </div>
@@ -114,22 +111,26 @@
     </div>
 
     <div id="tab-review" class="bg-white p-4 rounded-xl shadow-sm">
-        <div class="d-flex justify-content-between mb-3 align-items-center"><h5>Staging</h5><button class="btn btn-dark btn-sm rounded-pill px-3" onclick="pushQBO()">Push to QBO</button></div>
+        <div class="d-flex justify-content-between mb-3 align-items-center"><h5>Staging</h5><button class="btn btn-dark btn-sm rounded-pill" onclick="pushQBO()">Push to QBO</button></div>
         <table class="table table-hover table-sm align-middle"><thead class="table-light"><tr><th>Source</th><th>Date</th><th>Description</th><th>Amount</th><th>Expense Account</th><th>Status</th><th>Bank Account</th></tr></thead><tbody id="tb-staging"></tbody></table>
     </div>
 
-    <div id="tab-history" class="bg-white p-4 shadow-sm" style="display:none; border-radius:15px"><h5>History</h5><table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync Status</th></tr></thead><tbody id="tb-history"></tbody></table></div>
+    <div id="tab-history" class="bg-white p-4 shadow-sm" style="display:none; border-radius:15px"><h5>History</h5><table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync</th></tr></thead><tbody id="tb-history"></tbody></table></div>
 
     <div id="tab-je" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <div class="row g-3 mb-4">
-            <div class="col-md-6"><div class="summary-card"><h6>Bank Statement Items Total</h6><h4 id="bankTotal">$0.00</h4></div></div>
-            <div class="col-md-6"><div class="summary-card"><h6>Bank Uncategorized Items</h6><h4 id="bankUncat">$0.00</h4></div></div>
+            <div class="col-md-3"><div class="summary-card"><h6>Bank Total</h6><h4 id="bankTotal">$0.00</h4></div></div>
+            <div class="col-md-3"><div class="summary-card"><h6>Bank Uncat.</h6><h4 id="bankUncat">$0.00</h4></div></div>
+            <div class="col-md-3"><div class="summary-card"><h6>CC Total</h6><h4 id="ccTotal">$0.00</h4></div></div>
+            <div class="col-md-3"><div class="summary-card"><h6>CC Uncat.</h6><h4 id="ccUncat">$0.00</h4></div></div>
         </div>
         <div id="jeList" class="mt-3 font-monospace"></div>
     </div>
 
     <div id="tab-meta" class="bg-white p-4 shadow-sm" style="display:none; border-radius:15px"><h5>Client Info</h5><div id="metaList"></div></div>
 </div>
+
+<datalist id="glChoices"></datalist>
 
 <div id="st"><div class="spinner-border spinner-border-sm text-primary me-2"></div><strong>Processing Data...</strong></div>
 
@@ -196,7 +197,6 @@
         
         sBody.innerHTML = tableRowsHtml;
         
-        // After DOM injection, set values to match AI suggestions
         res.staging.forEach(i => {
             document.getElementById('c'+i.row).value = i.cat || "Uncategorized";
             document.getElementById('b'+i.row).value = i.bnk || "Uncategorized";
@@ -208,19 +208,34 @@
     }
 
     function recalcJE() {
-        let jeData = {}; let bankTotal = 0; let bankUncat = 0;
+        let jeData = {}; 
+        let bankTotal = 0; let bankUncat = 0;
+        let ccTotal = 0; let ccUncat = 0;
+        
         document.querySelectorAll('.row-cat').forEach(inp => {
             let r = inp.getAttribute('data-row');
             let item = localData.find(x => x.row == r);
             let val = parseFloat(item.amt.replace(/[^0-9.-]+/g,""));
             let expAcc = inp.value;
             let bnkAcc = document.getElementById('b'+r).value;
-            if(item.src === "BANK") { bankTotal += val; if(expAcc === "Uncategorized" || expAcc === "" || bnkAcc === "Uncategorized" || bnkAcc === "") bankUncat += val; }
+
+            if(item.src === "BANK") {
+                bankTotal += val;
+                if(expAcc === "Uncategorized" || expAcc === "" || bnkAcc === "Uncategorized" || bnkAcc === "") bankUncat += val;
+            } else if(item.src === "CREDIT CARD") {
+                ccTotal += val;
+                if(expAcc === "Uncategorized" || expAcc === "" || bnkAcc === "Uncategorized" || bnkAcc === "") ccUncat += val;
+            }
+
             if(expAcc) jeData[expAcc] = (jeData[expAcc] || 0) + val;
             if(bnkAcc) jeData[bnkAcc] = (jeData[bnkAcc] || 0) - val;
         });
+
         document.getElementById('bankTotal').innerText = "$" + bankTotal.toFixed(2);
         document.getElementById('bankUncat').innerText = "$" + bankUncat.toFixed(2);
+        document.getElementById('ccTotal').innerText = "$" + ccTotal.toFixed(2);
+        document.getElementById('ccUncat').innerText = "$" + ccUncat.toFixed(2);
+
         const jeDiv = document.getElementById('jeList'); jeDiv.innerHTML = `<div class="je-item fw-bold border-bottom"><span>Account</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
         for (let acc in jeData) {
             let bal = jeData[acc]; if(Math.abs(bal) < 0.01) continue;
