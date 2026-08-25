@@ -33,7 +33,8 @@
         #chat-trigger { position: fixed; bottom: 20px; left: 20px; width: 50px; height: 50px; background: var(--hca-dark); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 3000; }
         #chat-window { position: fixed; bottom: 80px; left: 20px; width: 320px; height: 400px; background: white; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: none; flex-direction: column; z-index: 3000; border: 1px solid #eee; overflow: hidden;}
         #chat-header { background: var(--hca-dark); color: white; padding: 15px; font-weight: bold; }
-        #chat-content { flex-grow: 1; padding: 15px; overflow-y: auto; font-size: 0.9rem; }
+        #chat-content { flex-grow: 1; padding: 15px; overflow-y: auto; font-size: 0.9rem; line-height: 1.4; }
+        .chat-bubble { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
         
         .je-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; font-family: monospace; }
         .dr { color: #2C3E50; width: 80px; text-align: right; font-weight: bold;}
@@ -83,7 +84,7 @@
                     <div class="card-body p-4 text-center"><button class="btn btn-hca w-100" onclick="triggerFile('PDF')">Process Bank PDF</button></div>
                 </div></div>
                 <div class="col-md-4"><div class="card card-custom">
-                    <img src="https://images.unsplash.com/photo-1556742049-0a67568d0d9f?auto=format&fit=crop&w=600&q=80" class="card-img-top">
+                    <img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=600&q=80" class="card-img-top">
                     <div class="card-body p-4 text-center"><button class="btn btn-hca w-100" onclick="triggerFile('CC')">Process CC PDF</button></div>
                 </div></div>
                 <div class="col-md-4"><div class="card card-custom">
@@ -141,7 +142,7 @@
 <div id="st"><strong>Processing...</strong></div>
 
 <script>
-    const ENGINE_URL = "https://script.google.com/macros/s/AKfycbxQB2QUWScC2U05Lnuoj1JjG6jrGEZi2TSheul8XautLG7v8QGR0BDQYmcwerOTClFTzg/exec";
+    const ENGINE_URL = "https://script.google.com/macros/s/AKfycby6EZ4AMGf5UNJuzGSWf9DFyUqVSl48I4AnWKc39enVgbhStbhKZ6BgTLgqUHLMaihx-A/exec";
     let currentClient = "";
     let localData = [];
 
@@ -215,8 +216,8 @@
     async function sendChat() {
         const i = document.getElementById('chat-input'), b = document.getElementById('chat-content'), q = i.value; 
         if(!q) return; i.value = "";
-        b.innerHTML += `<div class="mt-2 text-primary"><strong>You:</strong> ${q}</div>`;
-        b.innerHTML += `<div id="chat-thinking" class="mt-2 text-muted small"><em>Navigator is thinking...</em></div>`;
+        b.innerHTML += `<div class="chat-bubble text-primary"><strong>You:</strong> ${q}</div>`;
+        b.innerHTML += `<div id="chat-thinking" class="chat-bubble text-muted small"><em>Navigator is thinking...</em></div>`;
         b.scrollTop = b.scrollHeight;
         
         const res = await callEngine({action: "chatBot", query: q, client: currentClient, gk: localStorage.getItem('hca_gk')});
@@ -224,7 +225,12 @@
         const thinking = document.getElementById('chat-thinking');
         if(thinking) thinking.remove();
         
-        b.innerHTML += `<div class="mt-2 text-dark"><strong>AI:</strong> ${res.reply}</div>`; 
+        // Structured text formatting logic
+        const structuredReply = res.reply
+            .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // Handle Bold
+            .replace(/\n/g, '<br>');               // Handle line breaks
+            
+        b.innerHTML += `<div class="chat-bubble text-dark"><strong>AI:</strong><br>${structuredReply}</div>`; 
         b.scrollTop = b.scrollHeight;
     }
 
