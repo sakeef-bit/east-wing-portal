@@ -9,7 +9,7 @@
         body { background: var(--hca-bg); font-family: 'Segoe UI', sans-serif; color: var(--hca-dark); padding-bottom: 60px; }
         .rounded-xl { border-radius: 12px !important; }
         .navbar { background: white; border-bottom: 2px solid var(--hca-sage); padding: 1rem 2rem; }
-        .hero-section { background: var(--hca-dark); color: white; padding: 40px; text-align: center; margin-bottom: 40px; }
+        .hero-section { background: var(--hca-dark); color: white; padding: 60px 20px; text-align: center; margin-bottom: 40px; }
         .hero .sub-brand { position: absolute; bottom: 10px; right: 40px; font-weight: bold; color: var(--hca-sage); font-size: 0.8rem; }
         .card-custom { background: white; border: none; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); height: 100%; display: flex; flex-direction: column; transition: 0.3s; }
         .card-custom:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
@@ -46,7 +46,7 @@
             <div class="col-md-5"><div class="card card-custom p-4 text-center">
                 <h5 class="mb-3 text-uppercase fw-bold">Secure Access</h5>
                 <input type="password" id="master_gk" class="form-control mb-3 text-center" placeholder="Enter Gemini API Key">
-                <button class="btn btn-dark-hca w-100 rounded-pill" onclick="lockKey()">Open Portal</button>
+                <button class="btn btn-dark-hca w-100" onclick="lockKey()">Open Portal</button>
             </div></div>
         </div>
 
@@ -89,8 +89,7 @@
             <input id="nature" class="form-control" placeholder="Nature">
             <input id="qi" class="form-control" placeholder="QBO ID">
             <input id="qs" type="password" class="form-control" placeholder="QBO Secret">
-            <textarea id="gl" class="form-control" rows="4" style="border-radius:15px" placeholder="GL Accounts (comma separated)"></textarea>
-            <div class="col-12 d-flex gap-2 pt-3"><button onclick="save()" class="btn btn-dark-hca flex-grow-1 rounded-pill">Save & Provision</button><button onclick="showPane('launchpad')" class="btn btn-outline-secondary">Exit</button></div>
+            <div class="col-12 d-flex gap-2 pt-3"><button onclick="save()" class="btn btn-dark-hca flex-grow-1">Save & Provision</button><button onclick="showPane('launchpad')" class="btn btn-outline-secondary">Exit</button></div>
         </div>
     </div></div></div>
 </div>
@@ -100,7 +99,7 @@
         <h2 id="activeTitle" class="fw-bold">Dashboard</h2>
         <div class="gap-2 d-flex">
             <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="approveAll()">Approve All</button>
-            <button class="btn btn-primary btn-sm rounded-pill px-3" onclick="saveAll()">Save Changes</button>
+            <button class="btn btn-primary btn-sm rounded-pill px-3" onclick="saveAll()">Save All Changes</button>
             <button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="showPane('launchpad')">Exit</button>
         </div>
     </div>
@@ -130,10 +129,12 @@
 </div>
 
 <datalist id="glChoices"></datalist>
+
 <div id="st"><div class="spinner-border spinner-border-sm text-primary me-2"></div><strong>Processing Data...</strong></div>
 
 <script>
-    const ENGINE_URL = "https://script.google.com/macros/s/AKfycbyDjxsM9iEG0EhtEdQZeeMG_YGbzTvaWeUP4rs249egTWzYK4v7YtXVAhSO5KkGUc8h/exec";
+
+    const ENGINE_URL = "https://script.google.com/macros/s/AKfycbxlhXimRF8xS7RwTzKCagvZXtmT1xQIQdfVNJTufGTHREGhITZWYvUjNK-PgjGQ_jdUGA/exec";
     let currentClient = "";
     let localData = [];
 
@@ -156,18 +157,32 @@
     };
     document.getElementById('masterClient').onchange = function() { document.getElementById('actionGrid').style.opacity = this.value ? "1" : "0.3"; document.getElementById('actionGrid').style.pointerEvents = this.value ? "auto" : "none"; };
     function showPane(p) { document.querySelectorAll('.view-pane, #view-launchpad').forEach(el => el.style.display = 'none'); document.getElementById('view-' + p).style.display = 'block'; }
-    async function save() { document.getElementById('st').style.display = 'block'; const res = await callEngine({ action: "provision", clientName: document.getElementById('n').value, nature: document.getElementById('nature').value, keys: { QBO_ID: document.getElementById('qi').value, QBO_SEC: document.getElementById('qs').value }, glList: document.getElementById('gl').value }); alert(res.msg); location.reload(); }
+    async function save() { document.getElementById('st').style.display = 'block'; const res = await callEngine({ action: "provision", clientName: document.getElementById('n').value, nature: document.getElementById('nature').value, keys: { QBO_ID: document.getElementById('qi').value, QBO_SEC: document.getElementById('qs').value }, glList: "" }); alert(res.msg); location.reload(); }
     function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
-    async function handleFile(input, type) { currentClient = document.getElementById('masterClient').value; document.getElementById('st').style.display = 'block'; const reader = new FileReader(); reader.onload = async (e) => { const res = await callEngine({action: "process", client: currentClient, source: type, fileData: e.target.result.split(',')[1], geminiKey: localStorage.getItem('hca_gk')}); renderDashboard(res); }; reader.readAsDataURL(input.files[0]); }
     
+    async function handleFile(input, type) { 
+        currentClient = document.getElementById('masterClient').value; 
+        document.getElementById('st').style.display = 'block'; 
+        const reader = new FileReader(); 
+        reader.onload = async (e) => { 
+            const res = await callEngine({action: "process", client: currentClient, source: type, fileData: e.target.result.split(',')[1], geminiKey: localStorage.getItem('hca_gk')}); 
+            renderDashboard(res); 
+        }; 
+        reader.readAsDataURL(input.files[0]); 
+    }
+
     function renderDashboard(res) {
         document.getElementById('st').style.display = 'none'; if(!res || res.error) { alert("Error: " + (res ? res.error : "No data")); return; }
         showPane('dash'); document.getElementById('activeTitle').innerText = currentClient;
         localData = res.staging;
-        const dl = document.getElementById('glChoices'); dl.innerHTML = ""; res.glOptions.forEach(opt => dl.innerHTML += `<option value="${opt}">`);
-        const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
         
+        // Surgical Fix: Build dropdown list
+        const dl = document.getElementById('glChoices'); dl.innerHTML = ""; 
+        res.glOptions.forEach(opt => dl.innerHTML += `<option value="${opt}">`);
+        
+        const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
         res.staging.forEach(i => {
+            // Surgical Fix: Both Category and Bank Category now use list="glChoices"
             sBody.innerHTML += `<tr><td>${i.src}</td><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td><input id="c${i.row}" list="glChoices" data-row="${i.row}" class="form-control form-control-sm mb-0 row-cat" value="${i.cat}" oninput="recalcJE()"></td><td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td><td><input id="b${i.row}" list="glChoices" class="form-control form-control-sm mb-0 row-bnk" value="${i.bnk || ''}" oninput="recalcJE()"></td></tr>`;
         });
         document.getElementById('tb-history').innerHTML = ""; res.history.forEach(i => { document.getElementById('tb-history').innerHTML += `<tr><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; });
@@ -177,34 +192,22 @@
 
     function recalcJE() {
         let jeData = {}; let bankTotal = 0; let bankUncat = 0;
-        
         document.querySelectorAll('.row-cat').forEach(inp => {
             let r = inp.getAttribute('data-row');
             let item = localData.find(x => x.row == r);
             let val = parseFloat(item.amt.replace(/[^0-9.-]+/g,""));
             let expAcc = inp.value;
             let bnkAcc = document.getElementById('b'+r).value;
-
-            // Totals only for BANK items
-            if(item.src === "BANK") {
-                bankTotal += val;
-                if(expAcc === "Uncategorized" || expAcc === "" || bnkAcc === "") bankUncat += val;
-            }
-
-            // Balanced Logic: Expense leg (DR) and Bank leg (CR)
+            if(item.src === "BANK") { bankTotal += val; if(expAcc === "Uncategorized" || expAcc === "" || bnkAcc === "") bankUncat += val; }
             if(expAcc) jeData[expAcc] = (jeData[expAcc] || 0) + val;
             if(bnkAcc) jeData[bnkAcc] = (jeData[bnkAcc] || 0) - val;
         });
-
         document.getElementById('bankTotal').innerText = "$" + bankTotal.toFixed(2);
         document.getElementById('bankUncat').innerText = "$" + bankUncat.toFixed(2);
-
         const jeDiv = document.getElementById('jeList'); jeDiv.innerHTML = `<div class="je-item fw-bold border-bottom"><span>Account</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
         for (let acc in jeData) {
-            let bal = jeData[acc];
-            if(Math.abs(bal) < 0.01) continue;
-            let dr = bal < 0 ? Math.abs(bal) : 0;
-            let cr = bal > 0 ? bal : 0;
+            let bal = jeData[acc]; if(Math.abs(bal) < 0.01) continue;
+            let dr = bal < 0 ? Math.abs(bal) : 0; let cr = bal > 0 ? bal : 0;
             jeDiv.innerHTML += `<div class="je-item"><span>${acc}</span><span class="dr">${dr?`$${dr.toFixed(2)}`:''}</span><span class="cr">${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
         }
     }
