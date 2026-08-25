@@ -18,28 +18,23 @@
         body { background: var(--hca-bg); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--hca-dark); padding-bottom: 70px; }
         .rounded-xl { border-radius: 16px !important; }
         
-        /* Glassmorphism Navbar */
         .navbar { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); border-bottom: 2px solid var(--hca-sage); padding: 0.8rem 2rem; }
         .brand-logo { font-weight: 800; letter-spacing: -0.5px; }
         .brand-badge { background: var(--hca-sage); color: var(--hca-dark); font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; margin-left: 8px; letter-spacing: 0.5px; }
 
-        /* Modern Hero Header */
         .hero-section { background: var(--hca-dark); color: white; padding: 60px 20px 70px; text-align: center; border-radius: 0 0 32px 35px; margin-bottom: 40px; }
         
-        /* Action Cards & Hover Effects */
         .card-custom { background: white; border: 1px solid var(--hca-border); border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03); height: 100%; display: flex; flex-direction: column; transition: all 0.25s ease-in-out; }
         .card-custom:hover { transform: translateY(-6px); box-shadow: 0 16px 32px rgba(44,62,80,0.1); border-color: var(--hca-sage); }
         .card-img-container { height: 170px; overflow: hidden; position: relative; }
         .card-img-top { height: 100%; width: 100%; object-fit: cover; filter: brightness(0.95); transition: transform 0.3s ease; }
         .card-custom:hover .card-img-top { transform: scale(1.05); filter: brightness(1.02); }
         
-        /* Interactive Buttons */
         .btn-hca { background: var(--hca-sage); color: var(--hca-dark); border: none; font-weight: 600; padding: 12px 20px; border-radius: 12px; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-hca:hover { background: #b5c2a5; color: var(--hca-dark); }
         .btn-dark-hca { background: var(--hca-dark); color: white; border-radius: 12px; padding: 12px 20px; font-weight: 600; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-dark-hca:hover { background: #1a252f; color: white; }
         
-        /* Status Dot Indicator Styles */
         .status-pill { background: white; padding: 6px 16px; border-radius: 30px; border: 1px solid var(--hca-border); }
         .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; background: #CBD5E1; }
         .dot-green { background: #22C55E; box-shadow: 0 0 8px #22C55E; animation: signalPulse 2s infinite; }
@@ -47,18 +42,15 @@
         .dot-red { background: #EF4444; box-shadow: 0 0 8px #EF4444; }
         @keyframes signalPulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
-        /* Sleek Command Action Bar for AuditPilot */
         #chat-trigger-bar { position: fixed; bottom: 25px; left: 25px; background: var(--hca-dark); color: white; border-radius: 30px; padding: 8px 18px 8px 12px; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; box-shadow: 0 10px 25px rgba(44,62,80,0.25); z-index: 3000; transition: all 0.25s ease; border: 1px solid rgba(255,255,255,0.1); }
         #chat-trigger-bar:hover { background: #1a252f; border-color: var(--hca-sage); transform: translateY(-2px); }
         .chat-bar-badge { background: var(--hca-sage); color: var(--hca-dark); font-size: 0.65rem; font-weight: 800; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        /* Assistant Drawer Window */
         #chat-window { position: fixed; bottom: 80px; left: 25px; width: 360px; height: 480px; background: white; border-radius: 20px; box-shadow: 0 16px 40px rgba(0,0,0,0.15); display: none; flex-direction: column; z-index: 3000; border: 1px solid var(--hca-border); overflow: hidden; }
         #chat-header { background: var(--hca-dark); color: white; padding: 16px 20px; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.08); }
         #chat-content { flex-grow: 1; padding: 18px; overflow-y: auto; font-size: 0.88rem; line-height: 1.5; }
         .chat-bubble { margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #F1F5F9; }
 
-        /* Views & Layout Scaffolding */
         .view-pane { display: none; }
         .dash-tab { display: none; }
         .app-nav { background: white; border-radius: 14px; display: flex; overflow: hidden; margin-bottom: 30px; border: 1px solid var(--hca-border); }
@@ -70,6 +62,9 @@
         .batch-bar { background: #F1F5F9; padding: 16px; border-radius: 14px; border: 1px solid var(--hca-border); }
         
         .icon-svg { width: 18px; height: 18px; fill: currentColor; vertical-align: middle; }
+        .je-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; font-family: monospace; }
+        .dr { color: #2C3E50; width: 100px; text-align: right; font-weight: bold; }
+        .cr { color: #d9534f; width: 100px; text-align: right; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -124,10 +119,7 @@
                         <img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80" class="card-img-top">
                     </div>
                     <div class="card-body p-4 text-center">
-                        <button class="btn btn-hca w-100" onclick="triggerFile('PDF')">
-                            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-                            Process Bank Statement
-                        </button>
+                        <button class="btn btn-hca w-100" onclick="triggerFile('PDF')">Process Bank Statement</button>
                     </div>
                 </div></div>
                 <div class="col-md-4"><div class="card card-custom">
@@ -135,10 +127,7 @@
                         <img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=600&q=80" class="card-img-top">
                     </div>
                     <div class="card-body p-4 text-center">
-                        <button class="btn btn-hca w-100" onclick="triggerFile('CC')">
-                            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
-                            Process Credit Card PDF
-                        </button>
+                        <button class="btn btn-hca w-100" onclick="triggerFile('CC')">Process Credit Card PDF</button>
                     </div>
                 </div></div>
                 <div class="col-md-4"><div class="card card-custom">
@@ -146,10 +135,7 @@
                         <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80" class="card-img-top">
                     </div>
                     <div class="card-body p-4 text-center">
-                        <button class="btn btn-hca w-100" onclick="loadDash()">
-                            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>
-                            Open Review Dashboard
-                        </button>
+                        <button class="btn btn-hca w-100" onclick="loadDash()">Open Review Dashboard</button>
                     </div>
                 </div></div>
             </div>
@@ -173,9 +159,7 @@
                     <h6 class="fw-bold mb-1">QuickBooks Chart of Accounts / GL Source</h6>
                     <p class="small text-muted mb-3">Upload your QuickBooks export (.csv) to populate account choices.</p>
                     <input type="file" id="glFileInputConfig" accept=".csv" class="form-control mb-3" onchange="handleGLFileUpload(this)">
-                    <button class="btn btn-sm btn-outline-secondary rounded-pill fw-semibold" onclick="downloadQBTemplate()">
-                        Download QB GL Template
-                    </button>
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill fw-semibold" onclick="downloadQBTemplate()">Download QB GL Template</button>
                     <div id="glCountBadge" class="small text-success mt-2 fw-bold" style="display:none;"></div>
                 </div>
             </div>
@@ -200,6 +184,7 @@
     
     <div class="app-nav">
         <div id="nav-review" class="app-nav-btn active" onclick="switchTab('review')">REVIEW STAGING</div>
+        <div id="nav-pnl" class="app-nav-btn" onclick="switchTab('pnl')">VISUAL P&L</div>
         <div id="nav-gl" class="app-nav-btn" onclick="switchTab('gl')">CHART OF ACCOUNTS</div>
         <div id="nav-history" class="app-nav-btn" onclick="switchTab('history')">PERMANENT LEDGER</div>
         <div id="nav-je" class="app-nav-btn" onclick="switchTab('je')">JOURNAL ENTRY VIEW</div>
@@ -210,17 +195,28 @@
     <div id="tab-review" class="bg-white p-4 rounded-xl shadow-sm">
         <div class="d-flex justify-content-between mb-3 align-items-center">
             <h5 class="fw-bold mb-0">Staging Queue</h5>
-            <button class="btn btn-dark btn-sm rounded-pill px-4 fw-semibold" onclick="pushQBO()">Push Approved to QBO</button>
+            <button class="btn btn-dark btn-sm rounded-pill px-4 fw-semibold sync-gate-btn" onclick="pushQBO()">Push Approved to QBO</button>
         </div>
         <div class="batch-bar mb-4 row g-3">
             <div class="col-md-5"><input type="text" id="batchSearchInput" class="form-control form-control-sm" placeholder="Filter Vendor (e.g., Uber)"></div>
             <div class="col-md-4"><select id="batchCategorySelect" class="form-select form-select-sm"><option value="Uncategorized">-- Assign Target Account --</option></select></div>
             <div class="col-md-3"><button class="btn btn-hca btn-sm w-100 fw-semibold" onclick="applyBatch()">Apply Category Match</button></div>
         </div>
-        <table class="table table-hover table-sm align-middle"><thead class="table-light"><tr><th>Source</th><th>Date</th><th>Description</th><th>Amount</th><th>Expense Account</th><th>Status</th><th>Bank Account</th></tr></thead><tbody id="tb-staging"></tbody></table>
+        <table class="table table-hover table-sm align-middle"><thead class="table-light"><tr><th>Source</th><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Stat</th><th>Bank</th><th>Class</th></tr></thead><tbody id="tb-staging"></tbody></table>
     </div>
 
-    <!-- TAB 2: CHART OF ACCOUNTS -->
+    <!-- TAB 2: VISUAL P&L DASHBOARD -->
+    <div id="tab-pnl" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
+        <div class="row g-3 mb-4">
+            <div class="col-md-3"><div class="summary-card"><h6>Total Revenue</h6><h3 id="stat-rev" class="fw-bold mb-0">$0.00</h3></div></div>
+            <div class="col-md-3"><div class="summary-card"><h6>Total Expenses</h6><h3 id="stat-exp" class="text-danger fw-bold mb-0">$0.00</h3></div></div>
+            <div class="col-md-3"><div class="summary-card"><h6>Net Income</h6><h3 id="stat-net" class="fw-bold mb-0">$0.00</h3></div></div>
+            <div class="col-md-3"><div class="summary-card"><h6>Profit Margin</h6><h3 id="stat-margin" class="fw-bold mb-0">0%</h3></div></div>
+        </div>
+        <div class="row"><div class="col-md-12"><canvas id="chart-bar" height="100"></canvas></div></div>
+    </div>
+
+    <!-- TAB 3: CHART OF ACCOUNTS -->
     <div id="tab-gl" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <div class="d-flex justify-content-between mb-3 align-items-center">
             <h5 class="fw-bold mb-0">Active Chart of Accounts</h5>
@@ -238,22 +234,17 @@
         </div>
     </div>
 
-    <!-- TAB 3: HISTORY -->
+    <!-- TAB 4: HISTORY -->
     <div id="tab-history" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5 class="fw-bold mb-3">Permanent Ledger History</h5><table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync Reference</th></tr></thead><tbody id="tb-history"></tbody></table></div>
     
-    <!-- TAB 4: JOURNAL ENTRY VIEW -->
+    <!-- TAB 5: JOURNAL ENTRY & RECONCILIATION GATE VIEW -->
     <div id="tab-je" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
+        <div id="reconGateBanner" class="card p-3 mb-3 text-white fw-bold"></div>
         <div id="jeBalanceAlert" class="alert mb-4 text-center fw-bold"></div>
-        <div class="row g-3 mb-4">
-            <div class="col-md-3"><div class="summary-card"><h6>Bank Total</h6><h4 id="bankTotal" class="fw-bold mb-0">$0.00</h4></div></div>
-            <div class="col-md-3"><div class="summary-card"><h6>Bank Uncategorized</h6><h4 id="bankUncat" class="fw-bold mb-0">$0.00</h4></div></div>
-            <div class="col-md-3"><div class="summary-card"><h6>Credit Card Total</h6><h4 id="ccTotal" class="fw-bold mb-0">$0.00</h4></div></div>
-            <div class="col-md-3"><div class="summary-card"><h6>Credit Card Uncategorized</h6><h4 id="ccUncat" class="fw-bold mb-0">$0.00</h4></div></div>
-        </div>
         <div id="jeList" class="mt-3 font-monospace"></div>
     </div>
 
-    <!-- TAB 5: CLIENT METADATA -->
+    <!-- TAB 6: CLIENT METADATA -->
     <div id="tab-meta" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5 class="fw-bold mb-3">Client Metadata</h5><div id="metaList"></div></div>
 </div>
 
@@ -287,6 +278,10 @@
     let currentClient = "";
     let localData = [];
     let appGLOptions = [];
+    let historyData = [];
+    let stmtStart = 0, stmtEnd = 0, barChart = null;
+
+    const CLASS_OPTIONS = ["General", "Marketing", "Sales", "Operations", "NY-Office"];
 
     function lockKey() { 
         const keyVal = document.getElementById('master_gk').value;
@@ -300,7 +295,7 @@
             if (window.supabase) {
                 db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
             }
-        } catch(e) { console.error("Supabase Initialization Error:", e); }
+        } catch(e) { console.error("Supabase Error:", e); }
 
         if(localStorage.getItem('hca_gk')) {
             document.getElementById('keyGate').style.display = 'none'; 
@@ -373,15 +368,11 @@
 
     async function getClientList() {
         if (!db) return;
-        const { data, error } = await db.from('client_metadata').select('client_name');
-        if (error) console.error("Database fetch error:", error);
-
+        const { data } = await db.from('client_metadata').select('client_name');
         const sel = document.getElementById('masterClient');
         sel.innerHTML = '<option value="">-- Select Client Account --</option>';
         if (data && data.length > 0) {
-            data.forEach(v => {
-                sel.innerHTML += `<option value="${v.client_name}">${v.client_name}</option>`;
-            });
+            data.forEach(v => sel.innerHTML += `<option value="${v.client_name}">${v.client_name}</option>`);
         }
     }
 
@@ -451,9 +442,9 @@
                 const apiKey = localStorage.getItem('hca_gk');
 
                 const behavior = type === "CC" ? "Spend is negative, Payments positive." : "Debits are negative, Credits positive.";
-                const prompt = "ACT AS: Expert Senior Bookkeeper. Extract all transactions from the TRANSACTION HISTORY table in the provided PDF. Extract Date, Description (Vendor), and Amount for every row. Match using GL accounts: [" + appGLOptions.join(",") + "]. " + behavior + " Return ONLY a JSON array. SCHEMA: [{'date': 'YYYY-MM-DD', 'desc': 'Merchant Name', 'amount': 0.00, 'category': 'Account Name'}]";
+                const prompt = `ACT AS: Forensic Accountant. 1. Extract starting_balance and ending_balance from header. 2. Extract transactions. Match using GL accounts: [${appGLOptions.join(",")}]. ${behavior} Return ONLY JSON Object: {"starting_balance":0.0, "ending_balance":0.0, "transactions":[{"date":"YYYY-MM-DD","desc":"","amount":0.00,"category":""}]}`;
 
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
@@ -464,9 +455,14 @@
 
                 const jsonRes = await res.json();
                 const rawText = jsonRes.candidates[0].content.parts[0].text;
-                const transactions = JSON.parse(rawText);
+                const extracted = JSON.parse(rawText);
 
-                const rows = transactions.map(t => ({
+                // Save Statement Balances to Metadata
+                stmtStart = extracted.starting_balance || 0;
+                stmtEnd = extracted.ending_balance || 0;
+                await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).eq('client_name', currentClient);
+
+                const rows = extracted.transactions.map(t => ({
                     client_name: currentClient,
                     source: type === 'PDF' ? 'BANK' : 'CREDIT CARD',
                     txn_date: t.date,
@@ -475,6 +471,7 @@
                     category: t.category || "Uncategorized",
                     status: "PENDING",
                     bank_category: "Uncategorized",
+                    class_name: "General",
                     fingerprint: btoa(t.date + (t.desc || "") + t.amount)
                 }));
 
@@ -506,17 +503,20 @@
             amt: String(s.amount), 
             cat: s.category || "Uncategorized", 
             stat: s.status || "PENDING", 
-            bnk: s.bank_category || "Uncategorized" 
+            bnk: s.bank_category || "Uncategorized",
+            cls: s.class_name || "General"
         }));
 
-        if (meta && meta.gl_list) {
-            appGLOptions = meta.gl_list.split(',').filter(Boolean);
+        if (meta) {
+            stmtStart = parseFloat(meta.stmt_start || 0);
+            stmtEnd = parseFloat(meta.stmt_end || 0);
+            if (meta.gl_list) appGLOptions = meta.gl_list.split(',').filter(Boolean);
         }
 
-        const historyList = (ledger || []).map(l => ({ date: l.txn_date, desc: l.description, amt: String(l.amount), cat: l.category, qbo: l.qbo_id || "SYNCED" }));
+        historyData = (ledger || []).map(l => ({ date: l.txn_date, desc: l.description, amt: String(l.amount), cat: l.category, qbo: l.qbo_id || "SYNCED" }));
         const metaList = meta ? [["Client", meta.client_name], ["Nature", meta.nature], ["QBO_ID", meta.qbo_id]] : [];
 
-        renderDashboard({ staging: localData, history: historyList, metadata: metaList }); 
+        renderDashboard({ staging: localData, history: historyData, metadata: metaList }); 
     }
 
     function renderDashboard(res) {
@@ -533,7 +533,7 @@
 
         const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
         localData.forEach(i => {
-            sBody.innerHTML += `<tr><td>${i.src}</td><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()" onkeydown="handleKeyNav(event, ${i.row}, 'c')"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td><td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat" onkeydown="handleKeyNav(event, ${i.row}, 's')"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td><td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()" onkeydown="handleKeyNav(event, ${i.row}, 'b')"><option value="Uncategorized">Uncategorized</option></select></td></tr>`;
+            sBody.innerHTML += `<tr><td>${i.src}</td><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td><td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td><td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td><td><select id="l${i.row}" class="form-select form-select-sm">${CLASS_OPTIONS.map(c => `<option value="${c}" ${i.cls==c?'selected':''}>${c}</option>`).join('')}</select></td></tr>`;
         });
         
         localData.forEach(i => { 
@@ -553,6 +553,7 @@
         res.metadata.forEach(m => document.getElementById('metaList').innerHTML += `<div class="small py-1 border-bottom"><strong>${m[0]}:</strong> <span class="text-muted">${m[1]}</span></div>`);
         
         recalcJE();
+        renderPnLCharts();
     }
 
     function applyBatch() {
@@ -563,44 +564,75 @@
         recalcJE();
     }
 
-    function handleKeyNav(e, row, prefix) {
-        const prefixes = ['c', 's', 'b'];
-        let targetRow = row; let targetPrefix = prefix; let jump = false;
-        if (e.key === "Enter") { e.preventDefault(); targetRow = e.shiftKey ? row - 1 : row + 1; jump = true; }
-        else if (e.key === "ArrowDown") { e.preventDefault(); targetRow = row + 1; jump = true; }
-        else if (e.key === "ArrowUp") { e.preventDefault(); targetRow = row - 1; jump = true; }
-        else if (e.key === "ArrowRight") { let idx = prefixes.indexOf(prefix); if (idx < prefixes.length - 1) { e.preventDefault(); targetPrefix = prefixes[idx + 1]; jump = true; } }
-        else if (e.key === "ArrowLeft") { let idx = prefixes.indexOf(prefix); if (idx > 0) { e.preventDefault(); targetPrefix = prefixes[idx - 1]; jump = true; } }
-        if (jump) { const next = document.getElementById(targetPrefix + targetRow); if (next) next.focus(); }
-    }
-
     function recalcJE() {
-        let jeData = {}; let bT = 0, bU = 0, cT = 0, cU = 0;
+        let jeData = {}, tDr = 0, tCr = 0, netAct = 0;
         document.querySelectorAll('.row-cat').forEach(inp => {
-            let r = inp.getAttribute('data-row'), item = localData.find(x => x.row == r), val = parseFloat(item.amt.replace(/[^0-9.-]+/g,"")), exp = inp.value, bnk = document.getElementById('b'+r).value;
-            if(item.src === "BANK") { bT += val; if(exp === "Uncategorized" || bnk === "Uncategorized") bU += val; } else { cT += val; if(exp === "Uncategorized" || bnk === "Uncategorized") cU += val; }
-            if(exp) jeData[exp] = (jeData[exp] || 0) + val; if(bnk) jeData[bnk] = (jeData[bnk] || 0) - val;
+            let r = inp.getAttribute('data-row'), item = localData.find(x => x.row == r);
+            if(!item) return;
+            let val = parseFloat(item.amt.replace(/[^0-9.-]+/g,"")), exp = inp.value, bnk = document.getElementById('b'+r).value, cls = document.getElementById('l'+r) ? document.getElementById('l'+r).value : "General";
+            netAct += val; 
+            if(exp) jeData[exp + "|" + cls] = (jeData[exp + "|" + cls] || 0) + val; 
+            if(bnk) jeData[bnk + "|" + cls] = (jeData[bnk + "|" + cls] || 0) - val;
         });
-        document.getElementById('bankTotal').innerText = "$" + bT.toFixed(2); document.getElementById('bankUncat').innerText = "$" + bU.toFixed(2);
-        document.getElementById('ccTotal').innerText = "$" + cT.toFixed(2); document.getElementById('ccUncat').innerText = "$" + cU.toFixed(2);
-        
-        const jeDiv = document.getElementById('jeList'); jeDiv.innerHTML = `<div class="je-item fw-bold border-bottom"><span>Account Identifier</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
-        let totalDr = 0, totalCr = 0;
+
+        // RECONCILIATION GATE BALANCING CALCULATION
+        const calcEnd = stmtStart + netAct;
+        const diff = Math.abs(calcEnd - stmtEnd);
+        const banner = document.getElementById('reconGateBanner');
+        const syncBtns = document.querySelectorAll('.sync-gate-btn');
+
+        if (diff < 0.01) {
+            banner.className = "card p-3 mb-3 bg-success text-white fw-bold";
+            banner.innerText = "✓ Statement Reconciled (Starting Balance + Activity = Statement Ending Balance)";
+            syncBtns.forEach(b => b.disabled = false);
+        } else {
+            banner.className = "card p-3 mb-3 bg-danger text-white fw-bold";
+            banner.innerText = `⚠️ Out of Balance Discrepancy: $${diff.toFixed(2)} (Calc Ending: $${calcEnd.toFixed(2)} | Target Ending: $${stmtEnd.toFixed(2)})`;
+            syncBtns.forEach(b => b.disabled = true);
+        }
+
+        const div = document.getElementById('jeList'); div.innerHTML = `<div class="je-item fw-bold border-bottom"><span>Account Identifier | Class</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
         for (let acc in jeData) {
             let bal = jeData[acc]; if(Math.abs(bal) < 0.01) continue;
             let dr = bal < 0 ? Math.abs(bal) : 0, cr = bal > 0 ? bal : 0;
-            totalDr += dr; totalCr += cr;
-            jeDiv.innerHTML += `<div class="je-item"><span>${acc}</span><span class="dr">${dr?`$${dr.toFixed(2)}`:''}</span><span class="cr">${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
+            tDr += dr; tCr += cr;
+            div.innerHTML += `<div class="je-item"><span>${acc}</span><span class="dr">${dr?`$${dr.toFixed(2)}`:''}</span><span class="cr">${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
         }
 
         const alertBox = document.getElementById('jeBalanceAlert');
-        const diff = Math.abs(totalDr - totalCr);
-        if (diff < 0.01) {
-            alertBox.className = "alert alert-success mb-4 text-center fw-bold";
-            alertBox.innerText = `Journal Entry Balanced ($${totalDr.toFixed(2)} DR / $${totalCr.toFixed(2)} CR)`;
-        } else {
-            alertBox.className = "alert alert-danger mb-4 text-center fw-bold";
-            alertBox.innerText = `Out of Balance Variance: $${diff.toFixed(2)} (DR: $${totalDr.toFixed(2)} | CR: $${totalCr.toFixed(2)})`;
+        alertBox.className = Math.abs(tDr - tCr) < 0.01 ? "alert alert-success mb-4 text-center fw-bold" : "alert alert-danger mb-4 text-center fw-bold";
+        alertBox.innerText = `Balanced: $${tDr.toFixed(2)}`;
+    }
+
+    function renderPnLCharts() {
+        let months = {}, tRev = 0, tExp = 0; 
+        const allData = [...historyData, ...localData];
+        
+        allData.forEach(i => {
+            let val = parseFloat(String(i.amt).replace(/[^0-9.-]+/g,"")), m = i.date ? i.date.substring(0, 7) : "Current"; 
+            if(!months[m]) months[m] = { inc: 0, exp: 0 };
+            if(val > 0) { months[m].inc += val; tRev += val; } 
+            else { months[m].exp += Math.abs(val); tExp += Math.abs(val); }
+        });
+
+        if (document.getElementById('stat-rev')) document.getElementById('stat-rev').innerText = `$${tRev.toLocaleString()}`; 
+        if (document.getElementById('stat-exp')) document.getElementById('stat-exp').innerText = `$${tExp.toLocaleString()}`;
+        if (document.getElementById('stat-net')) document.getElementById('stat-net').innerText = `$${(tRev - tExp).toLocaleString()}`;
+        if (document.getElementById('stat-margin')) document.getElementById('stat-margin').innerText = tRev ? `${((tRev - tExp) / tRev * 100).toFixed(1)}%` : "0%";
+
+        const ctx = document.getElementById('chart-bar');
+        if (ctx) {
+            if(barChart) barChart.destroy();
+            barChart = new Chart(ctx, { 
+                type: 'bar', 
+                data: { 
+                    labels: Object.keys(months).sort(), 
+                    datasets: [
+                        { label: 'Revenue', data: Object.keys(months).sort().map(m => months[m].inc), backgroundColor: '#C5D1B8' },
+                        { label: 'Expenses', data: Object.keys(months).sort().map(m => months[m].exp), backgroundColor: '#2C3E50' }
+                    ]
+                }
+            });
         }
     }
 
@@ -615,7 +647,7 @@
         const apiKey = localStorage.getItem('hca_gk');
         const projectContext = "You are the AuditPilot support assistant. Current Client Context: " + (currentClient || "None Selected");
 
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ "contents": [{ "parts": [{ "text": projectContext + ". User Query: " + q }] }] })
@@ -632,7 +664,7 @@
     }
 
     function switchTab(t) { document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none'); document.querySelectorAll('.app-nav-btn').forEach(el => el.classList.remove('active')); document.getElementById('tab-'+t).style.display = 'block'; document.getElementById('nav-'+t).classList.add('active'); }
-    function approveAll() { document.querySelectorAll('.row-stat').forEach(s => s.value = "APPROVED"); }
+    function approveAll() { document.querySelectorAll('.row-stat').forEach(s => s.value = "APPROVED"); recalcJE(); }
     
     async function saveAll() {
         if(!db) return;
@@ -641,11 +673,13 @@
             const catVal = document.getElementById('c' + item.row) ? document.getElementById('c' + item.row).value : item.cat;
             const statVal = document.getElementById('s' + item.row) ? document.getElementById('s' + item.row).value : item.stat;
             const bnkVal = document.getElementById('b' + item.row) ? document.getElementById('b' + item.row).value : item.bnk;
+            const clsVal = document.getElementById('l' + item.row) ? document.getElementById('l' + item.row).value : item.cls;
 
             await db.from('review_staging').update({
                 category: catVal,
                 status: statVal,
-                bank_category: bnkVal
+                bank_category: bnkVal,
+                class_name: clsVal
             }).eq('id', item.row);
         }
         await loadDash();
@@ -668,6 +702,7 @@
             category: a.category,
             qbo_id: "SYNCED-ID",
             bank_category: a.bank_category,
+            class_name: a.class_name,
             fingerprint: a.fingerprint
         }));
 
