@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HCA Financial Automation Engine</title>
-    <!-- Dependencies -->
+    <title>HCA Financial Automation</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -12,45 +11,26 @@
         body { background: var(--hca-bg); font-family: 'Segoe UI', sans-serif; color: var(--hca-dark); padding-bottom: 60px; }
         .rounded-xl { border-radius: 12px !important; }
         .navbar { background: white; border-bottom: 2px solid var(--hca-sage); padding: 1rem 2rem; }
-        
-        /* Top Level Screen Switching */
         .view-pane { display: none; }
-        
-        /* Inner Dashboard Tab Switching */
         .dash-tab { display: none; }
-
-        .hero-section { background: var(--hca-dark); color: white; padding: 60px 20px; text-align: center; margin-bottom: 40px; border-radius: 0 0 40px 40px; }
-        .card-custom { background: white; border: none; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: 0.3s; height: 100%; }
-        .card-custom:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
-        .card-img-top { height: 180px; object-fit: cover; width: 100%; }
-        
+        .hero-section { background: var(--hca-dark); color: white; padding: 60px 20px; text-align: center; border-radius: 0 0 40px 40px; margin-bottom: 40px; }
+        .card-custom { background: white; border: none; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: 0.3s; }
         .btn-hca { background: var(--hca-sage); color: var(--hca-dark); border: none; font-weight: bold; padding: 10px 20px; border-radius: 12px; }
         .btn-dark-hca { background: var(--hca-dark); color: white; border-radius: 10px; padding: 10px 20px; font-weight: bold; }
-        
         .app-nav { background: white; border-radius: 12px; display: flex; overflow: hidden; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .app-nav-btn { flex: 1; text-align: center; padding: 15px; cursor: pointer; font-weight: bold; border-right: 1px solid #eee; color: #7f8c8d; transition: 0.2s; }
-        .app-nav-btn:hover { background: #f1f3f5; }
+        .app-nav-btn { flex: 1; text-align: center; padding: 15px; cursor: pointer; font-weight: bold; color: #7f8c8d; border-right: 1px solid #eee; }
         .app-nav-btn.active { background: var(--hca-sage); color: var(--hca-dark); }
-        
         .status-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 5px; background: #bbb; }
-        .dot-green { background: #2ca01c; box-shadow: 0 0 8px #2ca01c; }
-        .dot-amber { background: #f0ad4e; box-shadow: 0 0 8px #f0ad4e; }
-        .dot-red { background: #d9534f; box-shadow: 0 0 8px #d9534f; }
-        
-        #chat-trigger { position: fixed; bottom: 20px; left: 20px; width: 55px; height: 55px; background: var(--hca-dark); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 3000; font-size: 24px; }
+        .dot-green { background: #2ca01c; } .dot-amber { background: #f0ad4e; } .dot-red { background: #d9534f; }
+        #chat-trigger { position: fixed; bottom: 20px; left: 20px; width: 55px; height: 55px; background: var(--hca-dark); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 3000; font-size: 24px; }
         #chat-window { position: fixed; bottom: 85px; left: 20px; width: 350px; height: 450px; background: white; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: none; flex-direction: column; z-index: 3000; border: 1px solid #eee; overflow: hidden; }
         #chat-header { background: var(--hca-dark); color: white; padding: 15px; font-weight: bold; }
-        #chat-content { flex-grow: 1; padding: 15px; overflow-y: auto; font-size: 0.9rem; line-height: 1.5; background: #fdfdfd; }
-        .chat-bubble { margin-bottom: 12px; padding: 10px; border-radius: 10px; }
-        
-        .je-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; font-family: 'Courier New', monospace; font-size: 0.9rem; }
+        #chat-content { flex-grow: 1; padding: 15px; overflow-y: auto; font-size: 0.9rem; line-height: 1.5; }
+        #st { background: white; border-radius: 12px; padding: 20px; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: none; z-index: 4000; border: 2px solid var(--hca-sage); text-align: center; }
+        .summary-card { background: white; border-radius: 15px; padding: 20px; border-left: 5px solid var(--hca-sage); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .je-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; font-family: monospace; }
         .dr { color: #2C3E50; width: 100px; text-align: right; font-weight: bold; }
         .cr { color: #d9534f; width: 100px; text-align: right; font-weight: bold; }
-        .summary-card { background: white; border-radius: 15px; padding: 20px; border-left: 5px solid var(--hca-sage); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .batch-bar { background: #f1f3f5; padding: 15px; border-radius: 12px; border: 1px solid #e9ecef; }
-        
-        #st { background: rgba(255,255,255,0.9); border-radius: 12px; padding: 20px; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: none; z-index: 4000; border: 2px solid var(--hca-sage); text-align: center; }
-        .table-sm td, .table-sm th { padding: 0.3rem 0.5rem; font-size: 0.85rem; }
     </style>
 </head>
 <body>
@@ -67,272 +47,154 @@
     </div>
 </nav>
 
-<!-- SCREEN 1: LAUNCHPAD -->
 <div id="view-launchpad" class="view-pane" style="display: block;">
-    <header class="hero-section">
-        <h1 class="display-4 fw-bold">Financial Automation Portal</h1>
-        <p class="lead opacity-75">Forensic Ledger Processing & QBO Synchronization</p>
-    </header>
+    <header class="hero-section"><h1>Financial Automation Portal</h1><p class="lead">Forensic Ledger Processing & QBO Sync</p></header>
     <div class="container">
         <div id="keyGate" class="row justify-content-center">
-            <div class="col-md-5"><div class="card card-custom p-4 text-center">
-                <h5 class="mb-3">Secure Access</h5>
+            <div class="col-md-5 text-center card card-custom p-4">
                 <input type="password" id="master_gk" class="form-control mb-3 text-center rounded-pill" placeholder="Enter Gemini API Key">
                 <button class="btn btn-dark-hca w-100 rounded-pill" onclick="lockKey()">Open Portal</button>
-            </div></div>
+            </div>
         </div>
         <div id="mainPortal" style="display:none">
-            <div class="card p-4 rounded-xl border-0 shadow-sm mb-4">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <select id="masterClient" class="form-select rounded-pill" onchange="pingStatus()">
-                            <option value="">-- Choose a Client --</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <button class="btn btn-dark-hca rounded-pill px-4" onclick="showPane('config')">⚙️ Settings</button>
-                    </div>
-                </div>
+            <div class="card p-4 rounded-xl border-0 shadow-sm mb-4 d-flex flex-row justify-content-between align-items-center">
+                <select id="masterClient" class="form-select rounded-pill w-75" onchange="pingStatus()"><option value="">-- Choose Client --</option></select>
+                <button class="btn btn-dark-hca rounded-pill px-4" onclick="showPane('config')">⚙️ Settings</button>
             </div>
             <div class="row g-4" id="actionGrid" style="opacity:0.3; pointer-events:none;">
-                <div class="col-md-4"><div class="card card-custom">
-                    <img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80" class="card-img-top">
-                    <div class="card-body p-4 text-center"><button class="btn btn-hca w-100" onclick="triggerFile('PDF')">Process Bank PDF</button></div>
-                </div></div>
-                <div class="col-md-4"><div class="card card-custom">
-                    <img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=600&q=80" class="card-img-top">
-                    <div class="card-body p-4 text-center"><button class="btn btn-hca w-100" onclick="triggerFile('CC')">Process CC PDF</button></div>
-                </div></div>
-                <div class="col-md-4"><div class="card card-custom">
-                    <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80" class="card-img-top">
-                    <div class="card-body p-4 text-center"><button class="btn btn-hca w-100" onclick="loadDash()">Enter Dashboard</button></div>
-                </div></div>
+                <div class="col-md-4"><div class="card card-custom p-4 text-center"><button class="btn btn-hca w-100" onclick="triggerFile('PDF')">Process Bank PDF</button></div></div>
+                <div class="col-md-4"><div class="card card-custom p-4 text-center"><button class="btn btn-hca w-100" onclick="triggerFile('CC')">Process CC PDF</button></div></div>
+                <div class="col-md-4"><div class="card card-custom p-4 text-center"><button class="btn btn-hca w-100" onclick="loadDash()">Enter Dashboard</button></div></div>
             </div>
-            <input type="file" id="f_pdf" style="display:none" onchange="handleFile(this, 'PDF')">
-            <input type="file" id="f_cc" style="display:none" onchange="handleFile(this, 'CC')">
+            <input type="file" id="f_pdf" style="display:none" onchange="handleFile(this, 'PDF')"><input type="file" id="f_cc" style="display:none" onchange="handleFile(this, 'CC')">
         </div>
     </div>
 </div>
 
-<!-- SCREEN 2: CONFIGURATION -->
 <div id="view-config" class="view-pane container py-5">
     <div class="row g-4">
         <div class="col-md-6"><div class="card p-4 card-custom">
             <h3>Provision Client</h3>
-            <div class="row g-3 mt-2">
-                <div class="col-12"><input id="n" class="form-control rounded-pill" placeholder="Company Name"></div>
-                <div class="col-12"><input id="nature" class="form-control rounded-pill" placeholder="Business Nature (e.g. Consulting)"></div>
-                <div class="col-12"><input id="qi" class="form-control rounded-pill" placeholder="QBO Client ID"></div>
-                <div class="col-12"><input id="qs" type="password" class="form-control rounded-pill" placeholder="QBO Client Secret"></div>
-                <div class="col-12">
-                    <label class="small fw-bold mb-1">Chart of Accounts (CSV)</label>
-                    <input type="file" id="glFileInputConfig" accept=".csv" class="form-control rounded-pill" onchange="handleGLFileUpload(this)">
-                </div>
-                <div class="col-12 d-flex gap-2">
-                    <button onclick="save()" class="btn btn-dark-hca flex-grow-1 rounded-pill">Save & Provision</button>
-                    <button onclick="showPane('launchpad')" class="btn btn-outline-secondary rounded-pill">Cancel</button>
-                </div>
-            </div>
+            <input id="n" class="form-control mb-2 rounded-pill" placeholder="Company Name">
+            <input id="nature" class="form-control mb-2 rounded-pill" placeholder="Nature">
+            <input id="qi" class="form-control mb-2 rounded-pill" placeholder="QBO ID">
+            <input id="qs" type="password" class="form-control mb-3 rounded-pill" placeholder="QBO Secret">
+            <label class="small fw-bold">Upload GL List (CSV)</label>
+            <input type="file" id="glFileInputConfig" accept=".csv" class="form-control mb-3" onchange="handleGLFileUpload(this)">
+            <button onclick="save()" class="btn btn-dark-hca w-100 mb-2 rounded-pill">Save & Provision</button>
+            <button onclick="showPane('launchpad')" class="btn btn-outline-secondary w-100 rounded-pill">Cancel</button>
         </div></div>
         <div class="col-md-6"><div class="card p-4 card-custom">
             <h3>Mapping Rules</h3>
-            <p class="small text-muted">Rules here override AI suggestions instantly.</p>
-            <div id="rulesList" class="mb-3" style="max-height: 200px; overflow-y: auto;"></div>
-            <div class="input-group mb-3">
-                <input id="ruleKeyword" class="form-control form-control-sm" placeholder="Keyword in description">
-                <select id="ruleAccount" class="form-select form-select-sm"></select>
-                <button class="btn btn-primary btn-sm" onclick="addRuleRow()">Add</button>
-            </div>
+            <div id="rulesList" class="mb-3"></div>
+            <div class="input-group mb-3"><input id="ruleKeyword" class="form-control" placeholder="Keyword"><select id="ruleAccount" class="form-select"></select><button class="btn btn-primary" onclick="addRuleRow()">Add</button></div>
             <button class="btn btn-dark-hca w-100 rounded-pill" onclick="saveRules()">Save Rules</button>
         </div></div>
     </div>
 </div>
 
-<!-- SCREEN 3: DASHBOARD -->
 <div id="view-dash" class="view-pane container-fluid px-5 py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 id="activeTitle" class="fw-bold mb-0">Dashboard</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4"><h2 id="activeTitle" class="fw-bold mb-0">Dashboard</h2>
         <div class="gap-2 d-flex">
             <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="approveAll()">Approve All</button>
-            <button class="btn btn-primary btn-sm rounded-pill px-3" onclick="saveAll()">Save All Changes</button>
+            <button class="btn btn-primary btn-sm rounded-pill px-3" onclick="saveAll()">Save All</button>
             <button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="showPane('launchpad')">Exit</button>
         </div>
     </div>
-
     <div class="app-nav">
-        <div id="nav-review" class="app-nav-btn active" onclick="switchTab('review')">STAGING REVIEW</div>
+        <div id="nav-review" class="app-nav-btn active" onclick="switchTab('review')">REVIEW</div>
         <div id="nav-pnl" class="app-nav-btn" onclick="switchTab('pnl')">VISUAL P&L</div>
-        <div id="nav-je" class="app-nav-btn" onclick="switchTab('je')">JE VIEW & RECON</div>
-        <div id="nav-history" class="app-nav-btn" onclick="switchTab('history')">SYNC HISTORY</div>
+        <div id="nav-je" class="app-nav-btn" onclick="switchTab('je')">JE VIEW</div>
+        <div id="nav-history" class="app-nav-btn" onclick="switchTab('history')">HISTORY</div>
     </div>
 
-    <!-- Tab 1: Staging Review -->
     <div id="tab-review" class="dash-tab bg-white p-4 rounded-xl shadow-sm" style="display: block;">
-        <div class="d-flex justify-content-between mb-3 align-items-center">
-            <h5 class="mb-0">Pending Transactions</h5>
+        <div class="d-flex justify-content-between mb-3"><h5>Staging</h5>
             <div class="d-flex gap-2">
-                <button class="btn btn-outline-success btn-sm rounded-pill px-3" onclick="exportStagingCSV()">📥 Export CSV</button>
-                <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="document.getElementById('glFileInputDash').click()">📥 Update GL List</button>
-                <input type="file" id="glFileInputDash" style="display:none" accept=".csv" onchange="handleGLFileUpload(this)">
-                <button class="btn btn-dark btn-sm rounded-pill px-3 sync-gate-btn" onclick="pushQBO()">Push to QBO</button>
+                <button class="btn btn-outline-success btn-sm rounded-pill" onclick="exportStagingCSV()">📥 Export</button>
+                <button class="btn btn-dark btn-sm rounded-pill sync-gate-btn" onclick="pushQBO()">Push QBO</button>
             </div>
         </div>
-        
-        <div class="batch-bar mb-4 row g-3 align-items-end">
-            <div class="col-md-5">
-                <label class="small fw-bold">Batch Search</label>
-                <input type="text" id="batchSearchInput" class="form-control form-control-sm rounded-pill" placeholder="Search Vendor (e.g. Uber)">
-            </div>
-            <div class="col-md-4">
-                <label class="small fw-bold">Target Account</label>
-                <select id="batchCategorySelect" class="form-select form-select-sm rounded-pill"></select>
-            </div>
-            <div class="col-md-3">
-                <button class="btn btn-hca btn-sm w-100 rounded-pill" onclick="applyBatch()">Apply to Matches</button>
-            </div>
-        </div>
-
-        <div class="table-responsive">
-            <table class="table table-hover table-sm align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Src</th><th>Date</th><th>Description</th><th>Amount</th><th>Expense Account</th><th>Status</th><th>Bank Account</th><th>Class</th><th>Rec</th>
-                    </tr>
-                </thead>
-                <tbody id="tb-staging"></tbody>
-            </table>
-        </div>
+        <table class="table table-hover table-sm align-middle"><thead class="table-light"><tr><th>Src</th><th>Date</th><th>Description</th><th>Amount</th><th>Expense Account</th><th>Stat</th><th>Bank</th><th>Class</th><th>Rec</th></tr></thead><tbody id="tb-staging"></tbody></table>
     </div>
 
-    <!-- Tab 2: Visual P&L -->
     <div id="tab-pnl" class="dash-tab bg-white p-4 rounded-xl shadow-sm">
-        <div class="row g-3 mb-4">
-            <div class="col-md-3"><div class="summary-card"><h6>Total Revenue</h6><h3 id="stat-rev">$0.00</h3></div></div>
-            <div class="col-md-3"><div class="summary-card"><h6>Total Expenses</h6><h3 id="stat-exp" class="text-danger">$0.00</h3></div></div>
-            <div class="col-md-3"><div class="summary-card"><h6>Net Income</h6><h3 id="stat-net">$0.00</h3></div></div>
-            <div class="col-md-3"><div class="summary-card"><h6>Gross Margin</h6><h3 id="stat-margin">0%</h3></div></div>
-        </div>
-        <div class="row g-4">
-            <div class="col-md-8"><div class="card p-3 border-0 shadow-sm"><h6>Revenue vs Expenses Trend</h6><canvas id="chart-bar" height="150"></canvas></div></div>
-            <div class="col-md-4"><div class="card p-3 border-0 shadow-sm"><h6>Expense Distribution</h6><canvas id="chart-doughnut"></canvas></div></div>
-        </div>
+        <div class="row g-3 mb-4"><div class="col-md-3"><div class="summary-card"><h6>Revenue</h6><h3 id="stat-rev">$0.00</h3></div></div><div class="col-md-3"><div class="summary-card"><h6>Expenses</h6><h3 id="stat-exp" class="text-danger">$0.00</h3></div></div><div class="col-md-3"><div class="summary-card"><h6>Net</h6><h3 id="stat-net">$0.00</h3></div></div><div class="col-md-3"><div class="summary-card"><h6>Margin</h6><h3 id="stat-margin">0%</h3></div></div></div>
+        <div class="row"><div class="col-md-8"><canvas id="chart-bar" height="150"></canvas></div><div class="col-md-4"><canvas id="chart-doughnut"></canvas></div></div>
     </div>
 
-    <!-- Tab 3: JE View -->
     <div id="tab-je" class="dash-tab bg-white p-4 rounded-xl shadow-sm">
         <div id="reconGateBanner" class="card p-3 mb-4 border-0"></div>
         <div id="jeBalanceAlert" class="alert mb-4 text-center fw-bold"></div>
-        <div id="jeList" class="bg-light p-4 rounded-xl shadow-inner" style="min-height: 200px;"></div>
+        <div id="jeList"></div>
     </div>
-
-    <!-- Tab 4: History -->
+    
     <div id="tab-history" class="dash-tab bg-white p-4 rounded-xl shadow-sm">
-        <h5 class="mb-3">Recent Synchronized Entries</h5>
-        <div class="table-responsive">
-            <table class="table table-sm table-striped">
-                <thead><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>QBO ID</th></tr></thead>
-                <tbody id="tb-history"></tbody>
-            </table>
-        </div>
+        <table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>QBO</th></tr></thead><tbody id="tb-history"></tbody></table>
     </div>
 </div>
 
-<!-- Modules -->
 <div id="chat-trigger" onclick="toggleChat()">🤖</div>
 <div id="chat-window">
-    <div id="chat-header">HCA Navigator Assistant</div>
-    <div id="chat-content">Hello! I can help you reconcile your accounts. Try uploading a bank statement.</div>
-    <div class="p-3 border-top"><input id="chat-input" class="form-control form-control-sm rounded-pill" placeholder="Ask a question..." onkeydown="if(event.key==='Enter') sendChat()"></div>
+    <div id="chat-header">HCA Navigator</div>
+    <div id="chat-content">Ready for instructions.</div>
+    <div class="p-3 border-top"><input id="chat-input" class="form-control form-control-sm rounded-pill" placeholder="Ask..." onkeydown="if(event.key==='Enter') sendChat()"></div>
 </div>
 
-<div id="st">
-    <div class="spinner-border text-success mb-2" role="status"></div>
-    <div><strong id="st-msg">Engine Processing...</strong></div>
-</div>
-
+<div id="st"><div class="spinner-border text-success mb-2"></div><div><strong>Processing...</strong></div></div>
 <datalist id="glChoices"></datalist>
 
-<!-- RESTORED JAVASCRIPT HANDLERS -->
 <script>
-    const ENGINE_URL = "https://script.google.com/macros/s/AKfycbxmgz-yN_7sY-y-HUmDvTrnuWdw2JYpkEydiOtv35-cOdlmByP6Rb4Oe04qUHX5xNSIpA/exec";
+    const ENGINE_URL = "https://script.google.com/macros/s/AKfycbzrN_rfxcDbAy4fgB8C9ljFsqDq0nWn-0VVoj0J7906qHQYKqY831OicWYMAzjgveoFUw/exec";
     const CLASS_OPTIONS = ["General", "Marketing", "Sales", "Operations", "NY-Office"];
-    
-    let currentClient = "";
-    let localData = [];
-    let appGLOptions = [];
-    let activeRules = [];
-    let historyData = [];
-    let barChart, doughnutChart;
-    let stmtStart = 0, stmtEnd = 0;
+    let currentClient = "", localData = [], appGLOptions = [], activeRules = [], historyData = [], stmtStart = 0, stmtEnd = 0, barChart, doughnutChart;
 
-    // RESTORED: CORS-safe fetch wrapper
     async function callEngine(payload) {
-        try {
-            const r = await fetch(ENGINE_URL, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                body: JSON.stringify(payload), 
-                redirect: 'follow' 
-            });
-            return await r.json();
-        } catch (e) {
-            alert("Connection Error. Check if your Apps Script Web App is deployed correctly.");
-            document.getElementById('st').style.display = 'none';
-        }
+        try { const r = await fetch(ENGINE_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload), redirect: 'follow' }); return await r.json(); } 
+        catch (e) { alert("Engine Error"); document.getElementById('st').style.display = 'none'; }
     }
 
-    function lockKey() {
-        const key = document.getElementById('master_gk').value;
-        if(!key) return alert("API Key Required");
-        localStorage.setItem('hca_gk', key);
-        location.reload();
-    }
-
+    function lockKey() { localStorage.setItem('hca_gk', document.getElementById('master_gk').value); location.reload(); }
+    
     window.onload = async () => {
         if(localStorage.getItem('hca_gk')) {
-            document.getElementById('keyGate').style.display = 'none';
-            document.getElementById('mainPortal').style.display = 'block';
+            document.getElementById('keyGate').style.display = 'none'; document.getElementById('mainPortal').style.display = 'block';
             document.getElementById('dot-gemini').className = 'status-dot dot-green';
-            
-            document.getElementById('st').style.display = 'block';
             const list = await callEngine({action: "getList"});
-            document.getElementById('st').style.display = 'none';
-            
             const sel = document.getElementById('masterClient');
             if(list && !list.error) list.forEach(v => sel.innerHTML += `<option value="${v}">${v}</option>`);
         }
     };
 
-    // RESTORED: Status Light Logic
     async function pingStatus() {
-        currentClient = document.getElementById('masterClient').value;
-        if(!currentClient) return;
-        document.getElementById('actionGrid').style.opacity = "1";
-        document.getElementById('actionGrid').style.pointerEvents = "auto";
+        currentClient = document.getElementById('masterClient').value; if(!currentClient) return;
+        document.getElementById('actionGrid').style.opacity = "1"; document.getElementById('actionGrid').style.pointerEvents = "auto";
         const s = await callEngine({action: "checkStatus", client: currentClient});
         document.getElementById('dot-ledger').className = 'status-dot dot-green';
         document.getElementById('dot-qbo').className = (s.qbo === 'AMBER') ? 'status-dot dot-amber' : (s.qbo === 'GREEN' ? 'status-dot dot-green' : 'status-dot dot-red');
     }
 
-    // RESTORED: GL Upload & Parsing
+    // FIX: Client Provisioning Function
+    async function save() {
+        document.getElementById('st').style.display = 'block';
+        await callEngine({ 
+            action: "provision", 
+            clientName: document.getElementById('n').value, 
+            nature: document.getElementById('nature').value, 
+            keys: { QBO_ID: document.getElementById('qi').value, QBO_SEC: document.getElementById('qs').value }, 
+            glList: appGLOptions.join(",") 
+        });
+        location.reload();
+    }
+
     async function handleGLFileUpload(input) {
-        const file = input.files[0];
-        if(!file) return;
+        const file = input.files[0]; if(!file) return;
         const reader = new FileReader();
         reader.onload = (e) => {
             const lines = e.target.result.split(/\r?\n/);
             appGLOptions = lines.map(l => l.split(',')[0].replace(/"/g, '').trim()).filter(v => v && v.toLowerCase() !== "account");
-            
-            const dl = document.getElementById('glChoices');
-            dl.innerHTML = appGLOptions.map(o => `<option value="${o}">`).join('');
-            
-            const dropdowns = document.querySelectorAll('.row-cat, .row-bnk, #batchCategorySelect, #ruleAccount');
-            dropdowns.forEach(sel => {
-                const curVal = sel.value;
-                sel.innerHTML = `<option value="Uncategorized">Uncategorized</option>` + appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('');
-                if(appGLOptions.includes(curVal)) sel.value = curVal;
-            });
-            alert(`Ready: ${appGLOptions.length} Accounts Loaded.`);
+            document.getElementById('glChoices').innerHTML = appGLOptions.map(o => `<option value="${o}">`).join('');
+            alert(`Parsed ${appGLOptions.length} Accounts.`);
         };
         reader.readAsText(file);
     }
@@ -344,289 +206,115 @@
         document.getElementById('st').style.display = 'block';
         const reader = new FileReader();
         reader.onload = async (e) => {
-            const res = await callEngine({
-                action: "process", 
-                client: currentClient, 
-                source: type, 
-                fileData: e.target.result.split(',')[1], 
-                geminiKey: localStorage.getItem('hca_gk'),
-                glListOverride: appGLOptions.join(",")
-            });
+            const res = await callEngine({ action: "process", client: currentClient, source: type, fileData: e.target.result.split(',')[1], geminiKey: localStorage.getItem('hca_gk'), glListOverride: appGLOptions.join(",") });
             renderDashboard(res);
         };
         reader.readAsDataURL(input.files[0]);
     }
 
-    // RESTORED: Central Dashboard Renderer
     function renderDashboard(res) {
         document.getElementById('st').style.display = 'none';
-        if(!res || res.error) return alert("Dashboard Error: " + (res?res.error:"Null"));
+        if(!res || res.error) return alert("Error loading data");
+        showPane('dash'); document.getElementById('activeTitle').innerText = currentClient;
+        localData = res.staging; appGLOptions = res.glOptions || appGLOptions; activeRules = res.rules || []; historyData = res.history || [];
         
-        showPane('dash');
-        document.getElementById('activeTitle').innerText = currentClient;
-        localData = res.staging;
-        appGLOptions = res.glOptions || appGLOptions;
-        activeRules = res.rules || [];
-        historyData = res.history || [];
+        const sm = res.metadata.find(m => m[0] === "STMT_START"), em = res.metadata.find(m => m[0] === "STMT_END");
+        stmtStart = sm ? parseFloat(sm[1]) : 0; stmtEnd = em ? parseFloat(em[1]) : 0;
 
-        // Meta Stats
-        const sm = res.metadata.find(m => m[0] === "STMT_START");
-        const em = res.metadata.find(m => m[0] === "STMT_END");
-        stmtStart = sm ? parseFloat(sm[1]) : 0;
-        stmtEnd = em ? parseFloat(em[1]) : 0;
-
-        // Render Staging
-        const sBody = document.getElementById('tb-staging');
-        sBody.innerHTML = "";
+        const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
         res.staging.forEach(i => {
             const matched = i.desc.includes("[RECEIPT_LINKED]");
             const receiptBtn = matched ? '✅' : `<button class="btn btn-xs btn-outline-secondary" onclick="document.getElementById('rup${i.row}').click()">📁</button><input type="file" id="rup${i.row}" style="display:none" onchange="handleReceiptUpload(this, ${i.row})">`;
-            
-            sBody.innerHTML += `<tr>
-                <td>${i.src[0]}</td>
-                <td>${i.date}</td>
-                <td title="${i.desc}">${i.desc.length > 30 ? i.desc.substring(0,30)+'...' : i.desc}</td>
-                <td class="fw-bold">$${i.amt}</td>
-                <td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm row-cat" onchange="recalcJE()">
-                    <option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}
-                </select></td>
-                <td><select id="s${i.row}" class="form-select form-select-sm row-stat" onchange="recalcJE()">
-                    <option value="PENDING" ${i.stat=='PENDING'?'selected':''}>P</option>
-                    <option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>A</option>
-                </select></td>
-                <td><select id="b${i.row}" class="form-select form-select-sm row-bnk" onchange="recalcJE()">
-                    <option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}
-                </select></td>
-                <td><select id="l${i.row}" class="form-select form-select-sm row-cls" onchange="recalcJE()">
-                    ${CLASS_OPTIONS.map(c => `<option value="${c}">${c}</option>`).join('')}
-                </select></td>
-                <td id="rcell${i.row}">${receiptBtn}</td>
-            </tr>`;
+            sBody.innerHTML += `<tr><td>${i.src[0]}</td><td>${i.date}</td><td>${i.desc}</td><td class="fw-bold">$${i.amt}</td><td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm row-cat" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td><td><select id="s${i.row}" class="form-select form-select-sm" onchange="recalcJE()"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>P</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>A</option></select></td><td><select id="b${i.row}" class="form-select form-select-sm" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td><td><select id="l${i.row}" class="form-select form-select-sm">${CLASS_OPTIONS.map(c => `<option value="${c}">${c}</option>`).join('')}</select></td><td id="rcell${i.row}">${receiptBtn}</td></tr>`;
         });
-
-        // Sync Dropdown Values
-        res.staging.forEach(i => {
-            document.getElementById('c'+i.row).value = i.cat || "Uncategorized";
-            document.getElementById('b'+i.row).value = i.bnk || "Uncategorized";
-            document.getElementById('l'+i.row).value = i.cls || "General";
-        });
-
-        // Render History
-        const hBody = document.getElementById('tb-history');
-        hBody.innerHTML = historyData.map(h => `<tr><td>${h.date}</td><td>${h.desc}</td><td>$${h.amt}</td><td>${h.cat}</td><td>${h.qbo}</td></tr>`).join('');
-
-        recalcJE();
-        renderPnLCharts();
+        res.staging.forEach(i => { document.getElementById('c'+i.row).value = i.cat || "Uncategorized"; document.getElementById('b'+i.row).value = i.bnk || "Uncategorized"; document.getElementById('l'+i.row).value = i.cls || "General"; });
+        
+        document.getElementById('tb-history').innerHTML = historyData.map(h => `<tr><td>${h.date}</td><td>${h.desc}</td><td>$${h.amt}</td><td>${h.cat}</td><td>${h.qbo}</td></tr>`).join('');
+        recalcJE(); renderPnLCharts();
     }
 
-    // RESTORED: P&L Aggregator & Visuals
-    function renderPnLCharts() {
-        const ctxBar = document.getElementById('chart-bar');
-        const ctxDoughnut = document.getElementById('chart-doughnut');
-        if(!ctxBar || !ctxDoughnut) return;
-
-        let months = {}, catExps = {}, tRev = 0, tExp = 0;
-        const allData = [...historyData, ...localData];
-
-        allData.forEach(i => {
-            let val = parseFloat(String(i.amt).replace(/[^0-9.-]+/g,""));
-            let m = i.date.substring(0, 7); 
-            if(!months[m]) months[m] = { inc: 0, exp: 0 };
-            if(val > 0) { months[m].inc += val; tRev += val; }
-            else { months[m].exp += Math.abs(val); tExp += Math.abs(val); if(i.cat !== "Uncategorized") catExps[i.cat] = (catExps[i.cat] || 0) + Math.abs(val); }
-        });
-
-        document.getElementById('stat-rev').innerText = `$${tRev.toLocaleString()}`;
-        document.getElementById('stat-exp').innerText = `$${tExp.toLocaleString()}`;
-        document.getElementById('stat-net').innerText = `$${(tRev - tExp).toLocaleString()}`;
-        document.getElementById('stat-margin').innerText = tRev ? `${((tRev - tExp) / tRev * 100).toFixed(1)}%` : "0%";
-
-        const sorted = Object.keys(months).sort();
-        if(barChart) barChart.destroy();
-        barChart = new Chart(ctxBar, {
-            type: 'bar',
-            data: { labels: sorted, datasets: [
-                { label: 'Income', data: sorted.map(m => months[m].inc), backgroundColor: '#C5D1B8' },
-                { label: 'Expense', data: sorted.map(m => months[m].exp), backgroundColor: '#2C3E50' }
-            ]}
-        });
-
-        const sortedCats = Object.entries(catExps).sort((a,b) => b[1] - a[1]).slice(0, 5);
-        if(doughnutChart) doughnutChart.destroy();
-        doughnutChart = new Chart(ctxDoughnut, {
-            type: 'doughnut',
-            data: { labels: sortedCats.map(c => c[0]), datasets: [{ data: sortedCats.map(c => c[1]), backgroundColor: ['#2C3E50', '#C5D1B8', '#7F8C8D', '#BDC3C7', '#A9A9A9'] }]}
-        });
-    }
-
-    // RESTORED: Accounting Logic & Recon Gate
     function recalcJE() {
-        let jeData = {}; let tDr = 0, tCr = 0, netActivity = 0;
+        let jeData = {}, tDr = 0, tCr = 0, netAct = 0;
         document.querySelectorAll('.row-cat').forEach(inp => {
-            let r = inp.getAttribute('data-row');
-            let item = localData.find(x => x.row == r);
-            let val = parseFloat(String(item.amt).replace(/[^0-9.-]+/g,""));
-            let exp = inp.value;
-            let bnk = document.getElementById('b'+r).value;
-            let cls = document.getElementById('l'+r).value;
-
-            netActivity += val;
-            if(exp) jeData[exp+"|"+cls] = (jeData[exp+"|"+cls] || 0) + val;
-            if(bnk) jeData[bnk+"|"+cls] = (jeData[bnk+"|"+cls] || 0) - val;
+            let r = inp.getAttribute('data-row'), item = localData.find(x => x.row == r), val = parseFloat(String(item.amt).replace(/[^0-9.-]+/g,"")), exp = inp.value, bnk = document.getElementById('b'+r).value, cls = document.getElementById('l'+r).value;
+            netAct += val; if(exp) jeData[exp+"|"+cls] = (jeData[exp+"|"+cls] || 0) + val; if(bnk) jeData[bnk+"|"+cls] = (jeData[bnk+"|"+cls] || 0) - val;
         });
 
-        const calcEnd = stmtStart + netActivity;
-        const diff = Math.abs(calcEnd - stmtEnd);
-        const banner = document.getElementById('reconGateBanner');
-        const syncBtns = document.querySelectorAll('.sync-gate-btn');
+        const calcEnd = stmtStart + netAct; const diff = Math.abs(calcEnd - stmtEnd);
+        const banner = document.getElementById('reconGateBanner'); const syncBtns = document.querySelectorAll('.sync-gate-btn');
+        if(diff < 0.01) { banner.className = "card p-3 mb-3 bg-success text-white fw-bold"; banner.innerText = "✓ Reconciled"; syncBtns.forEach(b => b.disabled = false); } 
+        else { banner.className = "card p-3 mb-3 bg-danger text-white fw-bold"; banner.innerText = `⚠️ Discrepancy: $${diff.toFixed(2)}`; syncBtns.forEach(b => b.disabled = true); }
 
-        if(diff < 0.01) {
-            banner.className = "card p-3 mb-4 bg-success text-white fw-bold shadow-sm";
-            banner.innerHTML = `✓ Statement Reconciled | Calculated: $${calcEnd.toFixed(2)} matches Target: $${stmtEnd.toFixed(2)}`;
-            syncBtns.forEach(b => b.disabled = false);
-        } else {
-            banner.className = "card p-3 mb-4 bg-danger text-white fw-bold shadow-sm";
-            banner.innerHTML = `⚠️ Reconciliation Discrepancy: $${diff.toFixed(2)} (Calc: $${calcEnd.toFixed(2)} vs Statement: $${stmtEnd.toFixed(2)})`;
-            syncBtns.forEach(b => b.disabled = true);
-        }
-
-        const div = document.getElementById('jeList');
-        div.innerHTML = `<div class="je-item fw-bold border-bottom"><span>ACCOUNT & DEPARTMENT</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
+        const div = document.getElementById('jeList'); div.innerHTML = "";
         for (let k in jeData) {
             let b = jeData[k]; if(Math.abs(b) < 0.01) continue;
-            let dr = b < 0 ? Math.abs(b) : 0, cr = b > 0 ? b : 0;
-            tDr += dr; tCr += cr;
-            div.innerHTML += `<div class="je-item"><span>${k.split('|')[0]} <small>(${k.split('|')[1]})</small></span><span class="dr">${dr?`$${dr.toFixed(2)}`:''}</span><span class="cr">${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
+            let dr = b < 0 ? Math.abs(b) : 0, cr = b > 0 ? b : 0; tDr += dr; tCr += cr;
+            div.innerHTML += `<div class="je-item"><span>${k}</span><span class="dr">${dr?`$${dr.toFixed(2)}`:''}</span><span class="cr">${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
         }
-        
         const balAlert = document.getElementById('jeBalanceAlert');
-        const balanced = Math.abs(tDr - tCr) < 0.01;
-        balAlert.className = balanced ? "alert alert-success text-center fw-bold" : "alert alert-danger text-center fw-bold";
-        balAlert.innerText = balanced ? `✓ JE Total Balanced: $${tDr.toFixed(2)}` : `⚠️ Variance Detected: $${Math.abs(tDr-tCr).toFixed(2)}`;
+        balAlert.className = Math.abs(tDr - tCr) < 0.01 ? "alert alert-success" : "alert alert-danger";
+        balAlert.innerText = `Balanced: $${tDr.toFixed(2)}`;
     }
 
-    // RESTORED: Click & Utility Handlers
-    function approveAll() { document.querySelectorAll('.row-stat').forEach(s => s.value = "APPROVED"); recalcJE(); }
-    
+    function renderPnLCharts() {
+        if(!document.getElementById('chart-bar')) return;
+        let months = {}, catExps = {}, tRev = 0, tExp = 0; const allData = [...historyData, ...localData];
+        allData.forEach(i => {
+            let val = parseFloat(String(i.amt).replace(/[^0-9.-]+/g,"")), m = i.date.substring(0, 7); if(!months[m]) months[m] = { inc: 0, exp: 0 };
+            if(val > 0) { months[m].inc += val; tRev += val; } else { months[m].exp += Math.abs(val); tExp += Math.abs(val); if(i.cat !== "Uncategorized") catExps[i.cat] = (catExps[i.cat] || 0) + Math.abs(val); }
+        });
+        document.getElementById('stat-rev').innerText = `$${tRev.toLocaleString()}`; document.getElementById('stat-exp').innerText = `$${tExp.toLocaleString()}`;
+        document.getElementById('stat-net').innerText = `$${(tRev-tExp).toLocaleString()}`; document.getElementById('stat-margin').innerText = tRev ? `${((tRev-tExp)/tRev*100).toFixed(1)}%` : "0%";
+        if(barChart) barChart.destroy();
+        barChart = new Chart(document.getElementById('chart-bar'), { type: 'bar', data: { labels: Object.keys(months).sort(), datasets: [{ label: 'Inc', data: Object.keys(months).sort().map(m => months[m].inc), backgroundColor: '#C5D1B8' },{ label: 'Exp', data: Object.keys(months).sort().map(m => months[m].exp), backgroundColor: '#2C3E50' }]}});
+    }
+
+    function approveAll() { document.querySelectorAll('[id^="s"]').forEach(s => s.value = "APPROVED"); recalcJE(); }
     async function saveAll() {
-        let updates = [];
-        document.querySelectorAll('.row-cat').forEach(inp => {
-            let r = inp.getAttribute('data-row');
-            updates.push({
-                row: r, cat: inp.value, stat: document.getElementById('s'+r).value,
-                bnk: document.getElementById('b'+r).value, cls: document.getElementById('l'+r).value
-            });
-        });
-        document.getElementById('st').style.display = 'block';
-        await callEngine({action: "updateRows", client: currentClient, updateData: updates});
-        loadDash();
+        let updates = []; document.querySelectorAll('.row-cat').forEach(inp => { let r = inp.getAttribute('data-row'); updates.push({ row: r, cat: inp.value, stat: document.getElementById('s'+r).value, bnk: document.getElementById('b'+r).value, cls: document.getElementById('l'+r).value }); });
+        document.getElementById('st').style.display = 'block'; await callEngine({action: "updateRows", client: currentClient, updateData: updates}); loadDash();
     }
-
     async function pushQBO() {
-        let payload = []; let appCount = 0; let jeData = {};
+        let jeData = {}, payload = [], approved = 0;
         document.querySelectorAll('.row-cat').forEach(inp => {
-            let r = inp.getAttribute('data-row');
-            if(document.getElementById('s'+r).value !== "APPROVED") return;
-            appCount++;
-            let item = localData.find(x => x.row == r);
-            let val = parseFloat(String(item.amt).replace(/[^0-9.-]+/g,"")), exp = inp.value, bnk = document.getElementById('b'+r).value, cls = document.getElementById('l'+r).value;
-            jeData[exp+"|"+cls] = (jeData[exp+"|"+cls] || 0) + val;
-            jeData[bnk+"|"+cls] = (jeData[bnk+"|"+cls] || 0) - val;
+            let r = inp.getAttribute('data-row'); if(document.getElementById('s'+r).value !== "APPROVED") return;
+            approved++; let item = localData.find(x => x.row == r); let val = parseFloat(String(item.amt).replace(/[^0-9.-]+/g,"")), exp = inp.value, bnk = document.getElementById('b'+r).value, cls = document.getElementById('l'+r).value;
+            jeData[exp+"|"+cls] = (jeData[exp+"|"+cls] || 0) + val; jeData[bnk+"|"+cls] = (jeData[bnk+"|"+cls] || 0) - val;
         });
-        if(!appCount) return alert("No APPROVED entries.");
-        for(let k in jeData) if(Math.abs(jeData[k]) > 0.001) payload.push({ acc: k.split('|')[0], amt: jeData[k], cls: k.split('|')[1], desc: "Reconciliation Sync" });
-        
-        document.getElementById('st').style.display = 'block';
-        const res = await callEngine({action: "pushQBO", client: currentClient, jePayload: payload});
-        renderDashboard(res);
-        alert("Push Complete.");
+        if(!approved) return alert("None approved");
+        for(let k in jeData) if(Math.abs(jeData[k]) > 0.001) payload.push({ acc: k.split('|')[0], amt: jeData[k], cls: k.split('|')[1], desc: "Sync" });
+        document.getElementById('st').style.display = 'block'; const res = await callEngine({action: "pushQBO", client: currentClient, jePayload: payload}); renderDashboard(res);
     }
 
     function exportStagingCSV() {
-        const h = ["Source", "Date", "Description", "Amount", "Expense", "Status", "Bank", "Class"];
-        const esc = (v) => `"${String(v).replace(/"/g, '""')}"`;
-        let csv = h.join(",") + "\n";
-        localData.forEach(i => {
-            csv += [i.src, i.date, i.desc, i.amt, document.getElementById('c'+i.row).value, document.getElementById('s'+i.row).value, document.getElementById('b'+i.row).value, document.getElementById('l'+i.row).value].map(esc).join(",") + "\n";
-        });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `${currentClient.replace(/ /g,'_')}_Export.csv`;
-        link.click();
+        let csv = "Source,Date,Description,Amount,Category,Status,Bank,Class\n";
+        localData.forEach(i => { csv += `"${i.src}","${i.date}","${i.desc.replace(/"/g,'')}",${i.amt},"${document.getElementById('c'+i.row).value}","${document.getElementById('s'+i.row).value}","${document.getElementById('b'+i.row).value}","${document.getElementById('l'+i.row).value}"\n`; });
+        const b = new Blob([csv], { type: 'text/csv' }); const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = `${currentClient}_Export.csv`; a.click();
     }
 
     async function handleReceiptUpload(input, rowId) {
-        if(!input.files.length) return;
-        document.getElementById('st').style.display = 'block';
-        const reader = new FileReader();
-        reader.onload = async (e) => {
+        const reader = new FileReader(); reader.onload = async (e) => {
             const res = await callEngine({ action: "matchReceipt", client: currentClient, targetRow: rowId, fileData: e.target.result.split(',')[1], gk: localStorage.getItem('hca_gk') });
-            document.getElementById('st').style.display = 'none';
             if(res.status === "Matched") document.getElementById('rcell'+rowId).innerHTML = '✅';
-            else alert("Matching Failed: Date or Amount discrepancy.");
-        };
-        reader.readAsDataURL(input.files[0]);
+        }; reader.readAsDataURL(input.files[0]);
     }
 
-    function applyBatch() {
-        const q = document.getElementById('batchSearchInput').value.toLowerCase();
-        const cat = document.getElementById('batchCategorySelect').value;
-        if(!q) return alert("Search term required.");
-        localData.forEach(i => {
-            if(i.desc.toLowerCase().includes(q)) document.getElementById('c'+i.row).value = cat;
-        });
-        recalcJE();
-    }
-
-    // RESTORED: Rules Manager Logic
-    function addRuleRow() {
-        activeRules.push({ keyword: document.getElementById('ruleKeyword').value, account: document.getElementById('ruleAccount').value });
-        document.getElementById('ruleKeyword').value = '';
-        renderRulesUI();
-    }
+    function addRuleRow() { activeRules.push({ keyword: document.getElementById('ruleKeyword').value, account: document.getElementById('ruleAccount').value }); document.getElementById('ruleKeyword').value = ''; renderRulesUI(); }
     function removeRule(idx) { activeRules.splice(idx,1); renderRulesUI(); }
-    function renderRulesUI() {
-        const list = document.getElementById('rulesList');
-        list.innerHTML = activeRules.map((r, i) => `<div class="d-flex gap-2 mb-1"><span class="badge bg-light text-dark flex-grow-1 border">${r.keyword} ⮕ ${r.account}</span><button class="btn btn-xs btn-danger" onclick="removeRule(${i})">×</button></div>`).join('');
-    }
-    async function saveRules() { 
-        document.getElementById('st').style.display = 'block';
-        await callEngine({action: "updateRules", client: currentClient, rules: activeRules});
-        document.getElementById('st').style.display = 'none'; alert("Rules Saved."); 
-    }
+    function renderRulesUI() { document.getElementById('rulesList').innerHTML = activeRules.map((r, i) => `<div class="d-flex mb-1"><span class="badge bg-light text-dark flex-grow-1">${r.keyword} -> ${r.account}</span><button onclick="removeRule(${i})" class="btn btn-xs btn-danger">×</button></div>`).join(''); }
+    async function saveRules() { await callEngine({action: "updateRules", client: currentClient, rules: activeRules}); alert("Saved."); }
 
-    // RESTORED: Pane & Tab Navigation
-    function showPane(p) {
-        document.querySelectorAll('.view-pane').forEach(el => el.style.display = 'none');
-        document.getElementById('view-' + p).style.display = 'block';
-    }
-    function switchTab(t) {
-        document.querySelectorAll('.dash-tab').forEach(el => el.style.display = 'none');
-        document.querySelectorAll('.app-nav-btn').forEach(el => el.classList.remove('active'));
-        document.getElementById('tab-'+t).style.display = 'block';
-        document.getElementById('nav-'+t).classList.add('active');
-    }
-
-    // RESTORED: Assistant Chat
     function toggleChat() { const c = document.getElementById('chat-window'); c.style.display = c.style.display === 'flex' ? 'none' : 'flex'; }
     async function sendChat() {
-        const i = document.getElementById('chat-input'), b = document.getElementById('chat-content'), q = i.value;
-        if(!q) return; i.value = "";
+        const i = document.getElementById('chat-input'), b = document.getElementById('chat-content'), q = i.value; if(!q) return; i.value = "";
         b.innerHTML += `<div class="text-primary mb-2"><strong>You:</strong> ${q}</div>`;
         const res = await callEngine({action: "chatBot", query: q, client: currentClient, gk: localStorage.getItem('hca_gk')});
-        b.innerHTML += `<div class="mb-3"><strong>AI:</strong> ${res.reply}</div>`;
-        b.scrollTop = b.scrollHeight;
+        b.innerHTML += `<div><strong>AI:</strong> ${res.reply}</div>`; b.scrollTop = b.scrollHeight;
     }
 
-    async function loadDash() { 
-        currentClient = document.getElementById('masterClient').value; 
-        if(!currentClient) return alert("Select client first");
-        document.getElementById('st').style.display = 'block'; 
-        const res = await callEngine({action: "getAppData", clientName: currentClient}); 
-        renderDashboard(res); 
-        pingStatus(); 
-    }
+    function showPane(p) { document.querySelectorAll('.view-pane').forEach(el => el.style.display = 'none'); document.getElementById('view-' + p).style.display = 'block'; }
+    function switchTab(t) { document.querySelectorAll('.dash-tab').forEach(el => el.style.display = 'none'); document.querySelectorAll('.app-nav-btn').forEach(el => el.classList.remove('active')); document.getElementById('tab-'+t).style.display = 'block'; document.getElementById('nav-'+t).classList.add('active'); }
+    async function loadDash() { currentClient = document.getElementById('masterClient').value; if(!currentClient) return; document.getElementById('st').style.display = 'block'; const res = await callEngine({action: "getAppData", clientName: currentClient}); renderDashboard(res); pingStatus(); }
 </script>
 </body>
 </html>
