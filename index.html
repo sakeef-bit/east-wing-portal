@@ -8,6 +8,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- SheetJS for Excel Processing -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- jsPDF & AutoTable for PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <style>
         :root { 
             --hca-sage: #C5D1B8; 
@@ -141,7 +146,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row g-4" id="actionGrid" style="opacity:0.3; pointer-events:none;">
+            <div class="row g-4 mb-4" id="actionGrid" style="opacity:0.3; pointer-events:none;">
                 <div class="col-md-4"><div class="card card-custom">
                     <div class="card-img-container">
                         <img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80" class="card-img-top">
@@ -167,6 +172,37 @@
                     </div>
                 </div></div>
             </div>
+
+            <!-- ADVANCED DOCUMENT CONVERTER BOX -->
+            <div class="card p-4 rounded-xl border-0 shadow-sm">
+                <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                    Advanced Document Converter
+                </h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="upload-box text-center">
+                            <h6 class="fw-bold mb-1">PDF to Excel (.xlsx) Converter</h6>
+                            <p class="small text-muted mb-2">Convert financial PDF statements into clean, editable Excel spreadsheets.</p>
+                            <button class="btn btn-sm btn-dark-hca rounded-pill" onclick="document.getElementById('pdfToExcelInput').click()">
+                                Convert PDF to Excel
+                            </button>
+                            <input type="file" id="pdfToExcelInput" accept=".pdf" style="display:none" onchange="convertPDFToExcel(this)">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="upload-box text-center">
+                            <h6 class="fw-bold mb-1">Excel (.xlsx/.csv) to PDF Converter</h6>
+                            <p class="small text-muted mb-2">Generate formatted PDF documents complete with headers from Excel files.</p>
+                            <button class="btn btn-sm btn-hca rounded-pill" onclick="document.getElementById('excelToPdfInput').click()">
+                                Convert Excel to PDF
+                            </button>
+                            <input type="file" id="excelToPdfInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="convertExcelToPDF(this)">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <input type="file" id="f_pdf" style="display:none" onchange="handleFile(this, 'PDF')">
             <input type="file" id="f_cc" style="display:none" onchange="handleFile(this, 'CC')">
         </div>
@@ -375,6 +411,113 @@
             await getClientList();
         }
     };
+
+    // --- CONVERTER FUNCTION 1: PDF TO EXCEL (.XLSX) ---
+    async function convertPDFToExcel(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const apiKey = localStorage.getItem('hca_gk');
+        if (!apiKey) return alert("Missing Gemini API Key. Please authenticate.");
+
+        document.getElementById('st').style.display = 'block';
+        const reader = new FileReader();
+
+        reader.onload = async (e) => {
+            try {
+                const pdfData = e.target.result.split(',')[1];
+                const prompt = `ACT AS: Financial Data Analyst. Extract ALL tables and structured transactional rows from this PDF document.
+Return ONLY JSON array of arrays (rows with column values):
+[["Date", "Vendor/Description", "Reference", "Amount", "Category"], ["2026-01-01", "Sample Item", "1001", 150.00, "Expenses"]]`;
+
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        "contents": [{ "parts": [{ "text": prompt }, { "inline_data": { "mime_type": "application/pdf", "data": pdfData }}] }],
+                        "generationConfig": { "response_mime_type": "application/json" }
+                    })
+                });
+
+                const jsonRes = await res.json();
+                const rawText = jsonRes.candidates[0].content.parts[0].text;
+                const rowsData = JSON.parse(rawText.replace(/```json|```/g, '').trim());
+
+                // Convert to Excel workbook via SheetJS
+                const ws = XLSX.utils.aoa_to_sheet(rowsData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Converted Statement");
+
+                // Download .xlsx file
+                XLSX.writeFile(wb, file.name.replace(/\.[^/.]+$/, "") + "_Converted.xlsx");
+                document.getElementById('st').style.display = 'none';
+                alert("✓ PDF converted to Excel successfully!");
+            } catch (err) {
+                alert("PDF to Excel Conversion Error: " + err.message);
+                document.getElementById('st').style.display = 'none';
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // --- CONVERTER FUNCTION 2: EXCEL TO PDF (.PDF) ---
+    async function convertExcelToPDF(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        document.getElementById('st').style.display = 'block';
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                
+                // Convert SheetJS rows into arrays
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+                if (!jsonData || jsonData.length === 0) {
+                    document.getElementById('st').style.display = 'none';
+                    return alert("Excel file contains no data.");
+                }
+
+                const headers = jsonData[0];
+                const bodyRows = jsonData.slice(1);
+
+                // Initialize jsPDF document
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "letter" });
+
+                // Document Header
+                doc.setFontSize(14);
+                doc.setTextColor(44, 62, 80);
+                doc.text("Converted Financial Statement", 40, 40);
+                doc.setFontSize(9);
+                doc.setTextColor(100);
+                doc.text(`Source File: ${file.name} | Generated: ${new Date().toLocaleDateString()}`, 40, 55);
+
+                // Build Table via AutoTable
+                doc.autoTable({
+                    head: [headers],
+                    body: bodyRows,
+                    startY: 70,
+                    theme: "striped",
+                    headStyles: { fillColor: [44, 62, 80], textColor: [255, 255, 255], fontStyle: "bold" },
+                    styles: { fontSize: 8, cellPadding: 5 }
+                });
+
+                // Save PDF
+                doc.save(file.name.replace(/\.[^/.]+$/, "") + "_Converted.pdf");
+                document.getElementById('st').style.display = 'none';
+                alert("✓ Excel converted to PDF successfully!");
+            } catch (err) {
+                alert("Excel to PDF Conversion Error: " + err.message);
+                document.getElementById('st').style.display = 'none';
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
 
     function downloadQBTemplate() {
         const headers = "Account Name,Account Type,Sub Account\n";
