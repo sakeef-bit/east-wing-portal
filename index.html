@@ -9,7 +9,7 @@
         body { background: var(--hca-bg); font-family: 'Segoe UI', sans-serif; color: var(--hca-dark); padding-bottom: 60px; }
         .rounded-xl { border-radius: 12px !important; }
         .navbar { background: white; border-bottom: 2px solid var(--hca-sage); padding: 1rem 2rem; }
-        .hero-section { background: var(--hca-dark); color: white; padding: 60px 20px; text-align: center; margin-bottom: 40px; }
+        .hero-section { background: var(--hca-dark); color: white; padding: 40px; text-align: center; margin-bottom: 40px; }
         .hero .sub-brand { position: absolute; bottom: 10px; right: 40px; font-weight: bold; color: var(--hca-sage); font-size: 0.8rem; }
         .card-custom { background: white; border: none; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); height: 100%; display: flex; flex-direction: column; transition: 0.3s; }
         .card-custom:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
@@ -21,14 +21,13 @@
         .app-nav-btn { flex: 1; text-align: center; padding: 15px; cursor: pointer; font-weight: bold; border-right: 1px solid #eee; color: #7f8c8d; }
         .app-nav-btn.active { background: var(--hca-sage); color: var(--hca-dark); }
         #st { background: white; border-radius: 12px; padding: 20px; position: fixed; bottom: 30px; right: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: none; z-index: 2000; border: 1px solid var(--hca-sage); }
-        input, select, textarea, .form-control { border-radius: 12px !important; }
         
-        /* NEW: STATUS LIGHT STYLES */
         .status-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 5px; background: #bbb; transition: 0.3s; }
         .dot-green { background: #2ca01c; box-shadow: 0 0 8px #2ca01c; }
         .dot-amber { background: #f0ad4e; box-shadow: 0 0 8px #f0ad4e; }
         .dot-red { background: #d9534f; box-shadow: 0 0 8px #d9534f; }
         
+        input, select, textarea, .form-control { border-radius: 12px !important; }
         .je-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; font-family: monospace; }
         .dr { color: #2C3E50; width: 80px; text-align: right; font-weight: bold;}
         .cr { color: #d9534f; width: 80px; text-align: right; font-weight: bold;}
@@ -40,7 +39,6 @@
 <nav class="navbar d-flex justify-content-between">
     <div class="fw-bold fs-4">HCA <span class="fw-light text-muted">Automation</span></div>
     <div class="d-flex align-items-center gap-3">
-        <!-- LED LIGHTS CONTAINER -->
         <div class="small fw-bold text-uppercase d-flex align-items-center gap-2">
             <div><span class="status-dot" id="dot-ledger"></span> Ledger</div>
             <div><span class="status-dot" id="dot-gemini"></span> AI</div>
@@ -100,11 +98,11 @@
     <div class="row justify-content-center"><div class="col-md-8"><div class="card p-5 card-custom">
         <h3 class="fw-bold mb-4">Provision Client</h3>
         <div class="row g-3">
-            <input id="n" class="form-control" placeholder="Company Name">
-            <input id="nature" class="form-control" placeholder="Nature (e.g. Retail)">
-            <input id="qi" class="form-control" placeholder="QBO ID">
-            <input id="qs" type="password" class="form-control" placeholder="QBO Secret">
-            <div class="col-12 d-flex gap-2 pt-3"><button onclick="save()" class="btn btn-dark-hca flex-grow-1">Save & Provision</button><button onclick="showPane('launchpad')" class="btn btn-outline-secondary">Exit</button></div>
+            <input id="n" class="form-control rounded-pill" placeholder="Company Name">
+            <input id="nature" class="form-control rounded-pill" placeholder="Nature">
+            <input id="qi" class="form-control rounded-pill" placeholder="QBO ID">
+            <input id="qs" type="password" class="form-control rounded-pill" placeholder="QBO Secret">
+            <div class="col-12 d-flex gap-2 pt-3"><button onclick="save()" class="btn btn-dark-hca flex-grow-1 rounded-pill">Save & Provision</button><button onclick="showPane('launchpad')" class="btn btn-outline-secondary">Exit</button></div>
         </div>
     </div></div></div>
 </div>
@@ -114,14 +112,19 @@
         <h2 id="activeTitle" class="fw-bold">Dashboard</h2>
         <div class="gap-2 d-flex">
             <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="approveAll()">Approve All</button>
-            <button class="btn btn-primary btn-sm rounded-pill px-3" onclick="saveAll()">Save All</button>
+            <button class="btn btn-primary btn-sm rounded-pill px-3" onclick="saveAll()">Save All Changes</button>
             <button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="showPane('launchpad')">Exit</button>
         </div>
     </div>
-    <div class="app-nav"><div id="nav-review" class="app-nav-btn active" onclick="switchTab('review')">REVIEW</div><div id="nav-history" class="app-nav-btn" onclick="switchTab('history')">HISTORY</div><div id="nav-je" class="app-nav-btn" onclick="switchTab('je')">JE VIEW</div><div id="nav-meta" class="app-nav-btn" onclick="switchTab('meta')">CLIENT INFO</div></div>
-    
+    <div class="app-nav">
+        <div id="nav-review" class="app-nav-btn active" onclick="switchTab('review')">REVIEW</div>
+        <div id="nav-history" class="app-nav-btn" onclick="switchTab('history')">HISTORY</div>
+        <div id="nav-je" class="app-nav-btn" onclick="switchTab('je')">JE VIEW</div>
+        <div id="nav-meta" class="app-nav-btn" onclick="switchTab('meta')">CLIENT INFO</div>
+    </div>
+
     <div id="tab-review" class="bg-white p-4 rounded-xl shadow-sm">
-        <div class="d-flex justify-content-between mb-3 align-items-center"><h5>Staging Area</h5><button class="btn btn-dark btn-sm rounded-pill px-3" onclick="pushQBO()">Push to QBO</button></div>
+        <div class="d-flex justify-content-between mb-3 align-items-center"><h5>Staging</h5><button class="btn btn-dark btn-sm rounded-pill px-3" onclick="pushQBO()">Push to QBO</button></div>
         <table class="table table-hover table-sm align-middle"><thead class="table-light"><tr><th>Source</th><th>Date</th><th>Description</th><th>Amount</th><th>Expense Account</th><th>Status</th><th>Bank Account</th></tr></thead><tbody id="tb-staging"></tbody></table>
     </div>
 
@@ -144,7 +147,7 @@
 <div id="st"><div class="spinner-border spinner-border-sm text-primary me-2"></div><strong>Processing Data...</strong></div>
 
 <script>
-    const ENGINE_URL = "https://script.google.com/macros/s/AKfycbwNPCBAaror8YkrdFXLgludAtI78tx7R66kauQbwYa0TaXdoj9ZgI_KS0Lwfq3k6iU2FA/exec";
+    const ENGINE_URL = "https://script.google.com/macros/s/AKfycbzfHtMXzUetWkuc9zJa9NRgZb3H6MmP8wVrlWX4pD0yrQviJT4SEn8NuVBuTMQ9uFbYpA/exec";
     let currentClient = "";
     let localData = [];
 
@@ -156,7 +159,6 @@
     }
 
     function lockKey() { localStorage.setItem('hca_gk', document.getElementById('master_gk').value); location.reload(); }
-    
     window.onload = async () => {
         if(localStorage.getItem('hca_gk')) {
             document.getElementById('keyGate').style.display = 'none'; document.getElementById('mainPortal').style.display = 'block';
@@ -168,14 +170,16 @@
         }
     };
 
-    /**
-     * NEW: AUTO-PING STATUS LOGIC
-     */
+    document.getElementById('masterClient').onchange = function() { document.getElementById('actionGrid').style.opacity = this.value ? "1" : "0.3"; document.getElementById('actionGrid').style.pointerEvents = this.value ? "auto" : "none"; };
+    
+    function showPane(p) { 
+        document.querySelectorAll('.view-pane, #view-launchpad').forEach(el => el.style.display = 'none'); 
+        document.getElementById('view-' + p).style.display = 'block'; 
+    }
+
     async function pingStatus() {
         const client = document.getElementById('masterClient').value;
         if(!client) return;
-        document.getElementById('actionGrid').style.opacity = "1";
-        document.getElementById('actionGrid').style.pointerEvents = "auto";
         const status = await callEngine({action: "checkStatus", client: client});
         document.getElementById('dot-ledger').className = status.ledger ? 'status-dot dot-green' : 'status-dot dot-red';
         document.getElementById('dot-qbo').className = status.qbo === 'GREEN' ? 'status-dot dot-green' : (status.qbo === 'AMBER' ? 'status-dot dot-amber' : 'status-dot dot-red');
@@ -196,13 +200,16 @@
     }
 
     function renderDashboard(res) {
-        document.getElementById('st').style.display = 'none'; if(!res || res.error) { alert("Error: " + (res ? res.error : "No data")); return; }
-        showPane('dash'); document.getElementById('activeTitle').innerText = currentClient;
+        document.getElementById('st').style.display = 'none'; 
+        if(!res || res.error) { alert("Error: " + (res ? res.error : "No data")); return; }
+        
+        showPane('dash'); // Surgical Fix: Ensuring the dashboard launches immediately
+        document.getElementById('activeTitle').innerText = currentClient;
         localData = res.staging;
         
-        let glHtml = `<option value="Uncategorized">Uncategorized</option>`;
-        res.glOptions.forEach(opt => glHtml += `<option value="${opt}">${opt}</option>`);
-
+        const dl = document.getElementById('glChoices'); dl.innerHTML = ""; 
+        res.glOptions.forEach(opt => dl.innerHTML += `<option value="${opt}">`);
+        
         const sBody = document.getElementById('tb-staging');
         let tableRowsHtml = "";
         
@@ -212,13 +219,14 @@
                 <td>${i.date}</td>
                 <td>${i.desc}</td>
                 <td>$${i.amt}</td>
-                <td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()">${glHtml}</select></td>
+                <td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${res.glOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td>
                 <td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td>
-                <td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()">${glHtml}</select></td>
+                <td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${res.glOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td>
             </tr>`;
         });
         
         sBody.innerHTML = tableRowsHtml;
+        
         res.staging.forEach(i => {
             document.getElementById('c'+i.row).value = i.cat || "Uncategorized";
             document.getElementById('b'+i.row).value = i.bnk || "Uncategorized";
