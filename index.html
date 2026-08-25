@@ -46,7 +46,7 @@
             <div class="col-md-5"><div class="card card-custom p-4 text-center">
                 <h5 class="mb-3 text-uppercase fw-bold">Secure Access</h5>
                 <input type="password" id="master_gk" class="form-control mb-3 text-center" placeholder="Enter Gemini API Key">
-                <button class="btn btn-dark-hca w-100" onclick="lockKey()">Open Portal</button>
+                <button class="btn btn-dark-hca w-100 rounded-pill" onclick="lockKey()">Open Portal</button>
             </div></div>
         </div>
 
@@ -55,7 +55,7 @@
                 <div class="row align-items-center">
                     <div class="col-md-8">
                         <label class="fw-bold small text-muted text-uppercase mb-2 d-block">Active Client Profile</label>
-                        <select id="masterClient" class="form-select"><option value="">-- Choose a Client --</option></select>
+                        <select id="masterClient" class="form-select rounded-pill"><option value="">-- Choose a Client --</option></select>
                     </div>
                     <div class="col-md-4 text-end pt-4"><button class="btn btn-dark-hca" onclick="showPane('config')">+ Add/Update Client</button></div>
                 </div>
@@ -86,10 +86,11 @@
         <h3 class="fw-bold mb-4">Provision Client</h3>
         <div class="row g-3">
             <input id="n" class="form-control" placeholder="Company Name">
-            <input id="nature" class="form-control" placeholder="Nature (e.g. Retail)">
-            <input id="qi" class="form-control" placeholder="QBO Client ID">
+            <input id="nature" class="form-control" placeholder="Nature">
+            <input id="qi" class="form-control" placeholder="QBO ID">
             <input id="qs" type="password" class="form-control" placeholder="QBO Secret">
-            <div class="col-12 d-flex gap-2 pt-3"><button onclick="save()" class="btn btn-dark-hca flex-grow-1">Save & Provision</button><button onclick="showPane('launchpad')" class="btn btn-outline-secondary">Exit</button></div>
+            <textarea id="gl" class="form-control" rows="4" style="border-radius:15px" placeholder="GL Accounts (comma separated)"></textarea>
+            <div class="col-12 d-flex gap-2 pt-3"><button onclick="save()" class="btn btn-dark-hca flex-grow-1 rounded-pill">Save & Provision</button><button onclick="showPane('launchpad')" class="btn btn-outline-secondary">Exit</button></div>
         </div>
     </div></div></div>
 </div>
@@ -98,9 +99,9 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 id="activeTitle" class="fw-bold">Dashboard</h2>
         <div class="gap-2 d-flex">
-            <button class="btn btn-outline-primary btn-sm px-3" onclick="approveAll()">Approve All</button>
-            <button class="btn btn-primary btn-sm px-3" onclick="saveAll()">Save All Changes</button>
-            <button class="btn btn-outline-danger btn-sm px-3" onclick="showPane('launchpad')">Exit</button>
+            <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="approveAll()">Approve All</button>
+            <button class="btn btn-primary btn-sm rounded-pill px-3" onclick="saveAll()">Save Changes</button>
+            <button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="showPane('launchpad')">Exit</button>
         </div>
     </div>
     <div class="app-nav">
@@ -111,34 +112,28 @@
     </div>
 
     <div id="tab-review" class="bg-white p-4 rounded-xl shadow-sm">
-        <div class="d-flex justify-content-between mb-3 align-items-center"><h5>Staging Area</h5><button class="btn btn-dark btn-sm rounded-pill px-3" onclick="pushQBO()">Push to QBO</button></div>
-        <table class="table table-hover table-sm align-middle"><thead class="table-light"><tr><th>Source</th><th>Date</th><th>Description</th><th>Amount</th><th>Category (Dropdown)</th><th>Status</th></tr></thead><tbody id="tb-staging"></tbody></table>
+        <div class="d-flex justify-content-between mb-3 align-items-center"><h5>Staging</h5><button class="btn btn-dark btn-sm rounded-pill px-3" onclick="pushQBO()">Push to QBO</button></div>
+        <table class="table table-hover table-sm align-middle"><thead class="table-light"><tr><th>Source</th><th>Date</th><th>Description</th><th>Amount</th><th>Expense Account</th><th>Status</th><th>Bank Account</th></tr></thead><tbody id="tb-staging"></tbody></table>
     </div>
 
-    <div id="tab-history" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5>History</h5><table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync</th></tr></thead><tbody id="tb-history"></tbody></table></div>
+    <div id="tab-history" class="bg-white p-4 shadow-sm" style="display:none; border-radius:15px"><h5>History</h5><table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync</th></tr></thead><tbody id="tb-history"></tbody></table></div>
 
     <div id="tab-je" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <div class="row g-3 mb-4">
-            <div class="col-md-3"><div class="summary-card"><h6>Bank Total</h6><h4 id="bankTotal">$0.00</h4></div></div>
-            <div class="col-md-3"><div class="summary-card"><h6>Bank Categorized</h6><h4 id="bankCat">$0.00</h4></div></div>
-            <div class="col-md-3"><div class="summary-card"><h6>CC Total</h6><h4 id="ccTotal">$0.00</h4></div></div>
-            <div class="col-md-3"><div class="summary-card"><h6>CC Categorized</h6><h4 id="ccCat">$0.00</h4></div></div>
-        </div>
-        <div class="row mb-3 g-2">
-            <div class="col-md-3"><label class="small fw-bold">Bank Offset Account</label><input id="bankOffset" class="form-control form-control-sm" value="Cash Offset" oninput="recalcJE()"></div>
-            <div class="col-md-3"><label class="small fw-bold">CC Offset Account</label><input id="ccOffset" class="form-control form-control-sm" value="Credit Card Liability" oninput="recalcJE()"></div>
+            <div class="col-md-6"><div class="summary-card"><h6>Bank Statement Items Total</h6><h4 id="bankTotal">$0.00</h4></div></div>
+            <div class="col-md-6"><div class="summary-card"><h6>Bank Uncategorized Items</h6><h4 id="bankUncat">$0.00</h4></div></div>
         </div>
         <div id="jeList" class="mt-3 font-monospace"></div>
     </div>
 
-    <div id="tab-meta" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5>Client Info</h5><div id="metaList"></div></div>
+    <div id="tab-meta" class="bg-white p-4 shadow-sm" style="display:none; border-radius:15px"><h5>Client Info</h5><div id="metaList"></div></div>
 </div>
 
 <datalist id="glChoices"></datalist>
 <div id="st"><div class="spinner-border spinner-border-sm text-primary me-2"></div><strong>Processing Data...</strong></div>
 
 <script>
-    const ENGINE_URL = "https://script.google.com/macros/s/AKfycbyvQfTh-r4YJeMAonyaP7_P0ripXq41aR1OInRS_v29fofDkqsxoakCcQ499bqqIsL2pg/exec";
+    const ENGINE_URL = "https://script.google.com/macros/s/AKfycbyDjxsM9iEG0EhtEdQZeeMG_YGbzTvaWeUP4rs249egTWzYK4v7YtXVAhSO5KkGUc8h/exec";
     let currentClient = "";
     let localData = [];
 
@@ -160,26 +155,11 @@
         }
     };
     document.getElementById('masterClient').onchange = function() { document.getElementById('actionGrid').style.opacity = this.value ? "1" : "0.3"; document.getElementById('actionGrid').style.pointerEvents = this.value ? "auto" : "none"; };
-    
-    function showPane(p) { 
-        document.querySelectorAll('.view-pane, #view-launchpad').forEach(el => el.style.display = 'none'); 
-        document.getElementById('view-' + p).style.display = 'block'; 
-    }
-
-    async function save() { document.getElementById('st').style.display = 'block'; const res = await callEngine({ action: "provision", clientName: document.getElementById('n').value, nature: document.getElementById('nature').value, keys: { QBO_ID: document.getElementById('qi').value, QBO_SEC: document.getElementById('qs').value }, glList: "" }); alert(res.msg); location.reload(); }
+    function showPane(p) { document.querySelectorAll('.view-pane, #view-launchpad').forEach(el => el.style.display = 'none'); document.getElementById('view-' + p).style.display = 'block'; }
+    async function save() { document.getElementById('st').style.display = 'block'; const res = await callEngine({ action: "provision", clientName: document.getElementById('n').value, nature: document.getElementById('nature').value, keys: { QBO_ID: document.getElementById('qi').value, QBO_SEC: document.getElementById('qs').value }, glList: document.getElementById('gl').value }); alert(res.msg); location.reload(); }
     function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
+    async function handleFile(input, type) { currentClient = document.getElementById('masterClient').value; document.getElementById('st').style.display = 'block'; const reader = new FileReader(); reader.onload = async (e) => { const res = await callEngine({action: "process", client: currentClient, source: type, fileData: e.target.result.split(',')[1], geminiKey: localStorage.getItem('hca_gk')}); renderDashboard(res); }; reader.readAsDataURL(input.files[0]); }
     
-    async function handleFile(input, type) { 
-        currentClient = document.getElementById('masterClient').value; 
-        document.getElementById('st').style.display = 'block'; 
-        const reader = new FileReader(); 
-        reader.onload = async (e) => { 
-            const res = await callEngine({action: "process", client: currentClient, source: type, fileData: e.target.result.split(',')[1], geminiKey: localStorage.getItem('hca_gk')}); 
-            renderDashboard(res); 
-        }; 
-        reader.readAsDataURL(input.files[0]); 
-    }
-
     function renderDashboard(res) {
         document.getElementById('st').style.display = 'none'; if(!res || res.error) { alert("Error: " + (res ? res.error : "No data")); return; }
         showPane('dash'); document.getElementById('activeTitle').innerText = currentClient;
@@ -188,7 +168,7 @@
         const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
         
         res.staging.forEach(i => {
-            sBody.innerHTML += `<tr><td>${i.src}</td><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td><input id="c${i.row}" list="glChoices" data-row="${i.row}" class="form-control form-control-sm mb-0 row-cat" value="${i.cat}" oninput="recalcJE()"></td><td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td></tr>`;
+            sBody.innerHTML += `<tr><td>${i.src}</td><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td><input id="c${i.row}" list="glChoices" data-row="${i.row}" class="form-control form-control-sm mb-0 row-cat" value="${i.cat}" oninput="recalcJE()"></td><td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td><td><input id="b${i.row}" list="glChoices" class="form-control form-control-sm mb-0 row-bnk" value="${i.bnk || ''}" oninput="recalcJE()"></td></tr>`;
         });
         document.getElementById('tb-history').innerHTML = ""; res.history.forEach(i => { document.getElementById('tb-history').innerHTML += `<tr><td>${i.date}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; });
         document.getElementById('metaList').innerHTML = ""; res.metadata.forEach(m => document.getElementById('metaList').innerHTML += `<div class="small py-1 border-bottom"><strong>${m[0]}:</strong> <span class="text-muted">${m[1]}</span></div>`);
@@ -196,33 +176,28 @@
     }
 
     function recalcJE() {
-        let jeData = {}; let bankTotal = 0; let bankCat = 0; let ccTotal = 0; let ccCat = 0;
-        const bankOff = document.getElementById('bankOffset').value;
-        const ccOff = document.getElementById('ccOffset').value;
-
+        let jeData = {}; let bankTotal = 0; let bankUncat = 0;
+        
         document.querySelectorAll('.row-cat').forEach(inp => {
             let r = inp.getAttribute('data-row');
             let item = localData.find(x => x.row == r);
             let val = parseFloat(item.amt.replace(/[^0-9.-]+/g,""));
-            let cat = inp.value;
+            let expAcc = inp.value;
+            let bnkAcc = document.getElementById('b'+r).value;
 
-            if(item.src === "PDF") {
+            // Totals only for BANK items
+            if(item.src === "BANK") {
                 bankTotal += val;
-                if(cat !== "Uncategorized" && cat !== "") bankCat += val;
-            } else {
-                ccTotal += val;
-                if(cat !== "Uncategorized" && cat !== "") ccCat += val;
+                if(expAcc === "Uncategorized" || expAcc === "" || bnkAcc === "") bankUncat += val;
             }
 
-            let legName = item.src === "PDF" ? bankOff : ccOff;
-            jeData[cat] = (jeData[cat] || 0) + val;
-            jeData[legName] = (jeData[legName] || 0) - val;
+            // Balanced Logic: Expense leg (DR) and Bank leg (CR)
+            if(expAcc) jeData[expAcc] = (jeData[expAcc] || 0) + val;
+            if(bnkAcc) jeData[bnkAcc] = (jeData[bnkAcc] || 0) - val;
         });
 
         document.getElementById('bankTotal').innerText = "$" + bankTotal.toFixed(2);
-        document.getElementById('bankCat').innerText = "$" + bankCat.toFixed(2);
-        document.getElementById('ccTotal').innerText = "$" + ccTotal.toFixed(2);
-        document.getElementById('ccCat').innerText = "$" + ccCat.toFixed(2);
+        document.getElementById('bankUncat').innerText = "$" + bankUncat.toFixed(2);
 
         const jeDiv = document.getElementById('jeList'); jeDiv.innerHTML = `<div class="je-item fw-bold border-bottom"><span>Account</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
         for (let acc in jeData) {
@@ -237,7 +212,7 @@
     function switchTab(t) { document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none'); document.querySelectorAll('.app-nav-btn').forEach(el => el.classList.remove('active')); document.getElementById('tab-'+t).style.display = 'block'; document.getElementById('nav-'+t).classList.add('active'); }
     function approveAll() { document.querySelectorAll('.row-stat').forEach(s => s.value = "APPROVED"); }
     async function saveAll() {
-        let updates = []; document.querySelectorAll('.row-cat').forEach(inp => { let r = inp.getAttribute('data-row'); updates.push({ row: r, cat: inp.value, stat: document.getElementById('s'+r).value }); });
+        let updates = []; document.querySelectorAll('.row-cat').forEach(inp => { let r = inp.getAttribute('data-row'); updates.push({ row: r, cat: inp.value, stat: document.getElementById('s'+r).value, bnk: document.getElementById('b'+r).value }); });
         document.getElementById('st').style.display = 'block'; await callEngine({action: "updateRows", client: currentClient, updateData: updates}); loadDash();
     }
     async function pushQBO() { document.getElementById('st').style.display = 'block'; const res = await callEngine({action: "pushQBO", client: currentClient}); renderDashboard(res); }
