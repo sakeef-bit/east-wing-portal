@@ -704,7 +704,7 @@ Return ONLY JSON array of arrays (rows with column values):
 
     function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
 
-    // FILE PARSER
+    // FILE PARSER: PRE-FETCHES GL LIST + HISTORY + AUTO-FALLBACK CATEGORIES
     async function handleFile(input, type) { 
         currentClient = document.getElementById('masterClient').value; 
         if(!currentClient) return alert("Select client account first");
@@ -721,9 +721,22 @@ Return ONLY JSON array of arrays (rows with column values):
                     return alert("Missing Gemini API Key. Please authenticate.");
                 }
 
+                // Pre-fetch stored GL Accounts and History from Supabase
+                if (db) {
+                    const { data: meta } = await db.from('client_metadata').select('gl_list').eq('client_name', currentClient).maybeSingle();
+                    if (meta && meta.gl_list) {
+                        appGLOptions = meta.gl_list.split(',').filter(Boolean);
+                    }
+                    const { data: ledger } = await db.from('permanent_ledger').select('*').eq('client_name', currentClient).limit(50);
+                    if (ledger) {
+                        historyData = ledger.map(l => ({ date: l.txn_date, vendor: l.vendor || "", desc: l.description, amt: String(l.amount), cat: l.category }));
+                    }
+                }
+
+                // Construct explicit GL Context with standard GAAP fallbacks
                 const glContext = appGLOptions.length > 0 
                     ? appGLOptions.join(", ") 
-                    : "Standard GAAP Accounts (Office Supplies, Travel, Meals, Software, Professional Fees)";
+                    : "Payroll, Rent, Utilities, Office Supplies & Expenses, Bank Fees, Consulting Revenue, Travel & Lodging, Software & Subscriptions, Meals & Entertainment, Automobile & Fuel";
 
                 const pastHistoryContext = historyData.length > 0
                     ? historyData.slice(0, 30).map(h => `${h.vendor || h.desc} -> ${h.cat}`).join("\n")
@@ -733,18 +746,16 @@ Return ONLY JSON array of arrays (rows with column values):
                 
                 const prompt = `ACT AS: Senior Bookkeeper & Forensic Auditor. Extract all statement transactions.
 
-CHART OF ACCOUNTS (STRICT MANDATE):
-You MUST match and assign the 'category' field ONLY using this exact list of allowed GL accounts:
+CHART OF ACCOUNTS (MUST SELECT CATEGORIES FROM THIS LIST):
 [${glContext}]
 
-HISTORICAL CATEGORIZATION PATTERNS (LEARN AND APPLY THESE):
+HISTORICAL CATEGORIZATION PATTERNS:
 ${pastHistoryContext}
 
-STRICT VENDOR EXTRACTION RULES:
-1. 'vendor': Extract ONLY true commercial merchants or business vendors (e.g. 'Adobe', 'Uber', 'Amazon Web Services', 'Shell', 'Delta Air Lines', 'Marriott', 'The Capital Grille', 'Office Depot').
-2. SET 'vendor' TO AN EMPTY STRING ("") if the item is a payroll transaction ('Payroll Direct Deposit'), rent payment ('Monthly Apartment Rent'), transfer/payment ('Auto-Pay Received'), utility bill ('Electric & Gas Utility'), supermarket/freelance payment, or cashback reward.
-3. 'desc': Store the exact raw statement line text.
-4. 'category': Match the merchant against Historical Patterns and select the MOST APPLICABLE account from the provided CHART OF ACCOUNTS. Do NOT leave 'category' empty if an applicable GL Account exists.
+STRICT EXTRACTION RULES:
+1. 'vendor': Extract the clean entity, merchant, or organization name from the statement line (e.g. 'Con Edison', 'ACME Corp', 'Local Supermarket', 'Stripe', 'H. Sharma', 'Adobe', 'Uber', 'Delta Air Lines'). Set to "" only if generic internal fee with no entity name.
+2. 'desc': Store the exact raw statement line text.
+3. 'category': Categorize EVERY transaction using the CHART OF ACCOUNTS list above. Match payroll to Payroll, rent to Rent, utilities to Utilities, supermarket/catering to Meals/Office Supplies & Expenses, wire/inflow to Consulting Revenue, fees to Bank Fees. DO NOT RETURN BLANK OR NULL CATEGORIES.
 
 ${behavior}
 
@@ -756,7 +767,7 @@ Return ONLY JSON Object:
     {
       "date": "YYYY-MM-DD",
       "desc": "raw statement line",
-      "vendor": "Clean Merchant Name OR empty string",
+      "vendor": "Clean Entity Name",
       "amount": 0.00,
       "category": "Selected GL Account Name"
     }
@@ -791,12 +802,18 @@ Return ONLY JSON Object:
                 const rows = (extracted.transactions || []).map(t => {
                     let assignedCategory = t.category || "Uncategorized";
                     
+                    // Fallback to active rules engine
                     activeRules.forEach(rule => {
                         const targetText = ((t.vendor || "") + " " + (t.desc || "")).toLowerCase();
                         if(targetText.includes(rule.keyword.toLowerCase())) {
                             assignedCategory = rule.target_account;
                         }
                     });
+
+                    // Auto-append newly extracted GL account if not in dropdown array
+                    if (assignedCategory && assignedCategory !== "Uncategorized" && !appGLOptions.includes(assignedCategory)) {
+                        appGLOptions.push(assignedCategory);
+                    }
 
                     return {
                         client_name: currentClient,
