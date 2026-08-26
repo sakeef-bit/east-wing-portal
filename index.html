@@ -29,8 +29,9 @@
         .brand-logo-text { font-weight: 800; letter-spacing: -0.5px; }
         .brand-badge { background: var(--hca-sage); color: var(--hca-dark); font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; margin-left: 8px; letter-spacing: 0.5px; }
 
-        .hero-section { background: var(--hca-dark); color: white; padding: 60px 20px 70px; text-align: center; border-radius: 0 0 32px 35px; margin-bottom: 40px; }
-        
+        .hero-section { background: var(--hca-dark); color: white; padding: 40px 20px 60px; text-align: center; border-radius: 0 0 32px 35px; margin-bottom: 40px; }
+        .privacy-disclaimer-box { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 8px 16px; font-size: 0.78rem; color: #E2E8F0; max-width: 850px; margin: 0 auto 20px auto; }
+
         .card-custom { background: white; border: 1px solid var(--hca-border); border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03); height: 100%; display: flex; flex-direction: column; transition: all 0.25s ease-in-out; }
         .card-custom:hover { transform: translateY(-6px); box-shadow: 0 16px 32px rgba(44,62,80,0.1); border-color: var(--hca-sage); }
         .card-img-container { height: 170px; overflow: hidden; position: relative; }
@@ -49,14 +50,17 @@
         .dot-red { background: #EF4444; box-shadow: 0 0 8px #EF4444; }
         @keyframes signalPulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
-        /* Assistant Widget (LUFFY) */
-        #chat-trigger-bar { position: fixed; bottom: 25px; left: 25px; background: var(--hca-dark); color: white; border-radius: 30px; padding: 8px 18px 8px 12px; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; box-shadow: 0 10px 25px rgba(44,62,80,0.25); z-index: 3000; transition: all 0.25s ease; border: 1px solid rgba(255,255,255,0.1); }
-        #chat-trigger-bar:hover { background: #1a252f; border-color: var(--hca-sage); transform: translateY(-2px); }
+        /* Floating Widgets Container */
+        .widgets-dock { position: fixed; bottom: 25px; left: 25px; display: flex; gap: 12px; z-index: 3000; }
+        .chat-trigger-btn { background: var(--hca-dark); color: white; border-radius: 30px; padding: 8px 18px 8px 12px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 10px 25px rgba(44,62,80,0.25); transition: all 0.25s ease; border: 1px solid rgba(255,255,255,0.1); }
+        .chat-trigger-btn:hover { background: #1a252f; border-color: var(--hca-sage); transform: translateY(-2px); }
         .chat-bar-badge { background: var(--hca-sage); color: var(--hca-dark); font-size: 0.65rem; font-weight: 800; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        #chat-window { position: fixed; bottom: 80px; left: 25px; width: 360px; height: 480px; background: white; border-radius: 20px; box-shadow: 0 16px 40px rgba(0,0,0,0.15); display: none; flex-direction: column; z-index: 3000; border: 1px solid var(--hca-border); overflow: hidden; }
-        #chat-header { background: var(--hca-dark); color: white; padding: 16px 20px; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.08); }
-        #chat-content { flex-grow: 1; padding: 18px; overflow-y: auto; font-size: 0.88rem; line-height: 1.5; }
+        .chat-window-popup { position: fixed; bottom: 80px; width: 380px; height: 500px; background: white; border-radius: 20px; box-shadow: 0 16px 40px rgba(0,0,0,0.15); display: none; flex-direction: column; z-index: 3000; border: 1px solid var(--hca-border); overflow: hidden; }
+        #chat-window { left: 25px; }
+        #zoro-chat-window { left: 180px; }
+        .chat-window-popup .chat-header-bar { background: var(--hca-dark); color: white; padding: 16px 20px; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .chat-window-popup .chat-body-content { flex-grow: 1; padding: 18px; overflow-y: auto; font-size: 0.88rem; line-height: 1.5; }
         .chat-bubble { margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #F1F5F9; }
 
         .view-pane { display: none; }
@@ -126,6 +130,10 @@
 
 <div id="view-launchpad">
     <header class="hero-section">
+        <!-- TOP PRIVACY DISCLAIMER -->
+        <div class="privacy-disclaimer-box">
+            Your HCA Consulting Group chats aren’t used to improve our models. Gemini is AI and can make mistakes. Your privacy & Gemini.
+        </div>
         <h1 class="display-5 fw-bold mb-2">Financial Automation Portal</h1>
         <p class="lead opacity-75 mb-0 fs-6">Professional Forensic Ledger Processing & Sync System</p>
     </header>
@@ -362,23 +370,44 @@
     <div id="tab-meta" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5 class="fw-bold mb-3">Client Metadata</h5><div id="metaList"></div></div>
 </div>
 
-<!-- COMMAND ACTION BAR FOR LUFFY -->
-<div id="chat-trigger-bar" onclick="toggleChat()">
-    <svg class="icon-svg" style="width:16px; height:16px;" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
-    <span class="fw-semibold small">LUFFY</span>
-    <span class="chat-bar-badge">Assistant</span>
+<!-- DUAL WIDGETS DOCK: LUFFY & ZORO DASHBOARD ASSISTANTS -->
+<div class="widgets-dock">
+    <div class="chat-trigger-btn" onclick="toggleChat('chat-window')">
+        <svg class="icon-svg" style="width:16px; height:16px;" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
+        <span class="fw-semibold small">LUFFY</span>
+        <span class="chat-bar-badge">System</span>
+    </div>
+    <div class="chat-trigger-btn" onclick="toggleChat('zoro-chat-window')">
+        <svg class="icon-svg" style="width:16px; height:16px;" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+        <span class="fw-semibold small">ZORO</span>
+        <span class="chat-bar-badge">Dashboard</span>
+    </div>
 </div>
 
-<div id="chat-window">
-    <div id="chat-header" class="d-flex align-items-center justify-content-between">
+<!-- LUFFY CHAT WINDOW -->
+<div id="chat-window" class="chat-window-popup">
+    <div class="chat-header-bar d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center gap-2">
             <svg class="icon-svg" style="width:18px; height:18px;" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
             <span>LUFFY Assistant</span>
         </div>
-        <button class="btn-close btn-close-white btn-sm" onclick="toggleChat()"></button>
+        <button class="btn-close btn-close-white btn-sm" onclick="toggleChat('chat-window')"></button>
     </div>
-    <div id="chat-content">LUFFY active. Ask questions regarding workflow, classification, or ledger sync.</div>
-    <div class="p-2 border-top"><input id="chat-input" class="form-control form-control-sm rounded-pill" placeholder="Type command..." onkeydown="if(event.key==='Enter') sendChat()"></div>
+    <div id="chat-content" class="chat-body-content">LUFFY active. Ask questions regarding system workflow, setup, or features.</div>
+    <div class="p-2 border-top"><input id="chat-input" class="form-control form-control-sm rounded-pill" placeholder="Type system command..." onkeydown="if(event.key==='Enter') sendChat()"></div>
+</div>
+
+<!-- ZORO DASHBOARD ASSISTANT WINDOW -->
+<div id="zoro-chat-window" class="chat-window-popup">
+    <div class="chat-header-bar d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2">
+            <svg class="icon-svg" style="width:18px; height:18px;" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+            <span>ZORO Dashboard Assistant</span>
+        </div>
+        <button class="btn-close btn-close-white btn-sm" onclick="toggleChat('zoro-chat-window')"></button>
+    </div>
+    <div id="zoro-chat-content" class="chat-body-content">ZORO active. Ask questions regarding current dashboard data, spend breakdown, or ledger balances.</div>
+    <div class="p-2 border-top"><input id="zoro-chat-input" class="form-control form-control-sm rounded-pill" placeholder="Ask about dashboard data..." onkeydown="if(event.key==='Enter') sendZoroChat()"></div>
 </div>
 
 <datalist id="glChoices"></datalist>
@@ -1133,7 +1162,11 @@ Return ONLY JSON:
         }
     }
 
-    function toggleChat() { const c = document.getElementById('chat-window'); c.style.display = (c.style.display === 'flex') ? 'none' : 'flex'; }
+    function toggleChat(windowId) {
+        const target = document.getElementById(windowId);
+        if (!target) return;
+        target.style.display = (target.style.display === 'flex') ? 'none' : 'flex';
+    }
     
     async function sendChat() {
         const i = document.getElementById('chat-input'), b = document.getElementById('chat-content'), q = i.value; if(!q) return; i.value = "";
@@ -1157,6 +1190,40 @@ Return ONLY JSON:
         const structuredReply = reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
         
         b.innerHTML += `<div class="chat-bubble text-dark"><strong>AI:</strong><br>${structuredReply}</div>`; 
+        b.scrollTop = b.scrollHeight;
+    }
+
+    async function sendZoroChat() {
+        const i = document.getElementById('zoro-chat-input'), b = document.getElementById('zoro-chat-content'), q = i.value; if(!q) return; i.value = "";
+        b.innerHTML += `<div class="chat-bubble text-primary"><strong>You:</strong> ${q}</div>`;
+        b.innerHTML += `<div id="zoro-thinking" class="chat-bubble text-muted small"><em>Scanning dashboard dataset...</em></div>`;
+        b.scrollTop = b.scrollHeight;
+
+        const apiKey = localStorage.getItem('hca_gk');
+        
+        // Pass current staging and permanent ledger data into Zoro's system prompt context
+        const dashboardContext = `YOU ARE: ZORO DASHBOARD ASSISTANT. You have full access to the client's current dashboard dataset:
+CLIENT NAME: ${currentClient || "Unselected"}
+STAGING TRANSACTIONS (${localData.length} rows): ${JSON.stringify(localData.slice(0, 50))}
+PERMANENT LEDGER HISTORY (${historyData.length} rows): ${JSON.stringify(historyData.slice(0, 50))}
+ACTIVE GL ACCOUNTS: ${JSON.stringify(appGLOptions)}
+STATEMENT RECONCILIATION SUMMARY: Start Balance: $${stmtStart}, End Balance: $${stmtEnd}.
+
+Provide accurate, direct answers regarding spend, vendor totals, uncategorized rows, and financial metrics. Format key numbers in bold.`;
+
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ "contents": [{ "parts": [{ "text": dashboardContext + "\n\nUser Question: " + q }] }] })
+        });
+        
+        const jsonRes = await res.json();
+        const thinking = document.getElementById('zoro-thinking'); if(thinking) thinking.remove();
+        
+        const reply = jsonRes.candidates?.[0]?.content?.parts?.[0]?.text || "Unable to analyze dashboard context.";
+        const structuredReply = reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+        
+        b.innerHTML += `<div class="chat-bubble text-dark"><strong>ZORO:</strong><br>${structuredReply}</div>`; 
         b.scrollTop = b.scrollHeight;
     }
 
