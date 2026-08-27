@@ -236,7 +236,7 @@
     </div>
 </div>
 
-<!-- CLIENT PROVISIONING FORM -->
+<!-- CLIENT PROVISIONING FORM WITH AUTO-FILLED QBO CREDENTIALS -->
 <div id="view-config" class="view-pane container py-5">
     <div class="row g-4">
         <div class="col-md-6"><div class="card p-4 card-custom">
@@ -244,7 +244,9 @@
             <div class="row g-3">
                 <div class="col-12"><input id="n" class="form-control" placeholder="Company Legal Name"></div>
                 <div class="col-12"><input id="nature" class="form-control" placeholder="Business Industry / Nature"></div>
-                
+                <div class="col-6"><input id="qi" class="form-control" placeholder="QuickBooks Client ID" value="ABgu8RDrvNPOLdMBsAE4d7aIMSioPtPclJJOBxJ36vOLQ7VIS4"></div>
+                <div class="col-6"><input id="qs" type="password" class="form-control" placeholder="QuickBooks Secret" value="Kbdluz6sDjF13PrzxYgBEu9aklg2uok2nFXbkOeO"></div>
+
                 <div class="col-12 mt-2">
                     <div class="upload-box text-center">
                         <h6 class="fw-bold mb-1">QuickBooks Chart of Accounts Source</h6>
@@ -389,7 +391,6 @@
     </div>
     <div class="chat-trigger-btn" onclick="toggleChat('zoro-chat-window')">
         <svg class="icon-svg" style="width:16px; height:16px;" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-        <span class="fw-semibold small">ZORO</span>
         <span class="chat-bar-badge">Dashboard</span>
     </div>
 </div>
@@ -496,11 +497,6 @@
             document.getElementById('mainPortal').style.display = 'block';
             document.getElementById('dot-gemini').classList.add('dot-green');
             await getClientList();
-            
-            // Auto-cleanup bad Client ID strings accidentally written to database in past tests
-            if (db) {
-                await db.from('client_metadata').update({ qbo_id: null }).eq('qbo_id', INTUIT_CLIENT_ID);
-            }
 
             // Restore target client if coming back from connect flow
             const savedTarget = localStorage.getItem('connecting_client');
@@ -523,9 +519,12 @@
             if (db && targetClient) {
                 document.getElementById('st').style.display = 'block';
                 
-                // Save the exact numeric Realm ID to the client row in Supabase
+                // Save the exact numeric Realm ID AND Master Client Secret to Supabase
                 const { data, error } = await db.from('client_metadata')
-                    .update({ qbo_id: realmId })
+                    .update({ 
+                        qbo_id: realmId,
+                        qbo_sec: INTUIT_CLIENT_SECRET 
+                    })
                     .eq('client_name', targetClient)
                     .select();
 
@@ -723,7 +722,7 @@ Return ONLY JSON array of arrays (rows with column values):
         }
     }
 
-    // SAVE CLIENT PROFILE (QBO FIELDS REMOVED)
+    // SAVE CLIENT PROFILE WITH RE-INTEGRATED QBO FIELDS
     async function save() { 
         if(!db) return alert("Database connection uninitialized");
         const cName = document.getElementById('n').value.trim();
@@ -734,6 +733,7 @@ Return ONLY JSON array of arrays (rows with column values):
         const payload = {
             client_name: cName,
             nature: document.getElementById('nature').value || "General",
+            qbo_sec: document.getElementById('qs').value || INTUIT_CLIENT_SECRET,
             gl_list: (typeof appGLOptions !== 'undefined') ? appGLOptions.join(",") : ""
         };
 
