@@ -929,4 +929,460 @@ Return ONLY JSON Object:
                 }
 
                 const rawText = jsonRes.candidates[0].content.parts[0].text;
-                const extracted = JSON.parse(rawText.replace(/```json|
+                const extracted = JSON.parse(rawText.replace(/```json|```/g, '').trim());
+
+                stmtStart = extracted.starting_balance || 0;
+                stmtEnd = extracted.ending_balance || 0;
+                await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).eq('client_name', currentClient);
+
+                const rows = (extracted.transactions || []).map(t => {
+                    let assignedCategory = t.category || "Uncategorized";
+                    
+                    activeRules.forEach(rule => {
+                        const targetText = ((t.vendor || "") + " " + (t.desc || "")).toLowerCase();
+                        if(targetText.includes(rule.keyword.toLowerCase())) {
+                            assignedCategory = rule.target_account;
+                        }
+                    });
+
+                    if (assignedCategory && assignedCategory !== "Uncategorized" && !appGLOptions.includes(assignedCategory)) {
+                        appGLOptions.push(assignedCategory);
+                    }
+
+                    return {
+                        client_name: currentClient,
+                        source: type === 'PDF' ? 'BANK' : 'CREDIT CARD',
+                        txn_date: t.date,
+                        vendor: t.vendor || "", 
+                        description: t.desc || "Statement Line",
+                        amount: t.amount,
+                        category: assignedCategory,
+                        status: "PENDING",
+                        bank_category: "Uncategorized",
+                        class_name: "General",
+                        fingerprint: btoa(t.date + (t.desc || "") + t.amount)
+                    };
+                });
+
+                if (rows.length === 0) {
+                    document.getElementById('st').style.display = 'none';
+                    return alert("No valid transactions found in statement.");
+                }
+
+                await db.from('review_staging').insert(rows);
+                await loadDash();
+            } catch(err) {
+                alert("Processing Error: " + err.message);
+                document.getElementById('st').style.display = 'none';
+            }
+        }; 
+        reader.readAsDataURL(input.files[0]); 
+    }
+
+    async function loadDash() { 
+        currentClient = document.getElementById('masterClient').value; 
+        if(!currentClient) return alert("Select client account first"); 
+
+        document.getElementById('st').style.display = 'block'; 
+        
+        const { data: staging } = await db.from('review_staging').select('*').eq('client_name', currentClient);
+        const { data: ledger } = await db.from('permanent_ledger').select('*').eq('client_name', currentClient).limit(100);
+        const { data: meta } = await db.from('client_metadata').select('*').eq('client_name', currentClient).maybeSingle();
+
+        const seenFingerprints = {};
+        localData = (staging || []).map(s => {
+            const fp = s.fingerprint || btoa(s.txn_date + s.description + s.amount);
+            const isDup = !!seenFingerprints[fp];
+            seenFingerprints[fp] = true;
+
+            return { 
+                row: s.id, 
+                src: s.source, 
+                date: s.txn_date, 
+                vendor: s.vendor || "", 
+                desc: s.description || "", 
+                amt: String(s.amount), 
+                cat: s.category || "Uncategorized", 
+                stat: s.status || "PENDING", 
+                bnk: s.bank_category || "Uncategorized",
+                cls: s.class_name || "General",
+                dup: isDup,
+                receipt: s.receipt_linked || false
+            };
+        });
+
+        if (meta) {
+            stmtStart = parseFloat(meta.stmt_start || 0);
+            stmtEnd = parseFloat(meta.stmt_end || 0);
+            if (meta.gl_list) appGLOptions = meta.gl_list.split(',').filter(Boolean);
+        }
+
+        historyData = (ledger || []).map(l => ({ date: l.txn_date, vendor: l.vendor || "", desc: l.description, amt: String(l.amount), cat: l.category, qbo: l.qbo_id || "SYNCED" }));
+        const metaList = meta ? [["Client", meta.client_name], ["Nature", meta.nature], ["QBO_ID", meta.qbo_id]] : [];
+
+        renderDashboard({ staging: localData, history: historyData, metadata: metaList }); 
+    }
+
+    function renderDashboard(res) {
+        document.getElementById('st').style.display = 'none'; 
+        showPane('dash'); 
+        document.getElementById('activeTitle').innerText = currentClient;
+        
+        const dl = document.getElementById('glChoices'); dl.innerHTML = ""; 
+        const batchSel = document.getElementById('batchCategorySelect'); batchSel.innerHTML = '<option value="Uncategorized">-- Assign Target Account --</option>';
+        appGLOptions.forEach(opt => {
+            dl.innerHTML += `<option value="${opt}">`;
+            batchSel.innerHTML += `<option value="${opt}">${opt}</option>`;
+        });
+
+        renderStagingTable(localData);
+
+        const glBody = document.getElementById('tb-gl'); glBody.innerHTML = "";
+        appGLOptions.forEach((acc, idx) => {
+            glBody.innerHTML += `<tr><td>${idx + 1}</td><td class="fw-semibold">${acc}</td></tr>`;
+        });
+
+        document.getElementById('tb-history').innerHTML = ""; 
+        res.history.forEach(i => { document.getElementById('tb-history').innerHTML += `<tr><td>${i.date}</td><td class="fw-bold">${i.vendor || 'N/A'}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; });
+        
+        document.getElementById('metaList').innerHTML = ""; 
+        res.metadata.forEach(m => document.getElementById('metaList').innerHTML += `<div class="small py-1 border-bottom"><strong>${m[0]}:</strong> <span class="text-muted">${m[1]}</span></div>`);
+        
+        recalcJE();
+        renderPnLCharts();
+    }
+
+    function renderStagingTable(dataRows) {
+        const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
+        dataRows.forEach(i => {
+            const dupBadge = i.dup ? `<span class="badge-dup">DUP</span>` : '';
+            const receiptCell = i.receipt ? `✓ Verified` : `<button class="btn btn-xs btn-outline-secondary py-0" onclick="document.getElementById('rup${i.row}').click()">📁 Match</button><input type="file" id="rup${i.row}" style="display:none" onchange="handleReceiptUpload(this, ${i.row})">`;
+            const popupId = `vpop_${i.row}`;
+            
+            const vendorHtml = (i.vendor && i.vendor.trim() !== "") ? `
+                <span class="vendor-hover" onmouseenter="fetchVendorIntelligence('${i.vendor.replace(/'/g, "\\'")}', '${popupId}')">
+                    ${i.vendor} ${dupBadge}
+                </span>
+                <div class="vendor-card-popup" id="${popupId}">Fetching merchant insights...</div>` 
+                : `<span class="text-muted small">N/A</span> ${dupBadge}`;
+
+            sBody.innerHTML += `
+                <tr>
+                    <td>${i.src}</td>
+                    <td>${i.date}</td>
+                    <td class="vendor-cell">${vendorHtml}</td>
+                    <td><small class="text-muted">${i.desc}</small></td>
+                    <td class="fw-bold">$${i.amt}</td>
+                    <td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td>
+                    <td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td>
+                    <td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option></select></td>
+                    <td><select id="l${i.row}" class="form-select form-select-sm">${CLASS_OPTIONS.map(c => `<option value="${c}" ${i.cls==c?'selected':''}>${c}</option>`).join('')}</select></td>
+                    <td>${receiptCell}</td>
+                </tr>`;
+        });
+        
+        dataRows.forEach(i => { 
+            if(document.getElementById('c'+i.row)) document.getElementById('c'+i.row).value = i.cat || "Uncategorized"; 
+            if(document.getElementById('b'+i.row)) document.getElementById('b'+i.row).value = i.bnk || "Uncategorized"; 
+        });
+    }
+
+    // AI VENDOR LOOKUP & CACHING ENGINE
+    async function fetchVendorIntelligence(vendorName, targetElementId) {
+        if (!vendorName || !db) return;
+        const popupEl = document.getElementById(targetElementId);
+        if (!popupEl) return;
+
+        const { data: cached } = await db.from('vendor_knowledge').select('*').eq('vendor_name', vendorName).maybeSingle();
+        if (cached && cached.description) {
+            const linkHtml = cached.website ? `<br><a href="${cached.website}" target="_blank" class="small text-primary">${cached.website}</a>` : '';
+            popupEl.innerHTML = `<span class="vendor-badge">VERIFIED MERCHANT</span><br><strong>${vendorName}</strong><br><span class="text-muted">${cached.description}</span>${linkHtml}`;
+            return;
+        }
+
+        popupEl.innerHTML = `<em>Querying merchant intelligence...</em>`;
+        const apiKey = localStorage.getItem('hca_gk');
+        
+        try {
+            const prompt = `ACT AS: Corporate Intelligence Agent. Provide details for vendor "${vendorName}".
+Return ONLY JSON:
+{
+  "description": "1-2 sentence business summary of what they sell or provide.",
+  "website": "Official website URL (e.g. https://www.adobe.com)"
+}`;
+
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    "contents": [{ "parts": [{ "text": prompt }] }],
+                    "generationConfig": { "response_mime_type": "application/json" }
+                })
+            });
+
+            const jsonRes = await res.json();
+            if (!jsonRes.candidates?.[0]?.content?.parts?.[0]?.text) {
+                throw new Error("Invalid response");
+            }
+
+            const rawText = jsonRes.candidates[0].content.parts[0].text;
+            const info = JSON.parse(rawText.replace(/```json|```/g, '').trim());
+
+            const linkHtml = info.website ? `<br><a href="${info.website}" target="_blank" class="small text-primary">${info.website}</a>` : '';
+            popupEl.innerHTML = `<span class="vendor-badge">AI MERCHANT SUMMARY</span><br><strong>${vendorName}</strong><br><span>${info.description}</span>${linkHtml}`;
+
+            await db.from('vendor_knowledge').insert([{ vendor_name: vendorName, description: info.description, website: info.website || "" }]);
+        } catch (e) {
+            popupEl.innerHTML = `<strong>${vendorName}</strong><br><span class="text-muted">Merchant details unavailable.</span>`;
+        }
+    }
+
+    function filterStagingRows(filterType) {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+
+        if(filterType === 'ALL') renderStagingTable(localData);
+        else if(filterType === 'UNCAT') renderStagingTable(localData.filter(r => r.cat === 'Uncategorized'));
+        else if(filterType === 'DUP') renderStagingTable(localData.filter(r => r.dup));
+        else if(filterType === 'HIGH') renderStagingTable(localData.filter(r => Math.abs(parseFloat(r.amt)) > 1000));
+    }
+
+    async function handleReceiptUpload(input, rowId) {
+        const file = input.files[0];
+        if(!file) return;
+
+        document.getElementById('st').style.display = 'block';
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const imgData = e.target.result.split(',')[1];
+                const apiKey = localStorage.getItem('hca_gk');
+
+                const prompt = "Extract JSON: {'vendor':'', 'amount':0.00}";
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ "contents": [{ "parts": [{ "text": prompt }, { "inline_data": { "mime_type": "image/jpeg", "data": imgData }}] }] })
+                });
+
+                const jsonRes = await res.json();
+                const extracted = JSON.parse(jsonRes.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim());
+
+                const rowItem = localData.find(r => r.row == rowId);
+                const targetAmt = Math.abs(parseFloat(rowItem.amt));
+                const matchAmt = Math.abs(parseFloat(extracted.amount));
+
+                if(Math.abs(targetAmt - matchAmt) <= (targetAmt * 0.02)) {
+                    await db.from('review_staging').update({ receipt_linked: true }).eq('id', rowId);
+                    alert("✓ Receipt Verified & Linked!");
+                    await loadDash();
+                } else {
+                    alert(`Mismatch! Statement: $${targetAmt} vs Receipt: $${matchAmt}`);
+                    document.getElementById('st').style.display = 'none';
+                }
+            } catch(err) {
+                alert("Receipt OCR Error: " + err.message);
+                document.getElementById('st').style.display = 'none';
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function applyBatch() {
+        const query = document.getElementById('batchSearchInput').value.toLowerCase();
+        const newCat = document.getElementById('batchCategorySelect').value;
+        if(!query) return alert("Please enter a search filter query");
+        localData.forEach(item => { if((item.vendor + " " + item.desc).toLowerCase().includes(query)) { const target = document.getElementById('c' + item.row); if(target) target.value = newCat; } });
+        recalcJE();
+    }
+
+    function recalcJE() {
+        let jeData = {}, tDr = 0, tCr = 0, netAct = 0;
+        document.querySelectorAll('.row-cat').forEach(inp => {
+            let r = inp.getAttribute('data-row'), item = localData.find(x => x.row == r);
+            if(!item) return;
+            let val = parseFloat(item.amt.replace(/[^0-9.-]+/g,"")), exp = inp.value, bnk = document.getElementById('b'+r).value, cls = document.getElementById('l'+r) ? document.getElementById('l'+r).value : "General";
+            netAct += val; 
+            if(exp) jeData[exp + "|" + cls] = (jeData[exp + "|" + cls] || 0) + val; 
+            if(bnk) jeData[bnk + "|" + cls] = (jeData[bnk + "|" + cls] || 0) - val;
+        });
+
+        const calcEnd = stmtStart + netAct;
+        const diff = Math.abs(calcEnd - stmtEnd);
+        const banner = document.getElementById('reconGateBanner');
+        const syncBtns = document.querySelectorAll('.sync-gate-btn');
+
+        if (diff < 0.01) {
+            banner.className = "card p-3 mb-3 bg-success text-white fw-bold";
+            banner.innerText = "✓ Statement Reconciled (Starting Balance + Activity = Statement Ending Balance)";
+            syncBtns.forEach(b => b.disabled = false);
+        } else {
+            banner.className = "card p-3 mb-3 bg-danger text-white fw-bold";
+            banner.innerText = `⚠️ Out of Balance Discrepancy: $${diff.toFixed(2)} (Calc Ending: $${calcEnd.toFixed(2)} | Target Ending: $${stmtEnd.toFixed(2)})`;
+            syncBtns.forEach(b => b.disabled = true);
+        }
+
+        const div = document.getElementById('jeList'); div.innerHTML = `<div class="je-item fw-bold border-bottom"><span>Account Identifier | Class</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
+        for (let acc in jeData) {
+            let bal = jeData[acc]; if(Math.abs(bal) < 0.01) continue;
+            let dr = bal < 0 ? Math.abs(bal) : 0, cr = bal > 0 ? bal : 0;
+            tDr += dr; tCr += cr;
+            div.innerHTML += `<div class="je-item"><span>${acc}</span><span class="dr">${dr?`$${dr.toFixed(2)}`:''}</span><span class="cr">${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
+        }
+
+        const alertBox = document.getElementById('jeBalanceAlert');
+        alertBox.className = Math.abs(tDr - tCr) < 0.01 ? "alert alert-success mb-4 text-center fw-bold" : "alert alert-danger mb-4 text-center fw-bold";
+        alertBox.innerText = `Balanced: $${tDr.toFixed(2)}`;
+    }
+
+    function renderPnLCharts() {
+        let months = {}, tRev = 0, tExp = 0; 
+        const allData = [...historyData, ...localData];
+        
+        allData.forEach(i => {
+            let val = parseFloat(String(i.amt).replace(/[^0-9.-]+/g,"")), m = i.date ? i.date.substring(0, 7) : "Current"; 
+            if(!months[m]) months[m] = { inc: 0, exp: 0 };
+            if(val > 0) { months[m].inc += val; tRev += val; } 
+            else { months[m].exp += Math.abs(val); tExp += Math.abs(val); }
+        });
+
+        if (document.getElementById('stat-rev')) document.getElementById('stat-rev').innerText = `$${tRev.toLocaleString()}`; 
+        if (document.getElementById('stat-exp')) document.getElementById('stat-exp').innerText = `$${tExp.toLocaleString()}`;
+        if (document.getElementById('stat-net')) document.getElementById('stat-net').innerText = `$${(tRev - tExp).toLocaleString()}`;
+        if (document.getElementById('stat-margin')) document.getElementById('stat-margin').innerText = tRev ? `${((tRev - tExp) / tRev * 100).toFixed(1)}%` : "0%";
+
+        const ctx = document.getElementById('chart-bar');
+        if (ctx) {
+            if(barChart) barChart.destroy();
+            barChart = new Chart(ctx, { 
+                type: 'bar', 
+                data: { 
+                    labels: Object.keys(months).sort(), 
+                    datasets: [
+                        { label: 'Revenue', data: Object.keys(months).sort().map(m => months[m].inc), backgroundColor: '#C5D1B8' },
+                        { label: 'Expenses', data: Object.keys(months).sort().map(m => months[m].exp), backgroundColor: '#2C3E50' }
+                    ]
+                }
+            });
+        }
+    }
+
+    function toggleChat(windowId) {
+        const target = document.getElementById(windowId);
+        if (!target) return;
+        target.style.display = (target.style.display === 'flex') ? 'none' : 'flex';
+    }
+    
+    async function sendChat() {
+        const i = document.getElementById('chat-input'), b = document.getElementById('chat-content'), q = i.value; if(!q) return; i.value = "";
+        b.innerHTML += `<div class="chat-bubble text-primary"><strong>You:</strong> ${q}</div>`;
+        b.innerHTML += `<div id="chat-thinking" class="chat-bubble text-muted small"><em>Processing query...</em></div>`;
+        b.scrollTop = b.scrollHeight;
+
+        const apiKey = localStorage.getItem('hca_gk');
+        const projectContext = "You are LUFFY, the support assistant. Current Client Context: " + (currentClient || "None Selected");
+
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ "contents": [{ "parts": [{ "text": projectContext + ". User Query: " + q }] }] })
+        });
+        
+        const jsonRes = await res.json();
+        const thinking = document.getElementById('chat-thinking'); if(thinking) thinking.remove();
+        
+        const reply = jsonRes.candidates?.[0]?.content?.parts?.[0]?.text || "Unable to retrieve AI response.";
+        const structuredReply = reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+        
+        b.innerHTML += `<div class="chat-bubble text-dark"><strong>AI:</strong><br>${structuredReply}</div>`; 
+        b.scrollTop = b.scrollHeight;
+    }
+
+    async function sendZoroChat() {
+        const i = document.getElementById('zoro-chat-input'), b = document.getElementById('zoro-chat-content'), q = i.value; if(!q) return; i.value = "";
+        b.innerHTML += `<div class="chat-bubble text-primary"><strong>You:</strong> ${q}</div>`;
+        b.innerHTML += `<div id="zoro-thinking" class="chat-bubble text-muted small"><em>Scanning dashboard dataset...</em></div>`;
+        b.scrollTop = b.scrollHeight;
+
+        const apiKey = localStorage.getItem('hca_gk');
+        
+        const dashboardContext = `YOU ARE: ZORO DASHBOARD ASSISTANT. You have full access to the client's current dashboard dataset:
+CLIENT NAME: ${currentClient || "Unselected"}
+STAGING TRANSACTIONS (${localData.length} rows): ${JSON.stringify(localData.slice(0, 50))}
+PERMANENT LEDGER HISTORY (${historyData.length} rows): ${JSON.stringify(historyData.slice(0, 50))}
+ACTIVE GL ACCOUNTS: ${JSON.stringify(appGLOptions)}
+STATEMENT RECONCILIATION SUMMARY: Start Balance: $${stmtStart}, End Balance: $${stmtEnd}.
+
+Provide accurate, direct answers regarding spend, vendor totals, uncategorized rows, and financial metrics. Format key numbers in bold.`;
+
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ "contents": [{ "parts": [{ "text": dashboardContext + "\n\nUser Question: " + q }] }] })
+        });
+        
+        const jsonRes = await res.json();
+        const thinking = document.getElementById('zoro-thinking'); if(thinking) thinking.remove();
+        
+        const reply = jsonRes.candidates?.[0]?.content?.parts?.[0]?.text || "Unable to analyze dashboard context.";
+        const structuredReply = reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+        
+        b.innerHTML += `<div class="chat-bubble text-dark"><strong>ZORO:</strong><br>${structuredReply}</div>`; 
+        b.scrollTop = b.scrollHeight;
+    }
+
+    function switchTab(t) { document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none'); document.querySelectorAll('.app-nav-btn').forEach(el => el.classList.remove('active')); document.getElementById('tab-'+t).style.display = 'block'; document.getElementById('nav-'+t).classList.add('active'); }
+    function approveAll() { document.querySelectorAll('.row-stat').forEach(s => s.value = "APPROVED"); recalcJE(); }
+    
+    async function saveAll() {
+        if(!db) return;
+        document.getElementById('st').style.display = 'block'; 
+        for (let item of localData) {
+            const catVal = document.getElementById('c' + item.row) ? document.getElementById('c' + item.row).value : item.cat;
+            const statVal = document.getElementById('s' + item.row) ? document.getElementById('s' + item.row).value : item.stat;
+            const bnkVal = document.getElementById('b' + item.row) ? document.getElementById('b' + item.row).value : item.bnk;
+            const clsVal = document.getElementById('l' + item.row) ? document.getElementById('l' + item.row).value : item.cls;
+
+            await db.from('review_staging').update({
+                category: catVal,
+                status: statVal,
+                bank_category: bnkVal,
+                class_name: clsVal
+            }).eq('id', item.row);
+        }
+        await loadDash();
+    }
+
+    async function pushQBO() {
+        if(!db) return;
+        const { data: approved } = await db.from('review_staging').select('*').eq('client_name', currentClient).eq('status', 'APPROVED');
+        if(!approved || approved.length === 0) return alert("No rows marked as APPROVED.");
+
+        document.getElementById('st').style.display = 'block';
+        
+        const ledgerRows = approved.map(a => ({
+            client_name: a.client_name,
+            source: "JOURNAL",
+            nature: "General",
+            txn_date: a.txn_date,
+            vendor: a.vendor || "",
+            description: a.description,
+            amount: a.amount,
+            category: a.category,
+            qbo_id: "SYNCED-ID",
+            bank_category: a.bank_category,
+            class_name: a.class_name,
+            fingerprint: a.fingerprint
+        }));
+
+        await db.from('permanent_ledger').insert(ledgerRows);
+        await db.from('review_staging').delete().eq('client_name', currentClient).eq('status', 'APPROVED');
+
+        await loadDash();
+        alert("Success: Balanced Journal Entry Synced.");
+    }
+
+    function showPane(p) { document.querySelectorAll('.view-pane, #view-launchpad').forEach(el => el.style.display = 'none'); document.getElementById('view-' + p).style.display = 'block'; }
+</script>
+</body>
+</html>
