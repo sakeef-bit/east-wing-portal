@@ -236,7 +236,7 @@
     </div>
 </div>
 
-<!-- CLEANED CLIENT PROVISIONING SCREEN (MANUAL CLIENT ID / SECRET REMOVED) -->
+<!-- CLIENT PROVISIONING FORM (MANUAL QBO ID & SECRET INPUTS REMOVED) -->
 <div id="view-config" class="view-pane container py-5">
     <div class="row g-4">
         <div class="col-md-6"><div class="card p-4 card-custom">
@@ -424,10 +424,10 @@
 <div id="st"><strong>Processing Request...</strong></div>
 
 <script>
-    // HARDCODED INTUIT DEVELOPER APP CREDENTIALS
+    // INTUIT APP MASTER CREDENTIALS & STRICT REDIRECT URI (NO TRAILING SLASH)
     const INTUIT_CLIENT_ID = "ABgu8RDrvNPOLdMBsAE4d7aIMSioPtPclJJOBxJ36vOLQ7VIS4";
     const INTUIT_CLIENT_SECRET = "Kbdluz6sDjF13PrzxYgBEu9aklg2uok2nFXbkOeO";
-    const INTUIT_REDIRECT_URI = "https://east-wing-portal-ogfr8bhdh-adfh.vercel.app/";
+    const INTUIT_REDIRECT_URI = "https://east-wing-portal-ogfr8bhdh-adfh.vercel.app";
 
     const SUPABASE_URL = "https://oxhwhxnoysowuokdhmtr.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94aHdoeG5veXNvd3Vva2RobXRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NDU1MTEsImV4cCI6MjEwMzIyMTUxMX0.hQm9RsFit-TVz1pH0Y1Q3VITdbfwLUKA42uq2frZkyc";
@@ -452,7 +452,7 @@
     // MULTI-CLIENT INTUIT OAUTH CONNECT TRIGGER
     function connectToQuickBooks() {
         const selected = document.getElementById('masterClient').value;
-        if (!selected) return alert("Please select a client account first!");
+        if (!selected) return alert("Please select a client account from the dropdown first!");
         
         localStorage.setItem('connecting_client', selected);
 
@@ -490,7 +490,7 @@
             }
         } catch(e) { console.error("Supabase Initialization Error:", e); }
 
-        // Catch Intuit OAuth 2.0 Redirect Callback and map to selected client
+        // Catch Intuit OAuth 2.0 Redirect Callback and map to target client
         const urlParams = new URLSearchParams(window.location.search);
         const authCode = urlParams.get('code');
         const realmId = urlParams.get('realmId');
@@ -513,6 +513,13 @@
             document.getElementById('mainPortal').style.display = 'block';
             document.getElementById('dot-gemini').classList.add('dot-green');
             await getClientList();
+            
+            // Re-select client if returning from connect flow
+            const targetClient = localStorage.getItem('connecting_client');
+            if (targetClient) {
+                document.getElementById('masterClient').value = targetClient;
+                await pingStatus();
+            }
         }
     };
 
@@ -692,7 +699,7 @@ Return ONLY JSON array of arrays (rows with column values):
         }
     }
 
-    // SIMPLIFIED CLEAN SAVE (CLIENT ID & SECRET FIELD PARSING REMOVED)
+    // CLEAN CLIENT SAVE (QBO CREDS REMOVED)
     async function save() { 
         if(!db) return alert("Database connection uninitialized");
         const cName = document.getElementById('n').value.trim();
