@@ -84,36 +84,15 @@
         .badge-dup { background: #EF4444; color: white; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px; }
         .filter-btn { border-radius: 20px; font-size: 0.8rem; font-weight: 600; padding: 4px 12px; }
 
-        /* Vendor Hover Tooltips */
         .vendor-cell { position: relative; }
-        .vendor-hover {
-            cursor: pointer;
-            font-weight: 700;
-            color: var(--hca-dark);
-            text-decoration: underline dotted var(--hca-sage);
-        }
-        .vendor-card-popup {
-            display: none;
-            position: absolute;
-            bottom: 125%;
-            left: 0;
-            width: 290px;
-            background: white;
-            border: 1px solid var(--hca-sage);
-            border-radius: 14px;
-            padding: 14px;
-            box-shadow: 0 12px 32px rgba(0,0,0,0.15);
-            z-index: 1000;
-            font-size: 0.82rem;
-            color: var(--hca-dark);
-        }
+        .vendor-hover { cursor: pointer; font-weight: 700; color: var(--hca-dark); text-decoration: underline dotted var(--hca-sage); }
+        .vendor-card-popup { display: none; position: absolute; bottom: 125%; left: 0; width: 290px; background: white; border: 1px solid var(--hca-sage); border-radius: 14px; padding: 14px; box-shadow: 0 12px 32px rgba(0,0,0,0.15); z-index: 1000; font-size: 0.82rem; color: var(--hca-dark); }
         .vendor-cell:hover .vendor-card-popup { display: block; }
         .vendor-badge { font-size: 0.65rem; font-weight: bold; background: var(--hca-dark); color: white; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; display: inline-block; }
     </style>
 </head>
 <body>
 
-<!-- TOP NAVBAR WITH HCA BRANDING -->
 <nav class="navbar d-flex justify-content-between align-items-center">
     <div class="d-flex align-items-center gap-2">
         <span class="brand-logo-badge">HCA</span>
@@ -134,7 +113,6 @@
 
 <div id="view-launchpad">
     <header class="hero-section">
-        <!-- TOP PRIVACY DISCLAIMER -->
         <div class="privacy-disclaimer-box">
             Your HCA Consulting Group chats aren’t used to improve our models. Gemini is AI and can make mistakes. Your privacy & Gemini.
         </div>
@@ -200,7 +178,6 @@
                 </div></div>
             </div>
 
-            <!-- DOC SHIFT STUDIO BOX -->
             <div class="card p-4 rounded-xl border-0 shadow-sm">
                 <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
                     <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
@@ -236,7 +213,6 @@
     </div>
 </div>
 
-<!-- CLEAN CLIENT PROVISIONING FORM -->
 <div id="view-config" class="view-pane container py-5">
     <div class="row g-4">
         <div class="col-md-6"><div class="card p-4 card-custom">
@@ -262,7 +238,6 @@
             </div>
         </div></div>
 
-        <!-- CATEGORY AUTO-RULES ENGINE UI -->
         <div class="col-md-6"><div class="card p-4 card-custom">
             <h4 class="fw-bold mb-2">Category Auto-Rules Engine</h4>
             <p class="small text-muted mb-3">Automatically categorize future transactions by vendor keywords.</p>
@@ -296,14 +271,12 @@
         <div id="nav-meta" class="app-nav-btn" onclick="switchTab('meta')">CLIENT METADATA</div>
     </div>
 
-    <!-- TAB 1: REVIEW STAGING -->
     <div id="tab-review" class="bg-white p-4 rounded-xl shadow-sm">
         <div class="d-flex justify-content-between mb-3 align-items-center">
             <h5 class="fw-bold mb-0">Staging Queue</h5>
             <button class="btn btn-dark btn-sm rounded-pill px-4 fw-semibold sync-gate-btn" onclick="pushQBO()">Push Approved to QBO</button>
         </div>
 
-        <!-- SMART QUICK-FILTER BAR -->
         <div class="d-flex gap-2 mb-3 align-items-center">
             <span class="small fw-bold text-muted me-1">Quick Filters:</span>
             <button class="btn btn-outline-secondary filter-btn active" onclick="filterStagingRows('ALL')">Show All</button>
@@ -337,7 +310,6 @@
         </table>
     </div>
 
-    <!-- TAB 2: VISUAL P&L DASHBOARD -->
     <div id="tab-pnl" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <div class="row g-3 mb-4">
             <div class="col-md-3"><div class="summary-card"><h6>Total Revenue</h6><h3 id="stat-rev" class="fw-bold mb-0">$0.00</h3></div></div>
@@ -348,7 +320,6 @@
         <div class="row"><div class="col-md-12"><canvas id="chart-bar" height="100"></canvas></div></div>
     </div>
 
-    <!-- TAB 3: CHART OF ACCOUNTS -->
     <div id="tab-gl" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <div class="d-flex justify-content-between mb-3 align-items-center">
             <h5 class="fw-bold mb-0">Active Chart of Accounts</h5>
@@ -366,21 +337,17 @@
         </div>
     </div>
 
-    <!-- TAB 4: HISTORY -->
     <div id="tab-history" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5 class="fw-bold mb-3">Permanent Ledger History</h5><table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Vendor</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync Reference</th></tr></thead><tbody id="tb-history"></tbody></table></div>
     
-    <!-- TAB 5: JOURNAL ENTRY & RECONCILIATION GATE VIEW -->
     <div id="tab-je" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <div id="reconGateBanner" class="card p-3 mb-3 text-white fw-bold"></div>
         <div id="jeBalanceAlert" class="alert mb-4 text-center fw-bold"></div>
         <div id="jeList" class="mt-3 font-monospace"></div>
     </div>
 
-    <!-- TAB 6: CLIENT METADATA -->
     <div id="tab-meta" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5 class="fw-bold mb-3">Client Metadata</h5><div id="metaList"></div></div>
 </div>
 
-<!-- DUAL WIDGETS DOCK -->
 <div class="widgets-dock">
     <div class="chat-trigger-btn" onclick="toggleChat('chat-window')">
         <svg class="icon-svg" style="width:16px; height:16px;" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
@@ -393,7 +360,6 @@
     </div>
 </div>
 
-<!-- LUFFY CHAT WINDOW -->
 <div id="chat-window" class="chat-window-popup">
     <div class="chat-header-bar d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center gap-2">
@@ -406,7 +372,6 @@
     <div class="p-2 border-top"><input id="chat-input" class="form-control form-control-sm rounded-pill" placeholder="Type system command..." onkeydown="if(event.key==='Enter') sendChat()"></div>
 </div>
 
-<!-- ZORO DASHBOARD ASSISTANT WINDOW -->
 <div id="zoro-chat-window" class="chat-window-popup">
     <div class="chat-header-bar d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center gap-2">
@@ -423,7 +388,6 @@
 <div id="st"><strong>Processing Request...</strong></div>
 
 <script>
-    // INTUIT APP MASTER CREDENTIALS & STRICT REDIRECT URI
     const INTUIT_CLIENT_ID = "ABgu8RDrvNPOLdMBsAE4d7aIMSioPtPclJJOBxJ36vOLQ7VIS4";
     const INTUIT_CLIENT_SECRET = "Kbdluz6sDjF13PrzxYgBEu9aklg2uok2nFXbkOeO";
     const INTUIT_REDIRECT_URI = "https://east-wing-portal-ogfr8bhdh-adfh.vercel.app";
@@ -441,6 +405,11 @@
 
     const CLASS_OPTIONS = ["General", "Marketing", "Sales", "Operations", "NY-Office"];
 
+    // 1. SYNCHRONOUS PARSE: CAPTURE INTUIT CALLBACK BEFORE ANYTHING ELSE
+    const globalUrlParams = new URLSearchParams(window.location.search);
+    const cbAuthCode = globalUrlParams.get('code');
+    const cbRealmId = globalUrlParams.get('realmId');
+
     function lockKey() { 
         const keyVal = document.getElementById('master_gk').value;
         if(!keyVal) return alert("Please enter a Gemini API Key");
@@ -448,7 +417,6 @@
         location.reload(); 
     }
 
-    // MULTI-CLIENT INTUIT OAUTH CONNECT TRIGGER
     function connectToQuickBooks() {
         const selected = document.getElementById('masterClient').value;
         if (!selected) return alert("Please select a client account from the dropdown first!");
@@ -464,7 +432,6 @@
         window.location.href = authUrl;
     }
 
-    // DISCONNECT QUICKBOOKS FOR SELECTED CLIENT
     async function disconnectQuickBooks() {
         if (!currentClient || !db) return alert("Please select a client account first");
         if (!confirm(`Are you sure you want to disconnect QuickBooks for ${currentClient}?`)) return;
@@ -481,66 +448,74 @@
         }
     }
 
+    // GUARANTEED OAUTH CAPTURE ENGINE WITH DB POLLING
+    async function handleOAuthCallback() {
+        if (!cbRealmId) return;
+
+        let targetClient = localStorage.getItem('connecting_client');
+
+        // Polling loop: Wait up to 5 seconds for Supabase DB client initialization
+        let attempts = 0;
+        while (!db && attempts < 10) {
+            await new Promise(r => setTimeout(r, 500));
+            attempts++;
+        }
+
+        if (!db) return alert("Database connection timeout during OAuth capture.");
+
+        // Fallback: If localStorage lost the target, grab the latest row from client_metadata
+        if (!targetClient) {
+            const { data: latest } = await db.from('client_metadata').select('client_name').order('created_at', { ascending: false }).limit(1).maybeSingle();
+            if (latest) targetClient = latest.client_name;
+        }
+
+        if (targetClient) {
+            document.getElementById('st').style.display = 'block';
+            
+            // Clean browser address bar
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            const { data, error } = await db.from('client_metadata')
+                .update({ 
+                    qbo_id: cbRealmId,
+                    qbo_sec: INTUIT_CLIENT_SECRET 
+                })
+                .eq('client_name', targetClient)
+                .select();
+
+            document.getElementById('st').style.display = 'none';
+
+            if (error) {
+                alert("Database Update Error: " + error.message);
+            } else {
+                localStorage.removeItem('connecting_client');
+                await getClientList();
+                document.getElementById('masterClient').value = targetClient;
+                await pingStatus();
+                alert(`✓ Successfully captured & saved Realm ID ${cbRealmId} to "${targetClient}"!`);
+            }
+        }
+    }
+
     window.onload = async () => {
-        // 1. Initialize Supabase Client
+        // Init Supabase Client
         try {
             if (window.supabase) {
                 db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
             }
         } catch(e) { console.error("Supabase Initialization Error:", e); }
 
-        // 2. Fetch Client List if authenticated
+        // Fetch Client List if workspace key exists
         if (localStorage.getItem('hca_gk')) {
             document.getElementById('keyGate').style.display = 'none'; 
             document.getElementById('mainPortal').style.display = 'block';
             document.getElementById('dot-gemini').classList.add('dot-green');
             await getClientList();
-
-            // Restore target client if coming back from connect flow
-            const savedTarget = localStorage.getItem('connecting_client');
-            if (savedTarget) {
-                document.getElementById('masterClient').value = savedTarget;
-            }
         }
 
-        // 3. Process Intuit OAuth 2.0 Redirect Callback
-        const urlParams = new URLSearchParams(window.location.search);
-        const authCode = urlParams.get('code');
-        const realmId = urlParams.get('realmId');
-
-        if (authCode && realmId) {
-            let targetClient = localStorage.getItem('connecting_client') || document.getElementById('masterClient').value;
-            
-            // Clean URL parameter string from browser URL bar
-            window.history.replaceState({}, document.title, window.location.pathname);
-
-            if (db && targetClient) {
-                document.getElementById('st').style.display = 'block';
-                
-                // Save the exact numeric Realm ID and Master Client Secret directly to Supabase
-                const { data, error } = await db.from('client_metadata')
-                    .update({ 
-                        qbo_id: realmId,
-                        qbo_sec: INTUIT_CLIENT_SECRET 
-                    })
-                    .eq('client_name', targetClient)
-                    .select();
-
-                document.getElementById('st').style.display = 'none';
-
-                if (error) {
-                    alert("Database Update Error: " + error.message);
-                } else if (data && data.length > 0) {
-                    localStorage.removeItem('connecting_client');
-                    document.getElementById('masterClient').value = targetClient;
-                    await pingStatus();
-                    alert(`✓ Successfully linked QuickBooks Realm ID ${realmId} to "${targetClient}"!`);
-                } else {
-                    alert(`⚠️ Could not find client row named "${targetClient}" in Supabase.`);
-                }
-            } else {
-                alert(`✓ Intuit Authorized (Realm ID: ${realmId}). Select your client in the dropdown to save linkage.`);
-            }
+        // Trigger OAuth callback handler asynchronously
+        if (cbAuthCode && cbRealmId) {
+            await handleOAuthCallback();
         }
     };
 
@@ -720,7 +695,6 @@ Return ONLY JSON array of arrays (rows with column values):
         }
     }
 
-    // SAVE CLIENT PROFILE WITH AUTOMATIC MASTER SECRET ATTRIBUTION
     async function save() { 
         if(!db) return alert("Database connection uninitialized");
         const cName = document.getElementById('n').value.trim();
@@ -785,7 +759,6 @@ Return ONLY JSON array of arrays (rows with column values):
         }
     }
 
-    // AUTO-RULES ENGINE FUNCTIONS
     async function loadRules() {
         if (!db || !currentClient) return;
         const { data } = await db.from('category_rules').select('*').eq('client_name', currentClient);
@@ -840,7 +813,6 @@ Return ONLY JSON array of arrays (rows with column values):
 
     function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
 
-    // FILE PARSER
     async function handleFile(input, type) { 
         currentClient = document.getElementById('masterClient').value; 
         if(!currentClient) return alert("Select client account first");
@@ -1085,7 +1057,6 @@ Return ONLY JSON Object:
         });
     }
 
-    // AI VENDOR LOOKUP & CACHING ENGINE
     async function fetchVendorIntelligence(vendorName, targetElementId) {
         if (!vendorName || !db) return;
         const popupEl = document.getElementById(targetElementId);
