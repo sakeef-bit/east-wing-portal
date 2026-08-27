@@ -44,6 +44,8 @@
         .btn-dark-hca:hover { background: #1a252f; color: white; }
         .btn-qbo { background: #2CA01C; color: white; font-weight: 600; border-radius: 12px; padding: 10px 18px; border: none; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
         .btn-qbo:hover { background: #248216; color: white; }
+        .btn-disconnect { background: #EF4444; color: white; font-weight: 600; border-radius: 12px; padding: 10px 18px; border: none; transition: 0.2s; display: none; align-items: center; gap: 8px; }
+        .btn-disconnect:hover { background: #DC2626; color: white; }
         
         .status-pill { background: white; padding: 6px 16px; border-radius: 30px; border: 1px solid var(--hca-border); }
         .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; background: #CBD5E1; }
@@ -153,13 +155,16 @@
         <div id="mainPortal" style="display:none">
             <div class="card p-4 rounded-xl border-0 shadow-sm mb-4">
                 <div class="row align-items-center">
-                    <div class="col-md-7">
+                    <div class="col-md-6">
                         <select id="masterClient" class="form-select rounded-pill shadow-none" onchange="pingStatus()"><option value="">-- Select Client Account --</option></select>
                     </div>
-                    <div class="col-md-5 text-end pt-0 d-flex gap-2 justify-content-end">
-                        <button class="btn btn-qbo" onclick="connectToQuickBooks()">
+                    <div class="col-md-6 text-end pt-0 d-flex gap-2 justify-content-end">
+                        <button id="btnConnectQBO" class="btn btn-qbo" onclick="connectToQuickBooks()">
                             <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
                             Connect QuickBooks
+                        </button>
+                        <button id="btnDisconnectQBO" class="btn btn-disconnect" onclick="disconnectQuickBooks()">
+                            Disconnect QBO
                         </button>
                         <button class="btn btn-dark-hca rounded-pill" onclick="showPane('config')">
                             <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6z"/></svg>
@@ -231,6 +236,7 @@
     </div>
 </div>
 
+<!-- CLEANED CLIENT PROVISIONING SCREEN (MANUAL CLIENT ID / SECRET REMOVED) -->
 <div id="view-config" class="view-pane container py-5">
     <div class="row g-4">
         <div class="col-md-6"><div class="card p-4 card-custom">
@@ -238,8 +244,6 @@
             <div class="row g-3">
                 <div class="col-12"><input id="n" class="form-control" placeholder="Company Legal Name"></div>
                 <div class="col-12"><input id="nature" class="form-control" placeholder="Business Industry / Nature"></div>
-                <div class="col-6"><input id="qi" class="form-control" placeholder="QuickBooks Client ID"></div>
-                <div class="col-6"><input id="qs" type="password" class="form-control" placeholder="QuickBooks Secret"></div>
                 
                 <div class="col-12 mt-2">
                     <div class="upload-box text-center">
@@ -252,7 +256,7 @@
                 </div>
 
                 <div class="col-12 d-flex gap-2 mt-3">
-                    <button onclick="save()" class="btn btn-dark-hca flex-grow-1">Save Account</button>
+                    <button onclick="save()" class="btn btn-dark-hca flex-grow-1">Save Profile</button>
                     <button onclick="showPane('launchpad')" class="btn btn-outline-secondary">Cancel</button>
                 </div>
             </div>
@@ -420,7 +424,7 @@
 <div id="st"><strong>Processing Request...</strong></div>
 
 <script>
-    // HARDCODED INTUIT DEVELOPER CREDENTIALS & REDIRECT URI
+    // HARDCODED INTUIT DEVELOPER APP CREDENTIALS
     const INTUIT_CLIENT_ID = "ABgu8RDrvNPOLdMBsAE4d7aIMSioPtPclJJOBxJ36vOLQ7VIS4";
     const INTUIT_CLIENT_SECRET = "Kbdluz6sDjF13PrzxYgBEu9aklg2uok2nFXbkOeO";
     const INTUIT_REDIRECT_URI = "https://east-wing-portal-ogfr8bhdh-adfh.vercel.app/";
@@ -445,8 +449,13 @@
         location.reload(); 
     }
 
-    // INTUIT OAUTH CONNECT TRIGGER
+    // MULTI-CLIENT INTUIT OAUTH CONNECT TRIGGER
     function connectToQuickBooks() {
+        const selected = document.getElementById('masterClient').value;
+        if (!selected) return alert("Please select a client account first!");
+        
+        localStorage.setItem('connecting_client', selected);
+
         const authUrl = `https://appcenter.intuit.com/connect/oauth2` +
             `?client_id=${INTUIT_CLIENT_ID}` +
             `&response_type=code` +
@@ -454,6 +463,23 @@
             `&redirect_uri=${encodeURIComponent(INTUIT_REDIRECT_URI)}` +
             `&state=hca_ledger_session`;
         window.location.href = authUrl;
+    }
+
+    // DISCONNECT QUICKBOOKS FOR SELECTED CLIENT
+    async function disconnectQuickBooks() {
+        if (!currentClient || !db) return alert("Please select a client account first");
+        if (!confirm(`Are you sure you want to disconnect QuickBooks for ${currentClient}?`)) return;
+
+        document.getElementById('st').style.display = 'block';
+        const { error } = await db.from('client_metadata').update({ qbo_id: null }).eq('client_name', currentClient);
+        document.getElementById('st').style.display = 'none';
+
+        if (error) {
+            alert("Disconnection Error: " + error.message);
+        } else {
+            alert(`✓ Successfully disconnected QuickBooks for ${currentClient}`);
+            await pingStatus();
+        }
     }
 
     window.onload = async () => {
@@ -464,15 +490,22 @@
             }
         } catch(e) { console.error("Supabase Initialization Error:", e); }
 
-        // Catch Intuit OAuth 2.0 Redirect Callback
+        // Catch Intuit OAuth 2.0 Redirect Callback and map to selected client
         const urlParams = new URLSearchParams(window.location.search);
         const authCode = urlParams.get('code');
         const realmId = urlParams.get('realmId');
 
         if (authCode && realmId) {
+            const targetClient = localStorage.getItem('connecting_client');
             window.history.replaceState({}, document.title, window.location.pathname);
-            document.getElementById('dot-qbo').className = 'status-dot dot-green';
-            alert(`✓ Successfully Authenticated with QuickBooks! Company Realm ID: ${realmId}`);
+            
+            if (targetClient && db) {
+                await db.from('client_metadata').update({ qbo_id: realmId }).eq('client_name', targetClient);
+                localStorage.removeItem('connecting_client');
+                alert(`✓ Successfully linked Realm ID ${realmId} to ${targetClient}!`);
+            } else {
+                alert(`✓ Connected to QuickBooks Realm ID: ${realmId}`);
+            }
         }
 
         if(localStorage.getItem('hca_gk')) {
@@ -659,6 +692,7 @@ Return ONLY JSON array of arrays (rows with column values):
         }
     }
 
+    // SIMPLIFIED CLEAN SAVE (CLIENT ID & SECRET FIELD PARSING REMOVED)
     async function save() { 
         if(!db) return alert("Database connection uninitialized");
         const cName = document.getElementById('n').value.trim();
@@ -669,8 +703,6 @@ Return ONLY JSON array of arrays (rows with column values):
         const payload = {
             client_name: cName,
             nature: document.getElementById('nature').value || "General",
-            qbo_id: document.getElementById('qi').value || INTUIT_CLIENT_ID,
-            qbo_sec: document.getElementById('qs').value || INTUIT_CLIENT_SECRET,
             gl_list: (typeof appGLOptions !== 'undefined') ? appGLOptions.join(",") : ""
         };
 
@@ -707,7 +739,19 @@ Return ONLY JSON array of arrays (rows with column values):
         if (db) {
             const { data } = await db.from('client_metadata').select('*').eq('client_name', currentClient).maybeSingle();
             document.getElementById('dot-ledger').className = 'status-dot dot-green';
-            document.getElementById('dot-qbo').className = (data && data.qbo_id) ? 'status-dot dot-green' : 'status-dot dot-amber';
+            
+            const connBtn = document.getElementById('btnConnectQBO');
+            const discBtn = document.getElementById('btnDisconnectQBO');
+
+            if (data && data.qbo_id) {
+                document.getElementById('dot-qbo').className = 'status-dot dot-green';
+                connBtn.style.display = 'none';
+                discBtn.style.display = 'inline-flex';
+            } else {
+                document.getElementById('dot-qbo').className = 'status-dot dot-red';
+                connBtn.style.display = 'inline-flex';
+                discBtn.style.display = 'none';
+            }
             await loadRules();
         }
     }
