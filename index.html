@@ -236,7 +236,7 @@
     </div>
 </div>
 
-<!-- CLIENT PROVISIONING FORM WITH AUTO-FILLED QBO CREDENTIALS -->
+<!-- CLEAN CLIENT PROVISIONING FORM -->
 <div id="view-config" class="view-pane container py-5">
     <div class="row g-4">
         <div class="col-md-6"><div class="card p-4 card-custom">
@@ -244,9 +244,7 @@
             <div class="row g-3">
                 <div class="col-12"><input id="n" class="form-control" placeholder="Company Legal Name"></div>
                 <div class="col-12"><input id="nature" class="form-control" placeholder="Business Industry / Nature"></div>
-                <div class="col-6"><input id="qi" class="form-control" placeholder="QuickBooks Client ID" value="ABgu8RDrvNPOLdMBsAE4d7aIMSioPtPclJJOBxJ36vOLQ7VIS4"></div>
-                <div class="col-6"><input id="qs" type="password" class="form-control" placeholder="QuickBooks Secret" value="Kbdluz6sDjF13PrzxYgBEu9aklg2uok2nFXbkOeO"></div>
-
+                
                 <div class="col-12 mt-2">
                     <div class="upload-box text-center">
                         <h6 class="fw-bold mb-1">QuickBooks Chart of Accounts Source</h6>
@@ -382,7 +380,7 @@
     <div id="tab-meta" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5 class="fw-bold mb-3">Client Metadata</h5><div id="metaList"></div></div>
 </div>
 
-<!-- DUAL WIDGETS DOCK: LUFFY & ZORO DASHBOARD ASSISTANTS -->
+<!-- DUAL WIDGETS DOCK -->
 <div class="widgets-dock">
     <div class="chat-trigger-btn" onclick="toggleChat('chat-window')">
         <svg class="icon-svg" style="width:16px; height:16px;" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
@@ -519,7 +517,7 @@
             if (db && targetClient) {
                 document.getElementById('st').style.display = 'block';
                 
-                // Save the exact numeric Realm ID AND Master Client Secret to Supabase
+                // Save the exact numeric Realm ID and Master Client Secret directly to Supabase
                 const { data, error } = await db.from('client_metadata')
                     .update({ 
                         qbo_id: realmId,
@@ -722,7 +720,7 @@ Return ONLY JSON array of arrays (rows with column values):
         }
     }
 
-    // SAVE CLIENT PROFILE WITH RE-INTEGRATED QBO FIELDS
+    // SAVE CLIENT PROFILE WITH AUTOMATIC MASTER SECRET ATTRIBUTION
     async function save() { 
         if(!db) return alert("Database connection uninitialized");
         const cName = document.getElementById('n').value.trim();
@@ -733,7 +731,7 @@ Return ONLY JSON array of arrays (rows with column values):
         const payload = {
             client_name: cName,
             nature: document.getElementById('nature').value || "General",
-            qbo_sec: document.getElementById('qs').value || INTUIT_CLIENT_SECRET,
+            qbo_sec: INTUIT_CLIENT_SECRET,
             gl_list: (typeof appGLOptions !== 'undefined') ? appGLOptions.join(",") : ""
         };
 
