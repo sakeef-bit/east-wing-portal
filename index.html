@@ -68,7 +68,6 @@
         .chat-bubble { margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #F1F5F9; }
 
         .view-pane { display: none; }
-        .dash-tab { display: none; }
         .app-nav { background: white; border-radius: 14px; display: flex; overflow: hidden; margin-bottom: 30px; border: 1px solid var(--hca-border); }
         .app-nav-btn { flex: 1; text-align: center; padding: 16px; cursor: pointer; font-weight: 600; border-right: 1px solid var(--hca-border); color: #64748B; transition: 0.2s; }
         .app-nav-btn.active { background: var(--hca-sage); color: var(--hca-dark); }
@@ -220,6 +219,7 @@
             <div class="row g-3">
                 <div class="col-12"><input id="n" class="form-control" placeholder="Company Legal Name"></div>
                 <div class="col-12"><input id="nature" class="form-control" placeholder="Business Industry / Nature"></div>
+                <div class="col-12"><input id="client_email" class="form-control" placeholder="Client Authorization Email"></div>
                 
                 <div class="col-12 mt-2">
                     <div class="upload-box text-center">
@@ -233,6 +233,7 @@
 
                 <div class="col-12 d-flex gap-2 mt-3">
                     <button onclick="save()" class="btn btn-dark-hca flex-grow-1">Save Profile</button>
+                    <button onclick="generateAuthorizationLink()" class="btn btn-outline-primary">Generate Email Link</button>
                     <button onclick="showPane('launchpad')" class="btn btn-outline-secondary">Cancel</button>
                 </div>
             </div>
@@ -345,7 +346,13 @@
         <div id="jeList" class="mt-3 font-monospace"></div>
     </div>
 
-    <div id="tab-meta" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5 class="fw-bold mb-3">Client Metadata</h5><div id="metaList"></div></div>
+    <div id="tab-meta" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0">Client Metadata</h5>
+            <button class="btn btn-dark-hca btn-sm rounded-pill" onclick="updateClientMetadataFromTab()">Update Client Metadata</button>
+        </div>
+        <div id="metaList"></div>
+    </div>
 </div>
 
 <div class="widgets-dock">
@@ -389,7 +396,6 @@
 
 <script>
     const INTUIT_CLIENT_ID = "ABgu8RDrvNPOLdMBsAE4d7aIMSioPtPclJJOBxJ36vOLQ7VIS4";
-    const INTUIT_CLIENT_SECRET = "Kbdluz6sDjF13PrzxYgBEu9aklg2uok2nFXbkOeO";
     const INTUIT_REDIRECT_URI = "https://east-wing-portal-ogfr8bhdh-adfh.vercel.app";
 
     const SUPABASE_URL = "https://oxhwhxnoysowuokdhmtr.supabase.co";
@@ -405,11 +411,6 @@
 
     const CLASS_OPTIONS = ["General", "Marketing", "Sales", "Operations", "NY-Office"];
 
-    // 1. SYNCHRONOUS PARSE: CAPTURE INTUIT CALLBACK BEFORE ANYTHING ELSE
-    const globalUrlParams = new URLSearchParams(window.location.search);
-    const cbAuthCode = globalUrlParams.get('code');
-    const cbRealmId = globalUrlParams.get('realmId');
-
     function lockKey() { 
         const keyVal = document.getElementById('master_gk').value;
         if(!keyVal) return alert("Please enter a Gemini API Key");
@@ -417,6 +418,7 @@
         location.reload(); 
     }
 
+    // DIRECT OR EMAIL AUTHORIZATION LAUNCHER
     function connectToQuickBooks() {
         const selected = document.getElementById('masterClient').value;
         if (!selected) return alert("Please select a client account from the dropdown first!");
@@ -428,8 +430,18 @@
             `&response_type=code` +
             `&scope=com.intuit.quickbooks.accounting` +
             `&redirect_uri=${encodeURIComponent(INTUIT_REDIRECT_URI)}` +
-            `&state=hca_ledger_session`;
+            `&state=${encodeURIComponent(selected)}`;
         window.location.href = authUrl;
+    }
+
+    // OPTION 2: GENERATE EMAIL AUTHORIZATION LINK FOR CLIENTS
+    function generateAuthorizationLink() {
+        const cName = document.getElementById('n').value.trim();
+        if(!cName) return alert("Please enter the Company Legal Name first");
+
+        const authLink = `${INTUIT_REDIRECT_URI}/?connect_client=${encodeURIComponent(cName)}`;
+        navigator.clipboard.writeText(authLink);
+        alert(`✓ Authorization Link copied to clipboard!\n\nSend this link to your client:\n${authLink}`);
     }
 
     async function disconnectQuickBooks() {
@@ -437,7 +449,7 @@
         if (!confirm(`Are you sure you want to disconnect QuickBooks for ${currentClient}?`)) return;
 
         document.getElementById('st').style.display = 'block';
-        const { error } = await db.from('client_metadata').update({ qbo_id: null }).eq('client_name', currentClient);
+        const { error } = await db.from('client_metadata').update({ qbo_id: null, qbo_refresh_token: null }).eq('client_name', currentClient);
         document.getElementById('st').style.display = 'none';
 
         if (error) {
@@ -448,64 +460,79 @@
         }
     }
 
-    // GUARANTEED OAUTH CAPTURE ENGINE WITH DB POLLING
-    async function handleOAuthCallback() {
-        if (!cbRealmId) return;
+    // AUTOMATIC OAUTH RETURN CAPTURE HANDLER
+    async function handleOAuthReturn() {
+        const globalUrlParams = new URLSearchParams(window.location.search);
+        const code = globalUrlParams.get('code');
+        const realmId = globalUrlParams.get('realmId');
+        const stateClient = globalUrlParams.get('state');
 
-        let targetClient = localStorage.getItem('connecting_client');
-
-        // Polling loop: Wait up to 5 seconds for Supabase DB client initialization
-        let attempts = 0;
-        while (!db && attempts < 10) {
-            await new Promise(r => setTimeout(r, 500));
-            attempts++;
+        // Check if user clicked email authorization link directly
+        const emailConnectClient = globalUrlParams.get('connect_client');
+        if (emailConnectClient) {
+            localStorage.setItem('connecting_client', emailConnectClient);
+            const authUrl = `https://appcenter.intuit.com/connect/oauth2` +
+                `?client_id=${INTUIT_CLIENT_ID}` +
+                `&response_type=code` +
+                `&scope=com.intuit.quickbooks.accounting` +
+                `&redirect_uri=${encodeURIComponent(INTUIT_REDIRECT_URI)}` +
+                `&state=${encodeURIComponent(emailConnectClient)}`;
+            window.location.href = authUrl;
+            return;
         }
 
-        if (!db) return alert("Database connection timeout during OAuth capture.");
+        if (!code || !realmId) return;
 
-        // Fallback: If localStorage lost the target, grab the latest row from client_metadata
-        if (!targetClient) {
+        let targetClient = stateClient ? decodeURIComponent(stateClient) : localStorage.getItem('connecting_client');
+
+        if (!targetClient && db) {
             const { data: latest } = await db.from('client_metadata').select('client_name').order('created_at', { ascending: false }).limit(1).maybeSingle();
             if (latest) targetClient = latest.client_name;
         }
 
-        if (targetClient) {
+        if (targetClient && db) {
             document.getElementById('st').style.display = 'block';
-            
-            // Clean browser address bar
             window.history.replaceState({}, document.title, window.location.pathname);
 
-            const { data, error } = await db.from('client_metadata')
-                .update({ 
-                    qbo_id: cbRealmId,
-                    qbo_sec: INTUIT_CLIENT_SECRET 
-                })
-                .eq('client_name', targetClient)
-                .select();
+            try {
+                // Call Supabase Edge Function to exchange 'code' for 'refresh_token'
+                const res = await fetch("https://oxhwhxnoysowuokdhmtr.supabase.co/functions/v1/qbo-oauth", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        code: code,
+                        realmId: realmId,
+                        client_name: targetClient,
+                        redirect_uri: INTUIT_REDIRECT_URI
+                    })
+                });
 
-            document.getElementById('st').style.display = 'none';
+                const result = await res.json();
+                document.getElementById('st').style.display = 'none';
 
-            if (error) {
-                alert("Database Update Error: " + error.message);
-            } else {
+                if (!res.ok || !result.success) {
+                    throw new Error(result.error || "OAuth Exchange Failed");
+                }
+
                 localStorage.removeItem('connecting_client');
                 await getClientList();
                 document.getElementById('masterClient').value = targetClient;
                 await pingStatus();
-                alert(`✓ Successfully captured & saved Realm ID ${cbRealmId} to "${targetClient}"!`);
+                alert(`✓ Successfully authorized & linked QuickBooks Realm ID ${realmId} for "${targetClient}"!`);
+            } catch (err) {
+                document.getElementById('st').style.display = 'none';
+                alert("OAuth Error: " + err.message);
             }
         }
     }
 
     window.onload = async () => {
-        // Init Supabase Client
         try {
             if (window.supabase) {
                 db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
             }
         } catch(e) { console.error("Supabase Initialization Error:", e); }
 
-        // Fetch Client List if workspace key exists
         if (localStorage.getItem('hca_gk')) {
             document.getElementById('keyGate').style.display = 'none'; 
             document.getElementById('mainPortal').style.display = 'block';
@@ -513,13 +540,110 @@
             await getClientList();
         }
 
-        // Trigger OAuth callback handler asynchronously
-        if (cbAuthCode && cbRealmId) {
-            await handleOAuthCallback();
-        }
+        await handleOAuthReturn();
     };
 
-    // CONVERTER FUNCTION 1: PDF TO EXCEL (.XLSX)
+    async function getClientList() {
+        if (!db) return;
+        const { data, error } = await db.from('client_metadata').select('client_name');
+        if (error) console.error("Database fetch error:", error);
+
+        const sel = document.getElementById('masterClient');
+        sel.innerHTML = '<option value="">-- Select Client Account --</option>';
+        if (data && data.length > 0) {
+            data.forEach(v => {
+                sel.innerHTML += `<option value="${v.client_name}">${v.client_name}</option>`;
+            });
+        }
+    }
+
+    // FIXED SAVE FUNCTION: UPSERT MATCHES SUPABASE TABLE SCHEMA
+    async function save() { 
+        if(!db) return alert("Database connection uninitialized");
+        const cName = document.getElementById('n').value.trim();
+        if(!cName) return alert("Company Legal Name is required");
+
+        document.getElementById('st').style.display = 'block';
+
+        const payload = {
+            client_name: cName,
+            nature: document.getElementById('nature').value || "General",
+            client_email: document.getElementById('client_email').value || "",
+            gl_list: (typeof appGLOptions !== 'undefined') ? appGLOptions.join(",") : ""
+        };
+
+        const { error } = await db.from('client_metadata').upsert(payload, { onConflict: 'client_name' });
+        document.getElementById('st').style.display = 'none';
+
+        if (error) {
+            alert("Database Save Error: " + error.message);
+        } else {
+            alert("✓ Client profile saved successfully!");
+            showPane('launchpad');
+            await getClientList();
+            document.getElementById('masterClient').value = cName;
+            pingStatus();
+        }
+    }
+
+    async function pingStatus() {
+        currentClient = document.getElementById('masterClient').value;
+        if(!currentClient) return;
+        document.getElementById('actionGrid').style.opacity = "1";
+        document.getElementById('actionGrid').style.pointerEvents = "auto";
+        
+        if (db) {
+            const { data } = await db.from('client_metadata').select('*').eq('client_name', currentClient).maybeSingle();
+            document.getElementById('dot-ledger').className = 'status-dot dot-green';
+            
+            const connBtn = document.getElementById('btnConnectQBO');
+            const discBtn = document.getElementById('btnDisconnectQBO');
+
+            if (data && data.qbo_id && data.qbo_refresh_token) {
+                document.getElementById('dot-qbo').className = 'status-dot dot-green';
+                connBtn.style.display = 'none';
+                discBtn.style.display = 'inline-flex';
+            } else {
+                document.getElementById('dot-qbo').className = 'status-dot dot-red';
+                connBtn.style.display = 'inline-flex';
+                discBtn.style.display = 'none';
+            }
+            await loadRules();
+        }
+    }
+
+    // RESILIENT EDGE FUNCTION SYNC (KEEPS DATA IN STAGING IF QBO FAILS)
+    async function pushQBO() {
+        if(!db) return;
+        const { data: approved } = await db.from('review_staging').select('*').eq('client_name', currentClient).eq('status', 'APPROVED');
+        if(!approved || approved.length === 0) return alert("No rows marked as APPROVED.");
+
+        document.getElementById('st').style.display = 'block';
+        
+        try {
+            const res = await fetch("https://oxhwhxnoysowuokdhmtr.supabase.co/functions/v1/qbo-sync", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    client_name: currentClient,
+                    transactions: approved
+                })
+            });
+
+            const result = await res.json();
+
+            if (!res.ok || !result.success) {
+                throw new Error(result.error || "Edge Function processing error");
+            }
+
+            await loadDash();
+            alert(`✓ Success! Journal Entry #${result.journalEntryId} posted to QuickBooks Online!`);
+        } catch (err) {
+            document.getElementById('st').style.display = 'none';
+            alert(`⚠️ Sync Failed! Rows remain safely in Staging Queue.\n\nDetails: ${err.message}`);
+        }
+    }
+
     async function convertPDFToExcel(input) {
         const file = input.files[0];
         if (!file) return;
@@ -565,7 +689,6 @@ Return ONLY JSON array of arrays (rows with column values):
         reader.readAsDataURL(file);
     }
 
-    // CONVERTER FUNCTION 2: EXCEL TO PDF (.PDF)
     async function convertExcelToPDF(input) {
         const file = input.files[0];
         if (!file) return;
@@ -679,84 +802,6 @@ Return ONLY JSON array of arrays (rows with column values):
             }
         };
         reader.readAsText(file);
-    }
-
-    async function getClientList() {
-        if (!db) return;
-        const { data, error } = await db.from('client_metadata').select('client_name');
-        if (error) console.error("Database fetch error:", error);
-
-        const sel = document.getElementById('masterClient');
-        sel.innerHTML = '<option value="">-- Select Client Account --</option>';
-        if (data && data.length > 0) {
-            data.forEach(v => {
-                sel.innerHTML += `<option value="${v.client_name}">${v.client_name}</option>`;
-            });
-        }
-    }
-
-    async function save() { 
-        if(!db) return alert("Database connection uninitialized");
-        const cName = document.getElementById('n').value.trim();
-        if(!cName) return alert("Company Name is required");
-
-        document.getElementById('st').style.display = 'block';
-
-        const payload = {
-            client_name: cName,
-            nature: document.getElementById('nature').value || "General",
-            qbo_sec: INTUIT_CLIENT_SECRET,
-            gl_list: (typeof appGLOptions !== 'undefined') ? appGLOptions.join(",") : ""
-        };
-
-        const { data: existing } = await db.from('client_metadata').select('client_name').eq('client_name', cName).maybeSingle();
-
-        let resultError = null;
-        if (existing) {
-            const { error } = await db.from('client_metadata').update(payload).eq('client_name', cName);
-            resultError = error;
-        } else {
-            const { error } = await db.from('client_metadata').insert([payload]);
-            resultError = error;
-        }
-
-        document.getElementById('st').style.display = 'none';
-
-        if (resultError) {
-            alert("Database Error: " + resultError.message);
-        } else {
-            alert("Client profile saved.");
-            showPane('launchpad');
-            await getClientList();
-            document.getElementById('masterClient').value = cName;
-            pingStatus();
-        }
-    }
-
-    async function pingStatus() {
-        currentClient = document.getElementById('masterClient').value;
-        if(!currentClient) return;
-        document.getElementById('actionGrid').style.opacity = "1";
-        document.getElementById('actionGrid').style.pointerEvents = "auto";
-        
-        if (db) {
-            const { data } = await db.from('client_metadata').select('*').eq('client_name', currentClient).maybeSingle();
-            document.getElementById('dot-ledger').className = 'status-dot dot-green';
-            
-            const connBtn = document.getElementById('btnConnectQBO');
-            const discBtn = document.getElementById('btnDisconnectQBO');
-
-            if (data && data.qbo_id) {
-                document.getElementById('dot-qbo').className = 'status-dot dot-green';
-                connBtn.style.display = 'none';
-                discBtn.style.display = 'inline-flex';
-            } else {
-                document.getElementById('dot-qbo').className = 'status-dot dot-red';
-                connBtn.style.display = 'inline-flex';
-                discBtn.style.display = 'none';
-            }
-            await loadRules();
-        }
     }
 
     async function loadRules() {
@@ -988,9 +1033,8 @@ Return ONLY JSON Object:
         }
 
         historyData = (ledger || []).map(l => ({ date: l.txn_date, vendor: l.vendor || "", desc: l.description, amt: String(l.amount), cat: l.category, qbo: l.qbo_id || "SYNCED" }));
-        const metaList = meta ? [["Client", meta.client_name], ["Nature", meta.nature], ["QBO_ID", meta.qbo_id]] : [];
-
-        renderDashboard({ staging: localData, history: historyData, metadata: metaList }); 
+        
+        renderDashboard({ staging: localData, history: historyData, metadata: meta }); 
     }
 
     function renderDashboard(res) {
@@ -1015,11 +1059,46 @@ Return ONLY JSON Object:
         document.getElementById('tb-history').innerHTML = ""; 
         res.history.forEach(i => { document.getElementById('tb-history').innerHTML += `<tr><td>${i.date}</td><td class="fw-bold">${i.vendor || 'N/A'}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; });
         
-        document.getElementById('metaList').innerHTML = ""; 
-        res.metadata.forEach(m => document.getElementById('metaList').innerHTML += `<div class="small py-1 border-bottom"><strong>${m[0]}:</strong> <span class="text-muted">${m[1]}</span></div>`);
+        // Render Editable Metadata Controls
+        const meta = res.metadata || {};
+        document.getElementById('metaList').innerHTML = `
+            <div class="row g-3">
+                <div class="col-md-6"><label class="small fw-bold">Client Legal Name</label><input id="edit_m_name" class="form-control form-control-sm" value="${meta.client_name || currentClient}" readonly></div>
+                <div class="col-md-6"><label class="small fw-bold">Business Industry / Nature</label><input id="edit_m_nature" class="form-control form-control-sm" value="${meta.nature || 'General'}"></div>
+                <div class="col-md-6"><label class="small fw-bold">Client Authorization Email</label><input id="edit_m_email" class="form-control form-control-sm" value="${meta.client_email || ''}"></div>
+                <div class="col-md-6"><label class="small fw-bold">QBO Realm ID</label><input id="edit_m_qbo" class="form-control form-control-sm" value="${meta.qbo_id || 'Not Connected'}" readonly></div>
+                <div class="col-12"><label class="small fw-bold">Chart of Accounts (Comma Separated)</label><textarea id="edit_m_gl" class="form-control form-control-sm" rows="3">${appGLOptions.join(', ')}</textarea></div>
+            </div>
+        `;
         
         recalcJE();
         renderPnLCharts();
+    }
+
+    // UPDATE METADATA DIRECTLY FROM DASHBOARD TAB
+    async function updateClientMetadataFromTab() {
+        if (!db || !currentClient) return;
+
+        document.getElementById('st').style.display = 'block';
+        const newNature = document.getElementById('edit_m_nature').value.trim();
+        const newEmail = document.getElementById('edit_m_email').value.trim();
+        const rawGL = document.getElementById('edit_m_gl').value;
+        const newGL = rawGL.split(',').map(x => x.trim()).filter(Boolean).join(',');
+
+        const { error } = await db.from('client_metadata').update({
+            nature: newNature,
+            client_email: newEmail,
+            gl_list: newGL
+        }).eq('client_name', currentClient);
+
+        document.getElementById('st').style.display = 'none';
+
+        if (error) {
+            alert("Metadata Update Error: " + error.message);
+        } else {
+            alert("✓ Client Metadata updated successfully in Supabase!");
+            await loadDash();
+        }
     }
 
     function renderStagingTable(dataRows) {
@@ -1320,35 +1399,6 @@ Provide accurate, direct answers regarding spend, vendor totals, uncategorized r
             }).eq('id', item.row);
         }
         await loadDash();
-    }
-
-    async function pushQBO() {
-        if(!db) return;
-        const { data: approved } = await db.from('review_staging').select('*').eq('client_name', currentClient).eq('status', 'APPROVED');
-        if(!approved || approved.length === 0) return alert("No rows marked as APPROVED.");
-
-        document.getElementById('st').style.display = 'block';
-        
-        const ledgerRows = approved.map(a => ({
-            client_name: a.client_name,
-            source: "JOURNAL",
-            nature: "General",
-            txn_date: a.txn_date,
-            vendor: a.vendor || "",
-            description: a.description,
-            amount: a.amount,
-            category: a.category,
-            qbo_id: "SYNCED-ID",
-            bank_category: a.bank_category,
-            class_name: a.class_name,
-            fingerprint: a.fingerprint
-        }));
-
-        await db.from('permanent_ledger').insert(ledgerRows);
-        await db.from('review_staging').delete().eq('client_name', currentClient).eq('status', 'APPROVED');
-
-        await loadDash();
-        alert("Success: Balanced Journal Entry Synced.");
     }
 
     function showPane(p) { document.querySelectorAll('.view-pane, #view-launchpad').forEach(el => el.style.display = 'none'); document.getElementById('view-' + p).style.display = 'block'; }
