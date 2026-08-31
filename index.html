@@ -440,32 +440,29 @@
         alert(`✓ Authorization Link copied to clipboard!\n\nSend this link to your client:\n${authLink}`);
     }
 
-    // OPTION 1 IMPLEMENTATION: ZERO EXTRA ACCOUNTS/SETUP - DIRECT WEB APP DRAFT DISPATCH
+    // IN-APP MESSAGE GENERATOR & CLIPBOARD COPIER
     function sendAuthEmailFromMeta() {
         if (!currentClient) return alert("Please select a client first.");
         
-        const email = document.getElementById('edit_m_email').value.trim();
-        if (!email) return alert("Please enter the client's email address first.");
-
         const authLink = `${INTUIT_REDIRECT_URI}/?connect_client=${encodeURIComponent(currentClient)}`;
 
-        // Copy to clipboard as an immediate backup
+        // Copy raw link to clipboard immediately
         navigator.clipboard.writeText(authLink);
 
-        const subject = encodeURIComponent(`Action Required: Connect QuickBooks Online for ${currentClient}`);
-        const body = encodeURIComponent(
-            `Hello,\n\n` +
-            `Please click the link below to authorize HCA LedgerIQ to connect with your QuickBooks Online account for ${currentClient}:\n\n` +
-            `${authLink}\n\n` +
-            `Thank you,\nHCA Consulting Group`
-        );
+        // Render copyable text box on screen
+        const boxContainer = document.getElementById('emailMessageBox');
+        if (boxContainer) {
+            boxContainer.style.display = 'block';
+            document.getElementById('emailTextToCopy').value = 
+                `Subject: Action Required: Authorize QuickBooks Connection for ${currentClient}\n\n` +
+                `Hello,\n\n` +
+                `Please click the secure authorization link below to connect your QuickBooks Online company account with HCA LedgerIQ for ${currentClient}:\n\n` +
+                `${authLink}\n\n` +
+                `This link will take you directly to Intuit's official sign-in page, where you can select your company and click "Authorize".\n\n` +
+                `Thank you,\nHCA Consulting Group`;
+        }
 
-        const mailtoUrl = `mailto:${email}?subject=${subject}&body=${body}`;
-        
-        // Triggers email draft in user's default app or webmail handler
-        window.open(mailtoUrl, '_blank');
-
-        alert(`✓ Email draft opened for ${email}!\n\n(Authorization link has also been copied to your clipboard).`);
+        alert(`✓ Authorization link copied to clipboard! Formatted email text generated below.`);
     }
 
     async function disconnectQuickBooks() {
@@ -1079,7 +1076,7 @@ Return ONLY JSON Object:
         document.getElementById('tb-history').innerHTML = ""; 
         res.history.forEach(i => { document.getElementById('tb-history').innerHTML += `<tr><td>${i.date}</td><td class="fw-bold">${i.vendor || 'N/A'}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; });
         
-        // Single Action Row for Client Metadata
+        // Render Controls + In-App Email Message Box
         const meta = res.metadata || {};
         document.getElementById('metaList').innerHTML = `
             <div class="row g-3">
@@ -1089,8 +1086,17 @@ Return ONLY JSON Object:
                 <div class="col-md-6"><label class="small fw-bold">QBO Realm ID</label><input id="edit_m_qbo" class="form-control form-control-sm" value="${meta.qbo_id || 'Not Connected'}" readonly></div>
                 <div class="col-12"><label class="small fw-bold">Chart of Accounts (Comma Separated)</label><textarea id="edit_m_gl" class="form-control form-control-sm" rows="3">${appGLOptions.join(', ')}</textarea></div>
                 <div class="col-12 d-flex gap-2 justify-content-end mt-3">
-                    <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="sendAuthEmailFromMeta()">Send / Copy Authorization Email Link</button>
+                    <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="sendAuthEmailFromMeta()">Generate Authorization Message</button>
                     <button class="btn btn-dark-hca btn-sm rounded-pill px-3" onclick="updateClientMetadataFromTab()">Update Client Metadata</button>
+                </div>
+                <div class="col-12 mt-3" id="emailMessageBox" style="display:none;">
+                    <div class="card p-3 bg-light border">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold small text-primary">Formatted Client Email Message</span>
+                            <button class="btn btn-xs btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('emailTextToCopy').value); alert('Message copied to clipboard!');">Copy Text</button>
+                        </div>
+                        <textarea id="emailTextToCopy" class="form-control form-control-sm font-monospace" rows="8" readonly></textarea>
+                    </div>
                 </div>
             </div>
         `;
