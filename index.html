@@ -507,7 +507,7 @@
         }
     }
 
-    // CLIENT OAUTH SUCCESS CARD INTERCEPTOR (EXECUTES UNCONDITIONALLY ON CALLBACK)
+    // CLIENT OAUTH SUCCESS CARD INTERCEPTOR
     async function handleOAuthReturn() {
         const globalUrlParams = new URLSearchParams(window.location.search);
         const code = globalUrlParams.get('code');
@@ -1427,7 +1427,7 @@ Provide accurate, direct answers regarding spend, vendor totals, uncategorized r
         const thinking = document.getElementById('zoro-thinking'); if(thinking) thinking.remove();
         
         const reply = jsonRes.candidates?.[0]?.content?.parts?.[0]?.text || "Unable to analyze dashboard context.";
-        const structuredReply = reply.replace(/\*\*(.*?)\*\Replace /\n/g, '<br>');
+        const structuredReply = reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
         
         b.innerHTML += `<div class="chat-bubble text-dark"><strong>ZORO:</strong><br>${structuredReply}</div>`; 
         b.scrollTop = b.scrollHeight;
