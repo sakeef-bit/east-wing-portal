@@ -347,10 +347,7 @@
     </div>
 
     <div id="tab-meta" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold mb-0">Client Metadata</h5>
-            <button class="btn btn-dark-hca btn-sm rounded-pill" onclick="updateClientMetadataFromTab()">Update Client Metadata</button>
-        </div>
+        <h5 class="fw-bold mb-3">Client Metadata</h5>
         <div id="metaList"></div>
     </div>
 </div>
@@ -434,7 +431,6 @@
         window.location.href = authUrl;
     }
 
-    // OPTION 2: GENERATE EMAIL AUTHORIZATION LINK FOR CLIENTS
     function generateAuthorizationLink() {
         const cName = document.getElementById('n').value.trim();
         if(!cName) return alert("Please enter the Company Legal Name first");
@@ -444,7 +440,7 @@
         alert(`✓ Authorization Link copied to clipboard!\n\nSend this link to your client:\n${authLink}`);
     }
 
-    function copyAuthLinkFromMeta() {
+    function sendAuthEmailFromMeta() {
         if (!currentClient) return alert("No client selected.");
         const email = document.getElementById('edit_m_email').value.trim();
         
@@ -452,9 +448,13 @@
         navigator.clipboard.writeText(authLink);
         
         if (email) {
-            alert(`✓ Link copied for ${currentClient}!\n\nEmail to: ${email}\n\nAuthorization URL:\n${authLink}`);
+            const subject = encodeURIComponent(`Action Required: Connect QuickBooks for ${currentClient}`);
+            const body = encodeURIComponent(`Hello,\n\nPlease click the link below to authorize HCA LedgerIQ to sync with your QuickBooks Online company account:\n\n${authLink}\n\nThank you!`);
+            
+            window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+            alert(`✓ Link copied to clipboard and email client opened for ${email}!`);
         } else {
-            alert(`✓ Link copied!\n\nAuthorization URL:\n${authLink}`);
+            alert(`✓ Authorization Link copied to clipboard:\n${authLink}`);
         }
     }
 
@@ -481,7 +481,6 @@
         const realmId = globalUrlParams.get('realmId');
         const stateClient = globalUrlParams.get('state');
 
-        // Check if user clicked email authorization link directly
         const emailConnectClient = globalUrlParams.get('connect_client');
         if (emailConnectClient) {
             localStorage.setItem('connecting_client', emailConnectClient);
@@ -509,7 +508,6 @@
             window.history.replaceState({}, document.title, window.location.pathname);
 
             try {
-                // Call Supabase Edge Function to exchange 'code' for 'refresh_token'
                 const res = await fetch("https://oxhwhxnoysowuokdhmtr.supabase.co/functions/v1/qbo-oauth", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -571,7 +569,6 @@
         }
     }
 
-    // FIXED SAVE FUNCTION: UPSERT MATCHES SUPABASE TABLE SCHEMA
     async function save() { 
         if(!db) return alert("Database connection uninitialized");
         const cName = document.getElementById('n').value.trim();
@@ -626,7 +623,6 @@
         }
     }
 
-    // RESILIENT EDGE FUNCTION SYNC (KEEPS DATA IN STAGING IF QBO FAILS)
     async function pushQBO() {
         if(!db) return;
         const { data: approved } = await db.from('review_staging').select('*').eq('client_name', currentClient).eq('status', 'APPROVED');
@@ -1073,7 +1069,7 @@ Return ONLY JSON Object:
         document.getElementById('tb-history').innerHTML = ""; 
         res.history.forEach(i => { document.getElementById('tb-history').innerHTML += `<tr><td>${i.date}</td><td class="fw-bold">${i.vendor || 'N/A'}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; });
         
-        // Render Editable Metadata Controls + Copy Auth Link Button
+        // Single Action Row for Client Metadata
         const meta = res.metadata || {};
         document.getElementById('metaList').innerHTML = `
             <div class="row g-3">
@@ -1083,7 +1079,7 @@ Return ONLY JSON Object:
                 <div class="col-md-6"><label class="small fw-bold">QBO Realm ID</label><input id="edit_m_qbo" class="form-control form-control-sm" value="${meta.qbo_id || 'Not Connected'}" readonly></div>
                 <div class="col-12"><label class="small fw-bold">Chart of Accounts (Comma Separated)</label><textarea id="edit_m_gl" class="form-control form-control-sm" rows="3">${appGLOptions.join(', ')}</textarea></div>
                 <div class="col-12 d-flex gap-2 justify-content-end mt-3">
-                    <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="copyAuthLinkFromMeta()">Copy Authorization Link for Client</button>
+                    <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="sendAuthEmailFromMeta()">Send / Copy Authorization Email Link</button>
                     <button class="btn btn-dark-hca btn-sm rounded-pill px-3" onclick="updateClientMetadataFromTab()">Update Client Metadata</button>
                 </div>
             </div>
@@ -1093,7 +1089,6 @@ Return ONLY JSON Object:
         renderPnLCharts();
     }
 
-    // UPDATE METADATA DIRECTLY FROM DASHBOARD TAB
     async function updateClientMetadataFromTab() {
         if (!db || !currentClient) return;
 
