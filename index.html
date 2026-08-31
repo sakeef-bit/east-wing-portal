@@ -110,7 +110,7 @@
     </div>
 </nav>
 
-<!-- CLIENT AUTHORIZATION SUCCESS CARD (Shown ONLY during OAuth callback) -->
+<!-- CLIENT AUTHORIZATION SUCCESS CARD (Renders automatically upon OAuth callback) -->
 <div id="view-client-success" class="container py-5" style="display:none;">
     <div class="row justify-content-center">
         <div class="col-md-6">
@@ -521,7 +521,7 @@
         document.getElementById('floatingWidgetsDock').style.display = 'none';
         document.getElementById('view-client-success').style.display = 'block';
 
-        // Convert '+' signs into clean spaces
+        // Convert '+' signs and %20 sequences into clean spaces
         let targetClient = stateClient ? decodeURIComponent(stateClient.replace(/\+/g, ' ')).trim() : localStorage.getItem('connecting_client');
 
         if (!targetClient && db) {
