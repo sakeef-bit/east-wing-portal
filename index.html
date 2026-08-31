@@ -440,22 +440,32 @@
         alert(`✓ Authorization Link copied to clipboard!\n\nSend this link to your client:\n${authLink}`);
     }
 
+    // OPTION 1 IMPLEMENTATION: ZERO EXTRA ACCOUNTS/SETUP - DIRECT WEB APP DRAFT DISPATCH
     function sendAuthEmailFromMeta() {
-        if (!currentClient) return alert("No client selected.");
+        if (!currentClient) return alert("Please select a client first.");
+        
         const email = document.getElementById('edit_m_email').value.trim();
-        
+        if (!email) return alert("Please enter the client's email address first.");
+
         const authLink = `${INTUIT_REDIRECT_URI}/?connect_client=${encodeURIComponent(currentClient)}`;
+
+        // Copy to clipboard as an immediate backup
         navigator.clipboard.writeText(authLink);
+
+        const subject = encodeURIComponent(`Action Required: Connect QuickBooks Online for ${currentClient}`);
+        const body = encodeURIComponent(
+            `Hello,\n\n` +
+            `Please click the link below to authorize HCA LedgerIQ to connect with your QuickBooks Online account for ${currentClient}:\n\n` +
+            `${authLink}\n\n` +
+            `Thank you,\nHCA Consulting Group`
+        );
+
+        const mailtoUrl = `mailto:${email}?subject=${subject}&body=${body}`;
         
-        if (email) {
-            const subject = encodeURIComponent(`Action Required: Connect QuickBooks for ${currentClient}`);
-            const body = encodeURIComponent(`Hello,\n\nPlease click the link below to authorize HCA LedgerIQ to sync with your QuickBooks Online company account:\n\n${authLink}\n\nThank you!`);
-            
-            window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
-            alert(`✓ Link copied to clipboard and email client opened for ${email}!`);
-        } else {
-            alert(`✓ Authorization Link copied to clipboard:\n${authLink}`);
-        }
+        // Triggers email draft in user's default app or webmail handler
+        window.open(mailtoUrl, '_blank');
+
+        alert(`✓ Email draft opened for ${email}!\n\n(Authorization link has also been copied to your clipboard).`);
     }
 
     async function disconnectQuickBooks() {
