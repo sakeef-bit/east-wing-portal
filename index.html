@@ -415,7 +415,6 @@
         location.reload(); 
     }
 
-    // DIRECT INTUIT AUTHORIZATION LAUNCHER
     function connectToQuickBooks() {
         const selected = document.getElementById('masterClient').value;
         if (!selected) return alert("Please select a client account from the dropdown first!");
@@ -431,7 +430,6 @@
         window.location.href = authUrl;
     }
 
-    // DIRECT INTUIT OAUTH LINK GENERATORS (Clean State String for Spaces in Client Names)
     function generateAuthorizationLink() {
         const cName = document.getElementById('n').value.trim();
         if(!cName) return alert("Please enter the Company Legal Name first");
@@ -479,7 +477,7 @@
         if (!confirm(`Are you sure you want to disconnect QuickBooks for ${currentClient}?`)) return;
 
         document.getElementById('st').style.display = 'block';
-        const { error } = await db.from('client_metadata').update({ qbo_id: null, qbo_refresh_token: null }).eq('client_name', currentClient);
+        const { error } = await db.from('client_metadata').update({ qbo_id: null, qbo_refresh_token: null }).ilike('client_name', currentClient.trim());
         document.getElementById('st').style.display = 'none';
 
         if (error) {
@@ -490,16 +488,15 @@
         }
     }
 
-    // AUTOMATIC OAUTH RETURN CAPTURE HANDLER (ACCURATELY DECODES CLIENT NAMES WITH SPACES)
+    // OAUTH CALLBACK ENGINE (EXECUTES FIRST TO PREVENT RENDER RACE CONDITIONS)
     async function handleOAuthReturn() {
         const globalUrlParams = new URLSearchParams(window.location.search);
         const code = globalUrlParams.get('code');
         const realmId = globalUrlParams.get('realmId');
         const stateClient = globalUrlParams.get('state');
 
-        if (!code || !realmId) return;
+        if (!code || !realmId) return false;
 
-        // Clean decode target client string to handle "Demo version", "ACME Corp & Co", etc.
         let targetClient = stateClient ? decodeURIComponent(stateClient).trim() : localStorage.getItem('connecting_client');
 
         if (!targetClient && db) {
@@ -532,14 +529,18 @@
 
                 localStorage.removeItem('connecting_client');
                 await getClientList();
-                document.getElementById('masterClient').value = targetClient;
+                document.getElementById('masterClient').value = result.client_name || targetClient;
                 await pingStatus();
+                await loadDash(); // Immediately refresh dashboard to show populated GL and QBO ID
                 alert(`✓ Successfully authorized & linked QuickBooks Realm ID ${realmId} for "${targetClient}"!`);
+                return true;
             } catch (err) {
                 document.getElementById('st').style.display = 'none';
-                alert("OAuth Error: " + err.message);
+                alert("OAuth Save Error: " + err.message);
+                return false;
             }
         }
+        return false;
     }
 
     window.onload = async () => {
@@ -549,14 +550,16 @@
             }
         } catch(e) { console.error("Supabase Initialization Error:", e); }
 
+        // 1. Process OAuth Return First
+        await handleOAuthReturn();
+
+        // 2. Render UI
         if (localStorage.getItem('hca_gk')) {
             document.getElementById('keyGate').style.display = 'none'; 
             document.getElementById('mainPortal').style.display = 'block';
             document.getElementById('dot-gemini').classList.add('dot-green');
             await getClientList();
         }
-
-        await handleOAuthReturn();
     };
 
     async function getClientList() {
@@ -608,7 +611,7 @@
         document.getElementById('actionGrid').style.pointerEvents = "auto";
         
         if (db) {
-            const { data } = await db.from('client_metadata').select('*').eq('client_name', currentClient).maybeSingle();
+            const { data } = await db.from('client_metadata').select('*').ilike('client_name', currentClient.trim()).maybeSingle();
             document.getElementById('dot-ledger').className = 'status-dot dot-green';
             
             const connBtn = document.getElementById('btnConnectQBO');
@@ -629,7 +632,7 @@
 
     async function pushQBO() {
         if(!db) return;
-        const { data: approved } = await db.from('review_staging').select('*').eq('client_name', currentClient).eq('status', 'APPROVED');
+        const { data: approved } = await db.from('review_staging').select('*').ilike('client_name', currentClient.trim()).eq('status', 'APPROVED');
         if(!approved || approved.length === 0) return alert("No rows marked as APPROVED.");
 
         document.getElementById('st').style.display = 'block';
@@ -805,7 +808,7 @@ Return ONLY JSON array of arrays (rows with column values):
                 .map(l => l.split(',')[0].replace(/"/g, '').trim())
                 .filter(v => v && v.toLowerCase() !== "account name" && v.toLowerCase() !== "account");
 
-            const { error } = await db.from('client_metadata').update({ gl_list: appGLOptions.join(",") }).eq('client_name', currentClient);
+            const { error } = await db.from('client_metadata').update({ gl_list: appGLOptions.join(",") }).ilike('client_name', currentClient.trim());
             document.getElementById('st').style.display = 'none';
 
             if (error) {
@@ -820,7 +823,7 @@ Return ONLY JSON array of arrays (rows with column values):
 
     async function loadRules() {
         if (!db || !currentClient) return;
-        const { data } = await db.from('category_rules').select('*').eq('client_name', currentClient);
+        const { data } = await db.from('category_rules').select('*').ilike('client_name', currentClient.trim());
         activeRules = data || [];
         renderRulesUI();
     }
@@ -861,7 +864,7 @@ Return ONLY JSON array of arrays (rows with column values):
     async function saveRules() {
         if(!db || !currentClient) return;
         document.getElementById('st').style.display = 'block';
-        await db.from('category_rules').delete().eq('client_name', currentClient);
+        await db.from('category_rules').delete().ilike('client_name', currentClient.trim());
         if(activeRules.length > 0) {
             const rows = activeRules.map(r => ({ client_name: currentClient, keyword: r.keyword, target_account: r.target_account }));
             await db.from('category_rules').insert(rows);
@@ -889,11 +892,11 @@ Return ONLY JSON array of arrays (rows with column values):
                 }
 
                 if (db) {
-                    const { data: meta } = await db.from('client_metadata').select('gl_list').eq('client_name', currentClient).maybeSingle();
+                    const { data: meta } = await db.from('client_metadata').select('gl_list').ilike('client_name', currentClient.trim()).maybeSingle();
                     if (meta && meta.gl_list) {
                         appGLOptions = meta.gl_list.split(',').filter(Boolean);
                     }
-                    const { data: ledger } = await db.from('permanent_ledger').select('*').eq('client_name', currentClient).limit(50);
+                    const { data: ledger } = await db.from('permanent_ledger').select('*').ilike('client_name', currentClient.trim()).limit(50);
                     if (ledger) {
                         historyData = ledger.map(l => ({ date: l.txn_date, vendor: l.vendor || "", desc: l.description, amt: String(l.amount), cat: l.category }));
                     }
@@ -962,7 +965,7 @@ Return ONLY JSON Object:
 
                 stmtStart = extracted.starting_balance || 0;
                 stmtEnd = extracted.ending_balance || 0;
-                await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).eq('client_name', currentClient);
+                await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).ilike('client_name', currentClient.trim());
 
                 const rows = (extracted.transactions || []).map(t => {
                     let assignedCategory = t.category || "Uncategorized";
@@ -1014,9 +1017,9 @@ Return ONLY JSON Object:
 
         document.getElementById('st').style.display = 'block'; 
         
-        const { data: staging } = await db.from('review_staging').select('*').eq('client_name', currentClient);
-        const { data: ledger } = await db.from('permanent_ledger').select('*').eq('client_name', currentClient).limit(100);
-        const { data: meta } = await db.from('client_metadata').select('*').eq('client_name', currentClient).maybeSingle();
+        const { data: staging } = await db.from('review_staging').select('*').ilike('client_name', currentClient.trim());
+        const { data: ledger } = await db.from('permanent_ledger').select('*').ilike('client_name', currentClient.trim()).limit(100);
+        const { data: meta } = await db.from('client_metadata').select('*').ilike('client_name', currentClient.trim()).maybeSingle();
 
         const seenFingerprints = {};
         localData = (staging || []).map(s => {
@@ -1115,7 +1118,7 @@ Return ONLY JSON Object:
             nature: newNature,
             client_email: newEmail,
             gl_list: newGL
-        }).eq('client_name', currentClient);
+        }).ilike('client_name', currentClient.trim());
 
         document.getElementById('st').style.display = 'none';
 
