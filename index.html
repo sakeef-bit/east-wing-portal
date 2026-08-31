@@ -417,13 +417,14 @@
     const SUPABASE_URL = "https://oxhwhxnoysowuokdhmtr.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94aHdoeG5veXNvd3Vva2RobXRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NDU1MTEsImV4cCI6MjEwMzIyMTUxMX0.hQm9RsFit-TVz1pH0Y1Q3VITdbfwLUKA42uq2frZkyc";
     
-    // IMMEDIATE SUPABASE INITIALIZATION TO PREVENT RACE CONDITIONS
+    // IMMEDIATE SUPABASE INITIALIZATION TO PREVENT CDN LOAD DELAYS
     let db = null;
-    try {
-        if (window.supabase) {
+    function initSupabase() {
+        if (!db && window.supabase) {
             db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         }
-    } catch(e) { console.error("Supabase Initialization Error:", e); }
+        return db;
+    }
 
     let currentClient = "";
     let localData = [];
@@ -499,6 +500,7 @@
     }
 
     async function disconnectQuickBooks() {
+        initSupabase();
         if (!currentClient || !db) return alert("Please select a client account first");
         if (!confirm(`Are you sure you want to disconnect QuickBooks for ${currentClient}?`)) return;
 
@@ -514,7 +516,7 @@
         }
     }
 
-    // CLIENT OAUTH SUCCESS CARD INTERCEPTOR (UNCONDITIONALLY RUNS ON INTUIT REDIRECT)
+    // CLIENT OAUTH SUCCESS CARD INTERCEPTOR (EXECUTES DIRECTLY ON REDIRECT)
     async function handleOAuthReturn() {
         const globalUrlParams = new URLSearchParams(window.location.search);
         const code = globalUrlParams.get('code');
@@ -572,6 +574,8 @@
     }
 
     window.onload = async () => {
+        initSupabase();
+
         // 1. Process OAuth Return First
         const isOAuthCallback = await handleOAuthReturn();
 
@@ -585,6 +589,7 @@
     };
 
     async function getClientList() {
+        initSupabase();
         if (!db) return;
         const { data, error } = await db.from('client_metadata').select('client_name');
         if (error) console.error("Database fetch error:", error);
@@ -599,6 +604,7 @@
     }
 
     async function save() { 
+        initSupabase();
         if(!db) return alert("Database connection uninitialized");
         const cName = document.getElementById('n').value.trim();
         if(!cName) return alert("Company Legal Name is required");
@@ -632,6 +638,7 @@
         document.getElementById('actionGrid').style.opacity = "1";
         document.getElementById('actionGrid').style.pointerEvents = "auto";
         
+        initSupabase();
         if (db) {
             const { data } = await db.from('client_metadata').select('*').ilike('client_name', currentClient.trim()).maybeSingle();
             document.getElementById('dot-ledger').className = 'status-dot dot-green';
@@ -653,6 +660,7 @@
     }
 
     async function pushQBO() {
+        initSupabase();
         if(!db) return;
         const { data: approved } = await db.from('review_staging').select('*').ilike('client_name', currentClient.trim()).eq('status', 'APPROVED');
         if(!approved || approved.length === 0) return alert("No rows marked as APPROVED.");
@@ -820,7 +828,10 @@ Return ONLY JSON array of arrays (rows with column values):
 
     async function uploadGLFromDash(input) {
         const file = input.files[0];
-        if (!file || !currentClient || !db) return;
+        if (!file || !currentClient) return;
+
+        initSupabase();
+        if (!db) return;
 
         const reader = new FileReader();
         reader.onload = async (e) => {
@@ -844,6 +855,7 @@ Return ONLY JSON array of arrays (rows with column values):
     }
 
     async function loadRules() {
+        initSupabase();
         if (!db || !currentClient) return;
         const { data } = await db.from('category_rules').select('*').ilike('client_name', currentClient.trim());
         activeRules = data || [];
@@ -876,7 +888,8 @@ Return ONLY JSON array of arrays (rows with column values):
     }
 
     async function removeRule(idx) {
-        if(activeRules[idx].id) {
+        initSupabase();
+        if(activeRules[idx].id && db) {
             await db.from('category_rules').delete().eq('id', activeRules[idx].id);
         }
         activeRules.splice(idx, 1);
@@ -884,6 +897,7 @@ Return ONLY JSON array of arrays (rows with column values):
     }
 
     async function saveRules() {
+        initSupabase();
         if(!db || !currentClient) return;
         document.getElementById('st').style.display = 'block';
         await db.from('category_rules').delete().ilike('client_name', currentClient.trim());
@@ -913,6 +927,7 @@ Return ONLY JSON array of arrays (rows with column values):
                     return alert("Missing Gemini API Key. Please authenticate.");
                 }
 
+                initSupabase();
                 if (db) {
                     const { data: meta } = await db.from('client_metadata').select('gl_list').ilike('client_name', currentClient.trim()).maybeSingle();
                     if (meta && meta.gl_list) {
@@ -987,7 +1002,9 @@ Return ONLY JSON Object:
 
                 stmtStart = extracted.starting_balance || 0;
                 stmtEnd = extracted.ending_balance || 0;
-                await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).ilike('client_name', currentClient.trim());
+                if (db) {
+                    await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).ilike('client_name', currentClient.trim());
+                }
 
                 const rows = (extracted.transactions || []).map(t => {
                     let assignedCategory = t.category || "Uncategorized";
@@ -1023,7 +1040,9 @@ Return ONLY JSON Object:
                     return alert("No valid transactions found in statement.");
                 }
 
-                await db.from('review_staging').insert(rows);
+                if (db) {
+                    await db.from('review_staging').insert(rows);
+                }
                 await loadDash();
             } catch(err) {
                 alert("Processing Error: " + err.message);
@@ -1039,12 +1058,19 @@ Return ONLY JSON Object:
 
         document.getElementById('st').style.display = 'block'; 
         
-        const { data: staging } = await db.from('review_staging').select('*').ilike('client_name', currentClient.trim());
-        const { data: ledger } = await db.from('permanent_ledger').select('*').ilike('client_name', currentClient.trim()).limit(100);
-        const { data: meta } = await db.from('client_metadata').select('*').ilike('client_name', currentClient.trim()).maybeSingle();
+        initSupabase();
+        let staging = [], ledger = [], meta = null;
+        if (db) {
+            const { data: sData } = await db.from('review_staging').select('*').ilike('client_name', currentClient.trim());
+            const { data: lData } = await db.from('permanent_ledger').select('*').ilike('client_name', currentClient.trim()).limit(100);
+            const { data: mData } = await db.from('client_metadata').select('*').ilike('client_name', currentClient.trim()).maybeSingle();
+            staging = sData || [];
+            ledger = lData || [];
+            meta = mData;
+        }
 
         const seenFingerprints = {};
-        localData = (staging || []).map(s => {
+        localData = staging.map(s => {
             const fp = s.fingerprint || btoa(s.txn_date + s.description + s.amount);
             const isDup = !!seenFingerprints[fp];
             seenFingerprints[fp] = true;
@@ -1071,7 +1097,7 @@ Return ONLY JSON Object:
             if (meta.gl_list) appGLOptions = meta.gl_list.split(',').filter(Boolean);
         }
 
-        historyData = (ledger || []).map(l => ({ date: l.txn_date, vendor: l.vendor || "", desc: l.description, amt: String(l.amount), cat: l.category, qbo: l.qbo_id || "SYNCED" }));
+        historyData = ledger.map(l => ({ date: l.txn_date, vendor: l.vendor || "", desc: l.description, amt: String(l.amount), cat: l.category, qbo: l.qbo_id || "SYNCED" }));
         
         renderDashboard({ staging: localData, history: historyData, metadata: meta }); 
     }
@@ -1128,6 +1154,7 @@ Return ONLY JSON Object:
     }
 
     async function updateClientMetadataFromTab() {
+        initSupabase();
         if (!db || !currentClient) return;
 
         document.getElementById('st').style.display = 'block';
@@ -1188,6 +1215,7 @@ Return ONLY JSON Object:
     }
 
     async function fetchVendorIntelligence(vendorName, targetElementId) {
+        initSupabase();
         if (!vendorName || !db) return;
         const popupEl = document.getElementById(targetElementId);
         if (!popupEl) return;
@@ -1272,7 +1300,10 @@ Return ONLY JSON:
                 const matchAmt = Math.abs(parseFloat(extracted.amount));
 
                 if(Math.abs(targetAmt - matchAmt) <= (targetAmt * 0.02)) {
-                    await db.from('review_staging').update({ receipt_linked: true }).eq('id', rowId);
+                    initSupabase();
+                    if (db) {
+                        await db.from('review_staging').update({ receipt_linked: true }).eq('id', rowId);
+                    }
                     alert("✓ Receipt Verified & Linked!");
                     await loadDash();
                 } else {
@@ -1434,6 +1465,7 @@ Provide accurate, direct answers regarding spend, vendor totals, uncategorized r
     function approveAll() { document.querySelectorAll('.row-stat').forEach(s => s.value = "APPROVED"); recalcJE(); }
     
     async function saveAll() {
+        initSupabase();
         if(!db) return;
         document.getElementById('st').style.display = 'block'; 
         for (let item of localData) {
