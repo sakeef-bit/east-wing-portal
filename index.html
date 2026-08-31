@@ -431,7 +431,7 @@
         window.location.href = authUrl;
     }
 
-    // DIRECT INTUIT OAUTH LINK GENERATORS (No App Redirect Loop)
+    // DIRECT INTUIT OAUTH LINK GENERATORS (Clean State String for Spaces in Client Names)
     function generateAuthorizationLink() {
         const cName = document.getElementById('n').value.trim();
         if(!cName) return alert("Please enter the Company Legal Name first");
@@ -492,7 +492,7 @@
         }
     }
 
-    // AUTOMATIC OAUTH RETURN CAPTURE HANDLER (RUNS AFTER AUTHORIZATION)
+    // AUTOMATIC OAUTH RETURN CAPTURE HANDLER (ACCURATELY DECODES CLIENT NAMES WITH SPACES)
     async function handleOAuthReturn() {
         const globalUrlParams = new URLSearchParams(window.location.search);
         const code = globalUrlParams.get('code');
@@ -501,6 +501,7 @@
 
         if (!code || !realmId) return;
 
+        // Decode target client string to handle "demo version", "ACME Corp & Co", etc.
         let targetClient = stateClient ? decodeURIComponent(stateClient) : localStorage.getItem('connecting_client');
 
         if (!targetClient && db) {
