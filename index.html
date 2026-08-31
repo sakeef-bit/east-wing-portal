@@ -392,6 +392,27 @@
 <div id="st"><strong>Processing Request...</strong></div>
 
 <script>
+    // 1. EARLY INTERCEPT FOR CLIENT AUTHORIZATION LINKS (BEFORE ANYTHING ELSE RUNS)
+    const initParams = new URLSearchParams(window.location.search);
+    const emailConnectClient = initParams.get('connect_client');
+
+    if (emailConnectClient) {
+        const INTUIT_CLIENT_ID_TEMP = "ABgu8RDrvNPOLdMBsAE4d7aIMSioPtPclJJOBxJ36vOLQ7VIS4";
+        const INTUIT_REDIRECT_URI_TEMP = "https://east-wing-portal-ogfr8bhdh-adfh.vercel.app";
+        const cleanClientName = decodeURIComponent(emailConnectClient);
+
+        localStorage.setItem('connecting_client', cleanClientName);
+
+        const directAuthUrl = `https://appcenter.intuit.com/connect/oauth2` +
+            `?client_id=${INTUIT_CLIENT_ID_TEMP}` +
+            `&response_type=code` +
+            `&scope=com.intuit.quickbooks.accounting` +
+            `&redirect_uri=${encodeURIComponent(INTUIT_REDIRECT_URI_TEMP)}` +
+            `&state=${encodeURIComponent(cleanClientName)}`;
+        
+        window.location.href = directAuthUrl;
+    }
+
     const INTUIT_CLIENT_ID = "ABgu8RDrvNPOLdMBsAE4d7aIMSioPtPclJJOBxJ36vOLQ7VIS4";
     const INTUIT_REDIRECT_URI = "https://east-wing-portal-ogfr8bhdh-adfh.vercel.app";
 
@@ -487,19 +508,6 @@
         const code = globalUrlParams.get('code');
         const realmId = globalUrlParams.get('realmId');
         const stateClient = globalUrlParams.get('state');
-
-        const emailConnectClient = globalUrlParams.get('connect_client');
-        if (emailConnectClient) {
-            localStorage.setItem('connecting_client', emailConnectClient);
-            const authUrl = `https://appcenter.intuit.com/connect/oauth2` +
-                `?client_id=${INTUIT_CLIENT_ID}` +
-                `&response_type=code` +
-                `&scope=com.intuit.quickbooks.accounting` +
-                `&redirect_uri=${encodeURIComponent(INTUIT_REDIRECT_URI)}` +
-                `&state=${encodeURIComponent(emailConnectClient)}`;
-            window.location.href = authUrl;
-            return;
-        }
 
         if (!code || !realmId) return;
 
