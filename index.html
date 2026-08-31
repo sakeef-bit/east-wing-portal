@@ -110,6 +110,25 @@
     </div>
 </nav>
 
+<!-- CLIENT AUTHORIZATION SUCCESS CARD (Shown ONLY during OAuth callback) -->
+<div id="view-client-success" class="container py-5" style="display:none;">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card card-custom p-5 text-center">
+                <div class="mb-3">
+                    <span style="font-size: 3rem; color: #22C55E;">✓</span>
+                </div>
+                <h3 class="fw-bold mb-2" id="clientSuccessTitle">Connecting QuickBooks...</h3>
+                <p class="text-muted small mb-4" id="clientSuccessMessage">Please wait while we finalize your secure connection with HCA LedgerIQ.</p>
+                <div class="spinner-border text-primary mx-auto mb-3" id="clientSuccessSpinner" role="status"></div>
+                <div id="clientSuccessButton" style="display:none;">
+                    <p class="text-success fw-bold">You may now close this tab.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="view-launchpad">
     <header class="hero-section">
         <div class="privacy-disclaimer-box">
@@ -352,7 +371,7 @@
     </div>
 </div>
 
-<div class="widgets-dock">
+<div class="widgets-dock" id="floatingWidgetsDock">
     <div class="chat-trigger-btn" onclick="toggleChat('chat-window')">
         <svg class="icon-svg" style="width:16px; height:16px;" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
         <span class="fw-semibold small">LUFFY</span>
@@ -488,7 +507,7 @@
         }
     }
 
-    // OAUTH CALLBACK ENGINE (EXECUTES FIRST TO PREVENT RENDER RACE CONDITIONS)
+    // CLIENT OAUTH SUCCESS CARD INTERCEPTOR
     async function handleOAuthReturn() {
         const globalUrlParams = new URLSearchParams(window.location.search);
         const code = globalUrlParams.get('code');
@@ -497,7 +516,13 @@
 
         if (!code || !realmId) return false;
 
-        let targetClient = stateClient ? decodeURIComponent(stateClient).trim() : localStorage.getItem('connecting_client');
+        // Hide full portal UI and floating widgets instantly
+        document.getElementById('view-launchpad').style.display = 'none';
+        document.getElementById('floatingWidgetsDock').style.display = 'none';
+        document.getElementById('view-client-success').style.display = 'block';
+
+        // Convert '+' signs into clean spaces
+        let targetClient = stateClient ? decodeURIComponent(stateClient.replace(/\+/g, ' ')).trim() : localStorage.getItem('connecting_client');
 
         if (!targetClient && db) {
             const { data: latest } = await db.from('client_metadata').select('client_name').order('created_at', { ascending: false }).limit(1).maybeSingle();
@@ -505,8 +530,7 @@
         }
 
         if (targetClient && db) {
-            document.getElementById('st').style.display = 'block';
-            window.history.replaceState({}, document.title, window.location.pathname);
+            document.getElementById('clientSuccessTitle').innerText = `Connecting ${targetClient} to QuickBooks...`;
 
             try {
                 const res = await fetch("https://oxhwhxnoysowuokdhmtr.supabase.co/functions/v1/qbo-oauth", {
@@ -521,22 +545,23 @@
                 });
 
                 const result = await res.json();
-                document.getElementById('st').style.display = 'none';
 
                 if (!res.ok || !result.success) {
                     throw new Error(result.error || "OAuth Exchange Failed");
                 }
 
+                // Show Success Message Card
+                document.getElementById('clientSuccessSpinner').style.display = 'none';
+                document.getElementById('clientSuccessTitle').innerText = "QuickBooks Online Connected!";
+                document.getElementById('clientSuccessMessage').innerText = `✓ Successfully authorized & linked QuickBooks Realm ID ${realmId} for "${result.client_name || targetClient}".`;
+                document.getElementById('clientSuccessButton').style.display = 'block';
+
                 localStorage.removeItem('connecting_client');
-                await getClientList();
-                document.getElementById('masterClient').value = result.client_name || targetClient;
-                await pingStatus();
-                await loadDash(); // Immediately refresh dashboard to show populated GL and QBO ID
-                alert(`✓ Successfully authorized & linked QuickBooks Realm ID ${realmId} for "${targetClient}"!`);
                 return true;
             } catch (err) {
-                document.getElementById('st').style.display = 'none';
-                alert("OAuth Save Error: " + err.message);
+                document.getElementById('clientSuccessSpinner').style.display = 'none';
+                document.getElementById('clientSuccessTitle').innerText = "Authorization Error";
+                document.getElementById('clientSuccessMessage').innerHTML = `<span class="text-danger">${err.message}</span>`;
                 return false;
             }
         }
@@ -551,10 +576,10 @@
         } catch(e) { console.error("Supabase Initialization Error:", e); }
 
         // 1. Process OAuth Return First
-        await handleOAuthReturn();
+        const isOAuthCallback = await handleOAuthReturn();
 
-        // 2. Render UI
-        if (localStorage.getItem('hca_gk')) {
+        // 2. Render UI only if NOT an OAuth callback page
+        if (!isOAuthCallback && localStorage.getItem('hca_gk')) {
             document.getElementById('keyGate').style.display = 'none'; 
             document.getElementById('mainPortal').style.display = 'block';
             document.getElementById('dot-gemini').classList.add('dot-green');
