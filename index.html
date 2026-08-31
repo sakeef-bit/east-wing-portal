@@ -417,7 +417,14 @@
     const SUPABASE_URL = "https://oxhwhxnoysowuokdhmtr.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94aHdoeG5veXNvd3Vva2RobXRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NDU1MTEsImV4cCI6MjEwMzIyMTUxMX0.hQm9RsFit-TVz1pH0Y1Q3VITdbfwLUKA42uq2frZkyc";
     
+    // IMMEDIATE SUPABASE INITIALIZATION TO PREVENT RACE CONDITIONS
     let db = null;
+    try {
+        if (window.supabase) {
+            db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        }
+    } catch(e) { console.error("Supabase Initialization Error:", e); }
+
     let currentClient = "";
     let localData = [];
     let appGLOptions = [];
@@ -507,7 +514,7 @@
         }
     }
 
-    // CLIENT OAUTH SUCCESS CARD INTERCEPTOR
+    // CLIENT OAUTH SUCCESS CARD INTERCEPTOR (UNCONDITIONALLY RUNS ON INTUIT REDIRECT)
     async function handleOAuthReturn() {
         const globalUrlParams = new URLSearchParams(window.location.search);
         const code = globalUrlParams.get('code');
@@ -524,57 +531,47 @@
         // Convert '+' signs and %20 sequences into clean spaces
         let targetClient = stateClient ? decodeURIComponent(stateClient.replace(/\+/g, ' ')).trim() : localStorage.getItem('connecting_client');
 
-        if (!targetClient && db) {
-            const { data: latest } = await db.from('client_metadata').select('client_name').order('created_at', { ascending: false }).limit(1).maybeSingle();
-            if (latest) targetClient = latest.client_name;
+        if (!targetClient) {
+            targetClient = "Demo version";
         }
 
-        if (targetClient && db) {
-            document.getElementById('clientSuccessTitle').innerText = `Connecting ${targetClient} to QuickBooks...`;
+        document.getElementById('clientSuccessTitle').innerText = `Connecting ${targetClient} to QuickBooks...`;
 
-            try {
-                const res = await fetch("https://oxhwhxnoysowuokdhmtr.supabase.co/functions/v1/qbo-oauth", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        code: code,
-                        realmId: realmId,
-                        client_name: targetClient,
-                        redirect_uri: INTUIT_REDIRECT_URI
-                    })
-                });
+        try {
+            const res = await fetch("https://oxhwhxnoysowuokdhmtr.supabase.co/functions/v1/qbo-oauth", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    code: code,
+                    realmId: realmId,
+                    client_name: targetClient,
+                    redirect_uri: INTUIT_REDIRECT_URI
+                })
+            });
 
-                const result = await res.json();
+            const result = await res.json();
 
-                if (!res.ok || !result.success) {
-                    throw new Error(result.error || "OAuth Exchange Failed");
-                }
-
-                // Show Success Message Card
-                document.getElementById('clientSuccessSpinner').style.display = 'none';
-                document.getElementById('clientSuccessTitle').innerText = "QuickBooks Online Connected!";
-                document.getElementById('clientSuccessMessage').innerText = `✓ Successfully authorized & linked QuickBooks Realm ID ${realmId} for "${result.client_name || targetClient}".`;
-                document.getElementById('clientSuccessButton').style.display = 'block';
-
-                localStorage.removeItem('connecting_client');
-                return true;
-            } catch (err) {
-                document.getElementById('clientSuccessSpinner').style.display = 'none';
-                document.getElementById('clientSuccessTitle').innerText = "Authorization Error";
-                document.getElementById('clientSuccessMessage').innerHTML = `<span class="text-danger">${err.message}</span>`;
-                return false;
+            if (!res.ok || !result.success) {
+                throw new Error(result.error || "OAuth Exchange Failed");
             }
+
+            // Show Success Message Card
+            document.getElementById('clientSuccessSpinner').style.display = 'none';
+            document.getElementById('clientSuccessTitle').innerText = "QuickBooks Online Connected!";
+            document.getElementById('clientSuccessMessage').innerText = `✓ Successfully authorized & linked QuickBooks Realm ID ${realmId} for "${result.client_name || targetClient}".`;
+            document.getElementById('clientSuccessButton').style.display = 'block';
+
+            localStorage.removeItem('connecting_client');
+            return true;
+        } catch (err) {
+            document.getElementById('clientSuccessSpinner').style.display = 'none';
+            document.getElementById('clientSuccessTitle').innerText = "Authorization Error";
+            document.getElementById('clientSuccessMessage').innerHTML = `<span class="text-danger">${err.message}</span>`;
+            return false;
         }
-        return false;
     }
 
     window.onload = async () => {
-        try {
-            if (window.supabase) {
-                db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            }
-        } catch(e) { console.error("Supabase Initialization Error:", e); }
-
         // 1. Process OAuth Return First
         const isOAuthCallback = await handleOAuthReturn();
 
