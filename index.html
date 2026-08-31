@@ -457,10 +457,8 @@
             `&redirect_uri=${encodeURIComponent(INTUIT_REDIRECT_URI)}` +
             `&state=${encodeURIComponent(currentClient)}`;
 
-        // Copy direct URL to clipboard immediately
         navigator.clipboard.writeText(directIntuitUrl);
 
-        // Render copyable text box on screen
         const boxContainer = document.getElementById('emailMessageBox');
         if (boxContainer) {
             boxContainer.style.display = 'block';
@@ -501,8 +499,8 @@
 
         if (!code || !realmId) return;
 
-        // Decode target client string to handle "demo version", "ACME Corp & Co", etc.
-        let targetClient = stateClient ? decodeURIComponent(stateClient) : localStorage.getItem('connecting_client');
+        // Clean decode target client string to handle "Demo version", "ACME Corp & Co", etc.
+        let targetClient = stateClient ? decodeURIComponent(stateClient).trim() : localStorage.getItem('connecting_client');
 
         if (!targetClient && db) {
             const { data: latest } = await db.from('client_metadata').select('client_name').order('created_at', { ascending: false }).limit(1).maybeSingle();
