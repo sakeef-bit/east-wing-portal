@@ -392,27 +392,6 @@
 <div id="st"><strong>Processing Request...</strong></div>
 
 <script>
-    // 1. EARLY INTERCEPT FOR CLIENT AUTHORIZATION LINKS (BEFORE ANYTHING ELSE RUNS)
-    const initParams = new URLSearchParams(window.location.search);
-    const emailConnectClient = initParams.get('connect_client');
-
-    if (emailConnectClient) {
-        const INTUIT_CLIENT_ID_TEMP = "ABgu8RDrvNPOLdMBsAE4d7aIMSioPtPclJJOBxJ36vOLQ7VIS4";
-        const INTUIT_REDIRECT_URI_TEMP = "https://east-wing-portal-ogfr8bhdh-adfh.vercel.app";
-        const cleanClientName = decodeURIComponent(emailConnectClient);
-
-        localStorage.setItem('connecting_client', cleanClientName);
-
-        const directAuthUrl = `https://appcenter.intuit.com/connect/oauth2` +
-            `?client_id=${INTUIT_CLIENT_ID_TEMP}` +
-            `&response_type=code` +
-            `&scope=com.intuit.quickbooks.accounting` +
-            `&redirect_uri=${encodeURIComponent(INTUIT_REDIRECT_URI_TEMP)}` +
-            `&state=${encodeURIComponent(cleanClientName)}`;
-        
-        window.location.href = directAuthUrl;
-    }
-
     const INTUIT_CLIENT_ID = "ABgu8RDrvNPOLdMBsAE4d7aIMSioPtPclJJOBxJ36vOLQ7VIS4";
     const INTUIT_REDIRECT_URI = "https://east-wing-portal-ogfr8bhdh-adfh.vercel.app";
 
@@ -436,7 +415,7 @@
         location.reload(); 
     }
 
-    // DIRECT OR EMAIL AUTHORIZATION LAUNCHER
+    // DIRECT INTUIT AUTHORIZATION LAUNCHER
     function connectToQuickBooks() {
         const selected = document.getElementById('masterClient').value;
         if (!selected) return alert("Please select a client account from the dropdown first!");
@@ -452,23 +431,34 @@
         window.location.href = authUrl;
     }
 
+    // DIRECT INTUIT OAUTH LINK GENERATORS (No App Redirect Loop)
     function generateAuthorizationLink() {
         const cName = document.getElementById('n').value.trim();
         if(!cName) return alert("Please enter the Company Legal Name first");
 
-        const authLink = `${INTUIT_REDIRECT_URI}/?connect_client=${encodeURIComponent(cName)}`;
-        navigator.clipboard.writeText(authLink);
-        alert(`✓ Authorization Link copied to clipboard!\n\nSend this link to your client:\n${authLink}`);
+        const directIntuitUrl = `https://appcenter.intuit.com/connect/oauth2` +
+            `?client_id=${INTUIT_CLIENT_ID}` +
+            `&response_type=code` +
+            `&scope=com.intuit.quickbooks.accounting` +
+            `&redirect_uri=${encodeURIComponent(INTUIT_REDIRECT_URI)}` +
+            `&state=${encodeURIComponent(cName)}`;
+
+        navigator.clipboard.writeText(directIntuitUrl);
+        alert(`✓ Direct Intuit Link copied to clipboard!\n\nSend this link to your client:\n${directIntuitUrl}`);
     }
 
-    // IN-APP MESSAGE GENERATOR & CLIPBOARD COPIER
     function sendAuthEmailFromMeta() {
         if (!currentClient) return alert("Please select a client first.");
         
-        const authLink = `${INTUIT_REDIRECT_URI}/?connect_client=${encodeURIComponent(currentClient)}`;
+        const directIntuitUrl = `https://appcenter.intuit.com/connect/oauth2` +
+            `?client_id=${INTUIT_CLIENT_ID}` +
+            `&response_type=code` +
+            `&scope=com.intuit.quickbooks.accounting` +
+            `&redirect_uri=${encodeURIComponent(INTUIT_REDIRECT_URI)}` +
+            `&state=${encodeURIComponent(currentClient)}`;
 
-        // Copy raw link to clipboard immediately
-        navigator.clipboard.writeText(authLink);
+        // Copy direct URL to clipboard immediately
+        navigator.clipboard.writeText(directIntuitUrl);
 
         // Render copyable text box on screen
         const boxContainer = document.getElementById('emailMessageBox');
@@ -477,13 +467,13 @@
             document.getElementById('emailTextToCopy').value = 
                 `Subject: Action Required: Authorize QuickBooks Connection for ${currentClient}\n\n` +
                 `Hello,\n\n` +
-                `Please click the secure authorization link below to connect your QuickBooks Online company account with HCA LedgerIQ for ${currentClient}:\n\n` +
-                `${authLink}\n\n` +
+                `Please click the official Intuit authorization link below to connect your QuickBooks Online company account for ${currentClient}:\n\n` +
+                `${directIntuitUrl}\n\n` +
                 `This link will take you directly to Intuit's official sign-in page, where you can select your company and click "Authorize".\n\n` +
                 `Thank you,\nHCA Consulting Group`;
         }
 
-        alert(`✓ Authorization link copied to clipboard! Formatted email text generated below.`);
+        alert(`✓ Direct Intuit authorization link generated below and copied to clipboard!`);
     }
 
     async function disconnectQuickBooks() {
@@ -502,7 +492,7 @@
         }
     }
 
-    // AUTOMATIC OAUTH RETURN CAPTURE HANDLER
+    // AUTOMATIC OAUTH RETURN CAPTURE HANDLER (RUNS AFTER AUTHORIZATION)
     async function handleOAuthReturn() {
         const globalUrlParams = new URLSearchParams(window.location.search);
         const code = globalUrlParams.get('code');
