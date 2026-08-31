@@ -444,6 +444,20 @@
         alert(`✓ Authorization Link copied to clipboard!\n\nSend this link to your client:\n${authLink}`);
     }
 
+    function copyAuthLinkFromMeta() {
+        if (!currentClient) return alert("No client selected.");
+        const email = document.getElementById('edit_m_email').value.trim();
+        
+        const authLink = `${INTUIT_REDIRECT_URI}/?connect_client=${encodeURIComponent(currentClient)}`;
+        navigator.clipboard.writeText(authLink);
+        
+        if (email) {
+            alert(`✓ Link copied for ${currentClient}!\n\nEmail to: ${email}\n\nAuthorization URL:\n${authLink}`);
+        } else {
+            alert(`✓ Link copied!\n\nAuthorization URL:\n${authLink}`);
+        }
+    }
+
     async function disconnectQuickBooks() {
         if (!currentClient || !db) return alert("Please select a client account first");
         if (!confirm(`Are you sure you want to disconnect QuickBooks for ${currentClient}?`)) return;
@@ -1059,7 +1073,7 @@ Return ONLY JSON Object:
         document.getElementById('tb-history').innerHTML = ""; 
         res.history.forEach(i => { document.getElementById('tb-history').innerHTML += `<tr><td>${i.date}</td><td class="fw-bold">${i.vendor || 'N/A'}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; });
         
-        // Render Editable Metadata Controls
+        // Render Editable Metadata Controls + Copy Auth Link Button
         const meta = res.metadata || {};
         document.getElementById('metaList').innerHTML = `
             <div class="row g-3">
@@ -1068,6 +1082,10 @@ Return ONLY JSON Object:
                 <div class="col-md-6"><label class="small fw-bold">Client Authorization Email</label><input id="edit_m_email" class="form-control form-control-sm" value="${meta.client_email || ''}"></div>
                 <div class="col-md-6"><label class="small fw-bold">QBO Realm ID</label><input id="edit_m_qbo" class="form-control form-control-sm" value="${meta.qbo_id || 'Not Connected'}" readonly></div>
                 <div class="col-12"><label class="small fw-bold">Chart of Accounts (Comma Separated)</label><textarea id="edit_m_gl" class="form-control form-control-sm" rows="3">${appGLOptions.join(', ')}</textarea></div>
+                <div class="col-12 d-flex gap-2 justify-content-end mt-3">
+                    <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="copyAuthLinkFromMeta()">Copy Authorization Link for Client</button>
+                    <button class="btn btn-dark-hca btn-sm rounded-pill px-3" onclick="updateClientMetadataFromTab()">Update Client Metadata</button>
+                </div>
             </div>
         `;
         
