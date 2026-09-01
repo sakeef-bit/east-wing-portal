@@ -272,6 +272,7 @@
     
     <div class="app-nav">
         <div id="nav-review" class="app-nav-btn active" onclick="switchTab('review')">REVIEW STAGING</div>
+        <div id="nav-impact" class="app-nav-btn" onclick="switchTab('impact')">PROPOSED IMPACT</div>
         <div id="nav-pnl" class="app-nav-btn" onclick="switchTab('pnl')">VISUAL P&L</div>
         <div id="nav-gl" class="app-nav-btn" onclick="switchTab('gl')">CHART OF ACCOUNTS</div>
         <div id="nav-history" class="app-nav-btn" onclick="switchTab('history')">PERMANENT LEDGER</div>
@@ -316,6 +317,29 @@
             </thead>
             <tbody id="tb-staging"></tbody>
         </table>
+    </div>
+
+    <!-- Proposed Impact Tab -->
+    <div id="tab-impact" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0">Pre-Sync Balance Impact Analysis</h5>
+            <button class="btn btn-sm btn-outline-success fw-bold rounded-pill" onclick="syncQBOAccounts()">🔄 Refresh Live Balances</button>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle small bg-white">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Account Name</th>
+                        <th>Account Type</th>
+                        <th>Live QBO Balance</th>
+                        <th>Pending Staging Change</th>
+                        <th>Proposed New Balance</th>
+                    </tr>
+                </thead>
+                <tbody id="tb-impact"></tbody>
+            </table>
+        </div>
     </div>
 
     <div id="tab-pnl" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
@@ -417,6 +441,7 @@
     let currentClient = "";
     let localData = [];
     let appGLOptions = [];
+    let rawQBOAccountDetails = [];
     let activeRules = [];
     let historyData = [];
     let stmtStart = 0, stmtEnd = 0, barChart = null;
@@ -504,7 +529,7 @@
         }
     }
 
-    /* DIRECT QBO CHART OF ACCOUNTS SYNC FUNCTION */
+    /* DIRECT QBO CHART OF ACCOUNTS & BALANCES SYNC FUNCTION */
     async function syncQBOAccounts() {
         const targetClient = currentClient || document.getElementById('n').value.trim() || document.getElementById('masterClient').value;
         if (!targetClient) return alert("Please select or enter a client name first.");
@@ -526,6 +551,9 @@
             if (!res.ok || !result.success) throw new Error(result.error || "Failed to fetch accounts from QuickBooks.");
 
             appGLOptions = result.accounts;
+            if (result.account_details) {
+                rawQBOAccountDetails = result.account_details;
+            }
 
             const badge = document.getElementById('glCountBadge');
             if (badge) {
@@ -533,7 +561,7 @@
                 badge.innerText = `✓ Synced ${result.count} Accounts Live from QBO`;
             }
 
-            alert(`✓ Success! Retrieved ${result.count} Chart of Accounts straight from QuickBooks Online.`);
+            alert(`✓ Success! Retrieved ${result.count} Chart of Accounts & Balances straight from QuickBooks Online.`);
 
             if (document.getElementById('view-dash').style.display !== 'none') {
                 await loadDash();
@@ -1123,6 +1151,49 @@ Return ONLY JSON Object:
         
         recalcJE();
         renderPnLCharts();
+        if (rawQBOAccountDetails.length > 0) {
+            renderImpactTab(rawQBOAccountDetails);
+        }
+    }
+
+    function renderImpactTab(qboAccountsList) {
+        const tbody = document.getElementById('tb-impact');
+        if (!tbody) return;
+        tbody.innerHTML = "";
+
+        let stagedActivityMap = {};
+        document.querySelectorAll('.row-cat').forEach(inp => {
+            let r = inp.getAttribute('data-row');
+            let item = localData.find(x => x.row == r);
+            if (!item || item.stat !== "APPROVED") return;
+
+            let amt = parseFloat(String(item.amt).replace(/[^0-9.-]+/g, ""));
+            let expAcc = inp.value;
+            let bnkAcc = document.getElementById('b' + r) ? document.getElementById('b' + r).value : "";
+
+            if (expAcc && expAcc !== "Uncategorized") {
+                stagedActivityMap[expAcc] = (stagedActivityMap[expAcc] || 0) + amt;
+            }
+            if (bnkAcc && bnkAcc !== "Uncategorized") {
+                stagedActivityMap[bnkAcc] = (stagedActivityMap[bnkAcc] || 0) - amt;
+            }
+        });
+
+        qboAccountsList.forEach(acc => {
+            let pendingChange = stagedActivityMap[acc.name] || 0;
+            let proposedBalance = acc.current_balance + pendingChange;
+            let changeClass = pendingChange > 0 ? "text-success fw-bold" : (pendingChange < 0 ? "text-danger fw-bold" : "text-muted");
+
+            tbody.innerHTML += `
+                <tr>
+                    <td class="fw-bold">${acc.name}</td>
+                    <td><span class="badge bg-light text-dark border">${acc.type}</span></td>
+                    <td>$${acc.current_balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td class="${changeClass}">${pendingChange >= 0 ? '+' : ''}$${pendingChange.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td class="fw-bold">$${proposedBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                </tr>
+            `;
+        });
     }
 
     async function updateClientMetadataFromTab() {
@@ -1335,6 +1406,10 @@ Return ONLY JSON:
         const alertBox = document.getElementById('jeBalanceAlert');
         alertBox.className = Math.abs(tDr - tCr) < 0.01 ? "alert alert-success mb-4 text-center fw-bold" : "alert alert-danger mb-4 text-center fw-bold";
         alertBox.innerText = `Balanced: $${tDr.toFixed(2)}`;
+
+        if (rawQBOAccountDetails.length > 0) {
+            renderImpactTab(rawQBOAccountDetails);
+        }
     }
 
     function renderPnLCharts() {
