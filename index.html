@@ -713,8 +713,7 @@
 Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "Amount", "Category"], ["2026-01-01", "Sample Item", "1001", 150.00, "Expenses"]]`;
 
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    method: "POST", headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         "contents": [{ "parts": [{ "text": prompt }, { "inline_data": { "mime_type": "application/pdf", "data": pdfData }}] }],
                         "generationConfig": { "response_mime_type": "application/json" }
@@ -1015,18 +1014,47 @@ Return ONLY JSON Object:
         recalcJE(); applyGlobalDateFilter();
     }
 
-    /* GLOBAL DATE FILTERING CONTROLLER */
+    /* ROBUST GLOBAL DATE FILTERING CONTROLLER */
     function filterBySelectedPeriod(arr) {
         const selYear = document.getElementById('globalFilterYear').value;
         const selMonth = document.getElementById('globalFilterMonth').value;
 
         return arr.filter(item => {
             if (!item.date) return true;
-            const parts = item.date.split('-');
-            if (parts.length < 2) return true;
 
-            const matchesYear = (selYear === 'ALL' || parts[0] === selYear);
-            const matchesMonth = (selMonth === 'ALL' || parts[1] === selMonth);
+            let itemYear = "", itemMonth = "";
+
+            if (item.date.includes('-')) {
+                const parts = item.date.split('-');
+                if (parts[0].length === 4) {
+                    itemYear = parts[0];
+                    itemMonth = parts[1];
+                } else {
+                    itemYear = parts[2];
+                    itemMonth = parts[0];
+                }
+            } else if (item.date.includes('/')) {
+                const parts = item.date.split('/');
+                if (parts[2] && parts[2].length === 4) {
+                    itemYear = parts[2];
+                    itemMonth = parts[0];
+                } else if (parts[0].length === 4) {
+                    itemYear = parts[0];
+                    itemMonth = parts[1];
+                }
+            } else {
+                const d = new Date(item.date);
+                if (!isNaN(d.getTime())) {
+                    itemYear = String(d.getFullYear());
+                    itemMonth = String(d.getMonth() + 1).padStart(2, '0');
+                }
+            }
+
+            if (itemMonth.length === 1) itemMonth = '0' + itemMonth;
+
+            const matchesYear = (selYear === 'ALL' || itemYear === selYear);
+            const matchesMonth = (selMonth === 'ALL' || itemMonth === selMonth);
+
             return matchesYear && matchesMonth;
         });
     }
@@ -1093,6 +1121,66 @@ Return ONLY JSON Object:
             rowHtml += `<td class="text-end fw-bold text-primary">$${vData.total.toLocaleString('en-US', {minimumFractionDigits: 2})}</td><td class="text-center">${statusBadge}</td></tr>`;
             tb.innerHTML += rowHtml;
         });
+    }
+
+    function renderPnLCharts() {
+        let months = {}, catBreakdown = {}; 
+        let tRev = 0, tExp = 0; 
+        const filteredData = filterBySelectedPeriod([...historyData, ...localData]);
+        
+        filteredData.forEach(i => {
+            let val = parseFloat(String(i.amt).replace(/[^0-9.-]+/g,"")), m = i.date ? i.date.substring(0, 7) : "Current"; 
+            let cat = i.cat || "Uncategorized";
+
+            if(!months[m]) months[m] = { inc: 0, exp: 0 };
+            
+            if(val > 0) { 
+                months[m].inc += val; 
+                tRev += val; 
+            } else { 
+                let absVal = Math.abs(val);
+                months[m].exp += absVal; 
+                tExp += absVal; 
+                catBreakdown[cat] = (catBreakdown[cat] || 0) + absVal;
+            }
+        });
+
+        if (document.getElementById('stat-rev')) document.getElementById('stat-rev').innerText = `$${tRev.toLocaleString('en-US', {minimumFractionDigits: 2})}`; 
+        if (document.getElementById('stat-exp')) document.getElementById('stat-exp').innerText = `$${tExp.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+        if (document.getElementById('stat-net')) document.getElementById('stat-net').innerText = `$${(tRev - tExp).toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+        if (document.getElementById('stat-margin')) document.getElementById('stat-margin').innerText = tRev ? `${((tRev - tExp) / tRev * 100).toFixed(1)}%` : "0%";
+
+        const ctxBar = document.getElementById('chart-bar');
+        if (ctxBar) {
+            if(barChart) barChart.destroy();
+            barChart = new Chart(ctxBar, { 
+                type: 'bar', 
+                data: { 
+                    labels: Object.keys(months).sort(), 
+                    datasets: [
+                        { label: 'Revenue', data: Object.keys(months).sort().map(m => months[m].inc), backgroundColor: '#C5D1B8' },
+                        { label: 'Expenses', data: Object.keys(months).sort().map(m => months[m].exp), backgroundColor: '#2C3E50' }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        const ctxPie = document.getElementById('chart-doughnut');
+        if (ctxPie) {
+            if(window.doughnutChart) window.doughnutChart.destroy();
+            window.doughnutChart = new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(catBreakdown),
+                    datasets: [{
+                        data: Object.values(catBreakdown),
+                        backgroundColor: ['#2C3E50', '#C5D1B8', '#E74C3C', '#3498DB', '#F1C40F', '#9B59B6', '#1ABC9C']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
     }
 
     /* MD&A NOTES CONTROLLER */
