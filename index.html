@@ -69,7 +69,7 @@
 
         .view-pane { display: none; }
         .app-nav { background: white; border-radius: 14px; display: flex; overflow: hidden; margin-bottom: 30px; border: 1px solid var(--hca-border); }
-        .app-nav-btn { flex: 1; text-align: center; padding: 16px; cursor: pointer; font-weight: 600; border-right: 1px solid var(--hca-border); color: #64748B; transition: 0.2s; }
+        .app-nav-btn { flex: 1; text-align: center; padding: 14px; cursor: pointer; font-weight: 600; border-right: 1px solid var(--hca-border); color: #64748B; transition: 0.2s; font-size: 0.85rem; }
         .app-nav-btn.active { background: var(--hca-sage); color: var(--hca-dark); }
         .summary-card { background: white; border-radius: 16px; padding: 22px; border-left: 5px solid var(--hca-sage); border-top: 1px solid var(--hca-border); border-right: 1px solid var(--hca-border); border-bottom: 1px solid var(--hca-border); }
         .upload-box { border: 2px dashed var(--hca-sage); background: #FAFDF7; border-radius: 14px; padding: 20px; }
@@ -279,7 +279,8 @@
         <div id="nav-pnl" class="app-nav-btn" onclick="switchTab('pnl')">VISUAL P&L</div>
         <div id="nav-gl" class="app-nav-btn" onclick="switchTab('gl')">CHART OF ACCOUNTS</div>
         <div id="nav-history" class="app-nav-btn" onclick="switchTab('history')">PERMANENT LEDGER</div>
-        <div id="nav-je" class="app-nav-btn" onclick="switchTab('je')">JOURNAL ENTRY VIEW</div>
+        <div id="nav-je-bank" class="app-nav-btn" onclick="switchTab('je-bank')">BANK JE VIEW</div>
+        <div id="nav-je-cc" class="app-nav-btn" onclick="switchTab('je-cc')">CREDIT CARD JE VIEW</div>
         <div id="nav-meta" class="app-nav-btn" onclick="switchTab('meta')">CLIENT METADATA</div>
     </div>
 
@@ -391,10 +392,20 @@
 
     <div id="tab-history" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;"><h5 class="fw-bold mb-3">Permanent Ledger History</h5><table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Vendor</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync Reference</th></tr></thead><tbody id="tb-history"></tbody></table></div>
     
-    <div id="tab-je" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
-        <div id="reconGateBanner" class="card p-3 mb-3 text-white fw-bold"></div>
-        <div id="jeBalanceAlert" class="alert mb-4 text-center fw-bold"></div>
-        <div id="jeList" class="mt-3 font-monospace"></div>
+    <!-- Bank Journal Entry View -->
+    <div id="tab-je-bank" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
+        <h5 class="fw-bold mb-3 text-dark">Bank Statement Journal Entry & Cash Reconciliation View</h5>
+        <div id="reconGateBannerBank" class="card p-3 mb-3 text-white fw-bold"></div>
+        <div id="jeBalanceAlertBank" class="alert mb-4 text-center fw-bold"></div>
+        <div id="jeListBank" class="mt-3 font-monospace"></div>
+    </div>
+
+    <!-- Credit Card Journal Entry View -->
+    <div id="tab-je-cc" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
+        <h5 class="fw-bold mb-3 text-dark">Credit Card Statement Journal Entry & Liability Reconciliation View</h5>
+        <div id="reconGateBannerCC" class="card p-3 mb-3 text-white fw-bold"></div>
+        <div id="jeBalanceAlertCC" class="alert mb-4 text-center fw-bold"></div>
+        <div id="jeListCC" class="mt-3 font-monospace"></div>
     </div>
 
     <div id="tab-meta" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
@@ -1409,12 +1420,11 @@ Return ONLY JSON:
         recalcJE();
     }
 
-    /* DYNAMIC BANK VS CREDIT CARD RECONCILIATION ENGINE */
+    /* DYNAMIC BANK & CREDIT CARD SEPARATED RECONCILIATION ENGINE */
     function recalcJE() {
-        let jeData = {}, tDr = 0, tCr = 0, netAct = 0;
-        
-        // Detect statement type from queue source
-        const isCreditCard = localData.length > 0 && localData[0].src === 'CREDIT CARD';
+        let jeBank = {}, jeCC = {};
+        let tDrBank = 0, tCrBank = 0, netActBank = 0;
+        let tDrCC = 0, tCrCC = 0, netActCC = 0;
 
         document.querySelectorAll('.row-cat').forEach(inp => {
             let r = inp.getAttribute('data-row');
@@ -1428,53 +1438,87 @@ Return ONLY JSON:
             let bnk = document.getElementById('b'+r) ? document.getElementById('b'+r).value : "Uncategorized";
             let cls = document.getElementById('l'+r) ? document.getElementById('l'+r).value : "General";
 
-            // Statement-specific sign convention
-            if (isCreditCard) {
-                // For Credit Cards: Purchases (+val) increase ending liability balance
-                netAct += Math.abs(val); 
+            if (item.src === 'CREDIT CARD') {
+                // Credit Card: Charges (+val) increase ending liability
+                netActCC += Math.abs(val);
+                if(exp) jeCC[exp + "|" + cls] = (jeCC[exp + "|" + cls] || 0) + val; 
+                if(bnk && bnk !== "Uncategorized") jeCC[bnk + "|" + cls] = (jeCC[bnk + "|" + cls] || 0) - val;
             } else {
-                // For Bank Accounts: Standard net cash flow
-                netAct += val; 
+                // Bank Account: Standard Net Cash Activity
+                netActBank += val;
+                if(exp) jeBank[exp + "|" + cls] = (jeBank[exp + "|" + cls] || 0) + val; 
+                if(bnk && bnk !== "Uncategorized") jeBank[bnk + "|" + cls] = (jeBank[bnk + "|" + cls] || 0) - val;
             }
-
-            if(exp) jeData[exp + "|" + cls] = (jeData[exp + "|" + cls] || 0) + val; 
-            if(bnk && bnk !== "Uncategorized") jeData[bnk + "|" + cls] = (jeData[bnk + "|" + cls] || 0) - val;
         });
 
-        // Dynamic Balance Gate Calculation
-        const calcEnd = stmtStart + netAct;
-        const diff = Math.abs(calcEnd - stmtEnd);
+        // 1. BANK RECONCILIATION EVALUATION
+        const calcEndBank = stmtStart + netActBank;
+        const diffBank = Math.abs(calcEndBank - stmtEnd);
+        const bannerBank = document.getElementById('reconGateBannerBank');
 
-        const banner = document.getElementById('reconGateBanner');
+        if (bannerBank) {
+            if (diffBank < 0.01) {
+                bannerBank.className = "card p-3 mb-3 bg-success text-white fw-bold";
+                bannerBank.innerText = "✓ Bank Statement Reconciled (Starting Cash + Net Cash Activity = Target Ending Balance)";
+            } else {
+                bannerBank.className = "card p-3 mb-3 bg-danger text-white fw-bold";
+                bannerBank.innerText = `⚠️ Bank Out of Balance: Discrepancy $${diffBank.toFixed(2)} (Calc Ending: $${calcEndBank.toFixed(2)} | Target Ending: $${stmtEnd.toFixed(2)})`;
+            }
+        }
+
+        // 2. CREDIT CARD RECONCILIATION EVALUATION
+        const calcEndCC = stmtStart + netActCC;
+        const diffCC = Math.abs(calcEndCC - stmtEnd);
+        const bannerCC = document.getElementById('reconGateBannerCC');
+
+        if (bannerCC) {
+            if (diffCC < 0.01) {
+                bannerCC.className = "card p-3 mb-3 bg-success text-white fw-bold";
+                bannerCC.innerText = "✓ Credit Card Reconciled (Previous Balance + New Charges = Target Statement Ending Balance)";
+            } else {
+                bannerCC.className = "card p-3 mb-3 bg-danger text-white fw-bold";
+                bannerCC.innerText = `⚠️ Credit Card Out of Balance: Discrepancy $${diffCC.toFixed(2)} (Calc Ending: $${calcEndCC.toFixed(2)} | Target Ending: $${stmtEnd.toFixed(2)})`;
+            }
+        }
+
+        // Active Gate Button Control
+        const activeDiff = (localData.length > 0 && localData[0].src === 'CREDIT CARD') ? diffCC : diffBank;
         const syncBtns = document.querySelectorAll('.sync-gate-btn');
+        syncBtns.forEach(b => b.disabled = activeDiff >= 0.01);
 
-        if (diff < 0.01) {
-            banner.className = "card p-3 mb-3 bg-success text-white fw-bold";
-            banner.innerText = "✓ Statement Reconciled (Starting Balance + Activity = Statement Ending Balance)";
-            syncBtns.forEach(b => b.disabled = false);
-        } else {
-            banner.className = "card p-3 mb-3 bg-danger text-white fw-bold";
-            banner.innerText = `⚠️ Out of Balance Discrepancy: $${diff.toFixed(2)} (Calc Ending: $${calcEnd.toFixed(2)} | Target Ending: $${stmtEnd.toFixed(2)})`;
-            syncBtns.forEach(b => b.disabled = true);
+        // 3. RENDER BANK JE LINES
+        const divBank = document.getElementById('jeListBank');
+        if (divBank) {
+            divBank.innerHTML = `<div class="je-item fw-bold border-bottom"><span>Account Identifier | Class</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
+            for (let acc in jeBank) {
+                let bal = jeBank[acc]; if(Math.abs(bal) < 0.01) continue;
+                let dr = bal < 0 ? Math.abs(bal) : 0, cr = bal > 0 ? bal : 0;
+                tDrBank += dr; tCrBank += cr;
+                divBank.innerHTML += `<div class="je-item"><span>${acc}</span><span class="dr">${dr?`$${dr.toFixed(2)}`:''}</span><span class="cr">${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
+            }
+            const alertBank = document.getElementById('jeBalanceAlertBank');
+            if(alertBank) {
+                alertBank.className = Math.abs(tDrBank - tCrBank) < 0.01 ? "alert alert-success mb-4 text-center fw-bold" : "alert alert-danger mb-4 text-center fw-bold";
+                alertBank.innerText = `Bank Journal Balanced: $${tDrBank.toFixed(2)}`;
+            }
         }
 
-        // Render Journal Entry Lines
-        const div = document.getElementById('jeList'); 
-        div.innerHTML = `<div class="je-item fw-bold border-bottom"><span>Account Identifier | Class</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
-        
-        for (let acc in jeData) {
-            let bal = jeData[acc]; 
-            if(Math.abs(bal) < 0.01) continue;
-            let dr = bal < 0 ? Math.abs(bal) : 0;
-            let cr = bal > 0 ? bal : 0;
-            tDr += dr; 
-            tCr += cr;
-            div.innerHTML += `<div class="je-item"><span>${acc}</span><span class="dr">${dr ? `$${dr.toFixed(2)}` : ''}</span><span class="cr">${cr ? `$${cr.toFixed(2)}` : ''}</span></div>`;
+        // 4. RENDER CREDIT CARD JE LINES
+        const divCC = document.getElementById('jeListCC');
+        if (divCC) {
+            divCC.innerHTML = `<div class="je-item fw-bold border-bottom"><span>Account Identifier | Class</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
+            for (let acc in jeCC) {
+                let bal = jeCC[acc]; if(Math.abs(bal) < 0.01) continue;
+                let dr = bal < 0 ? Math.abs(bal) : 0, cr = bal > 0 ? bal : 0;
+                tDrCC += dr; tCrCC += cr;
+                divCC.innerHTML += `<div class="je-item"><span>${acc}</span><span class="dr">${dr?`$${dr.toFixed(2)}`:''}</span><span class="cr">${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
+            }
+            const alertCC = document.getElementById('jeBalanceAlertCC');
+            if(alertCC) {
+                alertCC.className = Math.abs(tDrCC - tCrCC) < 0.01 ? "alert alert-success mb-4 text-center fw-bold" : "alert alert-danger mb-4 text-center fw-bold";
+                alertCC.innerText = `Credit Card Journal Balanced: $${tDrCC.toFixed(2)}`;
+            }
         }
-
-        const alertBox = document.getElementById('jeBalanceAlert');
-        alertBox.className = Math.abs(tDr - tCr) < 0.01 ? "alert alert-success mb-4 text-center fw-bold" : "alert alert-danger mb-4 text-center fw-bold";
-        alertBox.innerText = `Balanced: $${tDr.toFixed(2)}`;
 
         if (rawQBOAccountDetails.length > 0) {
             renderImpactTab(rawQBOAccountDetails);
