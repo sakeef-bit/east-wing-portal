@@ -23,6 +23,7 @@
         body { background: var(--app-bg); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--app-dark); padding-bottom: 70px; }
         .rounded-xl { border-radius: 16px !important; }
         
+        /* Navbar & Branding */
         .navbar { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); border-bottom: 2px solid var(--app-sage); padding: 0.8rem 2rem; }
         .brand-logo-text { font-weight: 800; letter-spacing: -0.5px; }
         .brand-badge { background: var(--app-sage); color: var(--app-dark); font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; margin-left: 8px; letter-spacing: 0.5px; }
@@ -34,19 +35,28 @@
         .card-custom:hover { transform: translateY(-6px); box-shadow: 0 16px 32px rgba(44,62,80,0.1); border-color: var(--app-sage); }
         .card-img-container { height: 170px; overflow: hidden; position: relative; }
         .card-img-top { height: 100%; width: 100%; object-fit: cover; filter: brightness(0.95); transition: transform 0.3s ease; }
+        .card-custom:hover .card-img-top { transform: scale(1.05); filter: brightness(1.02); }
         
         .btn-app { background: var(--app-sage); color: var(--app-dark); border: none; font-weight: 600; padding: 12px 20px; border-radius: 12px; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-app:hover { background: #b5c2a5; color: var(--app-dark); }
         .btn-dark-app { background: var(--app-dark); color: white; border-radius: 12px; padding: 12px 20px; font-weight: 600; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-dark-app:hover { background: #1a252f; color: white; }
         .btn-qbo { background: #2CA01C; color: white; font-weight: 600; border-radius: 12px; padding: 10px 18px; border: none; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-qbo:hover { background: #248216; color: white; }
         .btn-disconnect { background: #EF4444; color: white; font-weight: 600; border-radius: 12px; padding: 10px 18px; border: none; transition: 0.2s; display: none; align-items: center; gap: 8px; }
+        .btn-disconnect:hover { background: #DC2626; color: white; }
         
         .status-pill { background: white; padding: 6px 16px; border-radius: 30px; border: 1px solid var(--app-border); }
         .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; background: #CBD5E1; }
         .dot-green { background: #22C55E; box-shadow: 0 0 8px #22C55E; animation: signalPulse 2s infinite; }
+        .dot-amber { background: #F59E0B; box-shadow: 0 0 8px #F59E0B; }
+        .dot-red { background: #EF4444; box-shadow: 0 0 8px #EF4444; }
         @keyframes signalPulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
+        /* Floating Widgets Container */
         .widgets-dock { position: fixed; bottom: 25px; left: 25px; display: flex; gap: 12px; z-index: 3000; }
         .chat-trigger-btn { background: var(--app-dark); color: white; border-radius: 30px; padding: 8px 18px 8px 12px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 10px 25px rgba(44,62,80,0.25); transition: all 0.25s ease; border: 1px solid rgba(255,255,255,0.1); }
+        .chat-trigger-btn:hover { background: #1a252f; border-color: var(--app-sage); transform: translateY(-2px); }
         .chat-bar-badge { background: var(--app-sage); color: var(--app-dark); font-size: 0.65rem; font-weight: 800; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
 
         .chat-window-popup { position: fixed; bottom: 80px; width: 380px; height: 500px; background: white; border-radius: 20px; box-shadow: 0 16px 40px rgba(0,0,0,0.15); display: none; flex-direction: column; z-index: 3000; border: 1px solid var(--app-border); overflow: hidden; }
@@ -72,6 +82,12 @@
         .badge-dup { background: #EF4444; color: white; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px; }
         .filter-btn { border-radius: 20px; font-size: 0.8rem; font-weight: 600; padding: 4px 12px; }
 
+        .vendor-cell { position: relative; }
+        .vendor-hover { cursor: pointer; font-weight: 700; color: var(--app-dark); text-decoration: underline dotted var(--app-sage); }
+        .vendor-card-popup { display: none; position: absolute; bottom: 125%; left: 0; width: 290px; background: white; border: 1px solid var(--app-sage); border-radius: 14px; padding: 14px; box-shadow: 0 12px 32px rgba(0,0,0,0.15); z-index: 1000; font-size: 0.82rem; color: var(--app-dark); }
+        .vendor-cell:hover .vendor-card-popup { display: block; }
+        .vendor-badge { font-size: 0.65rem; font-weight: bold; background: var(--app-dark); color: white; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; display: inline-block; }
+        
         .stmt-balance-bar { background: #FFFFFF; border: 1px solid var(--app-border); border-radius: 16px; padding: 14px 20px; margin-bottom: 20px; }
         .global-filter-bar { background: var(--app-dark); color: white; border-radius: 16px; padding: 12px 20px; margin-bottom: 18px; }
         .input-amount-cell { width: 110px; font-weight: bold; text-align: right; }
@@ -113,6 +129,7 @@
                 <h5 class="mb-3 fw-bold">System Authorization</h5>
                 <input type="password" id="master_gk" class="form-control mb-3 text-center rounded-pill" placeholder="Enter Gemini API Key">
                 <button class="btn btn-dark-app w-100 rounded-pill" onclick="lockKey()">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
                     Authenticate Workspace
                 </button>
             </div></div>
@@ -124,9 +141,15 @@
                         <select id="masterClient" class="form-select rounded-pill shadow-none" onchange="pingStatus()"><option value="">-- Select Client Account --</option></select>
                     </div>
                     <div class="col-md-6 text-end pt-0 d-flex gap-2 justify-content-end">
-                        <button id="btnConnectQBO" class="btn btn-qbo" onclick="connectToQuickBooks()">Connect QuickBooks</button>
+                        <button id="btnConnectQBO" class="btn btn-qbo" onclick="connectToQuickBooks()">
+                            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+                            Connect QuickBooks
+                        </button>
                         <button id="btnDisconnectQBO" class="btn btn-disconnect" onclick="disconnectQuickBooks()">Disconnect QBO</button>
-                        <button class="btn btn-dark-app rounded-pill" onclick="showPane('config')">Client Settings</button>
+                        <button class="btn btn-dark-app rounded-pill" onclick="showPane('config')">
+                            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6z"/></svg>
+                            Client Settings
+                        </button>
                     </div>
                 </div>
             </div>
@@ -144,6 +167,32 @@
                     <div class="card-body p-4 text-center"><button class="btn btn-app w-100" onclick="loadDash()">Open Review Dashboard</button></div>
                 </div></div>
             </div>
+
+            <div class="card p-4 rounded-xl border-0 shadow-sm">
+                <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                    Doc Shift Studio
+                </h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="upload-box text-center">
+                            <h6 class="fw-bold mb-1">PDF to Excel (.xlsx) Converter</h6>
+                            <p class="small text-muted mb-2">Convert financial PDF statements into clean, editable Excel spreadsheets.</p>
+                            <button class="btn btn-sm btn-dark-app rounded-pill" onclick="document.getElementById('pdfToExcelInput').click()">Convert PDF to Excel</button>
+                            <input type="file" id="pdfToExcelInput" accept=".pdf" style="display:none" onchange="convertPDFToExcel(this)">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="upload-box text-center">
+                            <h6 class="fw-bold mb-1">Excel (.xlsx/.csv) to PDF Converter</h6>
+                            <p class="small text-muted mb-2">Generate formatted PDF documents complete with headers from Excel files.</p>
+                            <button class="btn btn-sm btn-app rounded-pill" onclick="document.getElementById('excelToPdfInput').click()">Convert Excel to PDF</button>
+                            <input type="file" id="excelToPdfInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="convertExcelToPDF(this)">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <input type="file" id="f_pdf" style="display:none" onchange="handleFile(this, 'PDF')">
             <input type="file" id="f_cc" style="display:none" onchange="handleFile(this, 'CC')">
         </div>
@@ -158,11 +207,39 @@
                 <div class="col-12"><input id="n" class="form-control" placeholder="Company Legal Name"></div>
                 <div class="col-12"><input id="nature" class="form-control" placeholder="Business Industry / Nature"></div>
                 <div class="col-12"><input id="client_email" class="form-control" placeholder="Client Authorization Email"></div>
+                
+                <div class="col-12 mt-2">
+                    <div class="upload-box text-center">
+                        <h6 class="fw-bold mb-1">QuickBooks Chart of Accounts Source</h6>
+                        <div class="mb-2">
+                            <button type="button" class="btn btn-sm btn-outline-success w-100 fw-bold rounded-pill" onclick="syncQBOAccounts()">🔄 Sync Live QBO Chart of Accounts</button>
+                        </div>
+                        <div class="text-center small text-muted my-1">- OR -</div>
+                        <p class="small text-muted mb-2">Upload your QuickBooks export (.csv - Optional):</p>
+                        <input type="file" id="glFileInputConfig" accept=".csv" class="form-control mb-2" onchange="handleGLFileUpload(this)">
+                        <button class="btn btn-sm btn-outline-secondary rounded-pill fw-semibold" onclick="downloadQBTemplate()">Download Template</button>
+                        <div id="glCountBadge" class="small text-success mt-2 fw-bold" style="display:none;"></div>
+                    </div>
+                </div>
+
                 <div class="col-12 d-flex gap-2 mt-3">
                     <button onclick="save()" class="btn btn-dark-app flex-grow-1">Save Profile</button>
+                    <button onclick="generateAuthorizationLink()" class="btn btn-outline-primary">Generate Email Link</button>
                     <button onclick="showPane('launchpad')" class="btn btn-outline-secondary">Cancel</button>
                 </div>
             </div>
+        </div></div>
+
+        <div class="col-md-6"><div class="card p-4 card-custom">
+            <h4 class="fw-bold mb-2">Category Auto-Rules Engine</h4>
+            <p class="small text-muted mb-3">Automatically categorize future transactions by vendor keywords.</p>
+            <div id="rulesList" class="mb-3" style="max-height: 180px; overflow-y: auto;"></div>
+            <div class="input-group mb-3">
+                <input id="ruleKeyword" class="form-control form-control-sm" placeholder="Keyword (e.g. Uber)">
+                <select id="ruleAccount" class="form-select form-select-sm"></select>
+                <button class="btn btn-primary btn-sm" onclick="addRuleRow()">Add Rule</button>
+            </div>
+            <button class="btn btn-dark-app w-100" onclick="saveRules()">Save Rules Matrix</button>
         </div></div>
     </div>
 </div>
@@ -229,7 +306,7 @@
     <div class="stmt-balance-bar shadow-sm">
         <div class="d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">
-                <span class="fw-bold text-dark small">Statement Parameters:</span>
+                <span class="fw-bold text-dark small"><svg class="icon-svg me-1" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg> Statement Reconciliation Parameters:</span>
                 <div class="d-flex align-items-center gap-1" id="boxStartBalance">
                     <label class="small text-muted fw-semibold me-1">Start / Previous Balance ($):</label>
                     <input type="number" step="0.01" id="inputStmtStart" class="form-control form-control-sm rounded-pill text-end fw-bold" style="width: 130px;" value="0.00" onchange="updateStatementTargetBalances()">
@@ -249,18 +326,34 @@
             <h5 class="fw-bold mb-0">Staging Queue</h5>
             <button class="btn btn-dark btn-sm rounded-pill px-4 fw-semibold sync-gate-btn" onclick="pushQBO()">Push Approved to QBO</button>
         </div>
+
+        <div class="d-flex gap-2 mb-3 align-items-center">
+            <span class="small fw-bold text-muted me-1">Quick Filters:</span>
+            <button class="btn btn-outline-secondary filter-btn active" onclick="filterStagingRows('ALL')">Show All</button>
+            <button class="btn btn-outline-secondary filter-btn" onclick="filterStagingRows('UNCAT')">Uncategorized Only</button>
+            <button class="btn btn-outline-danger filter-btn" onclick="filterStagingRows('DUP')">Duplicates Only</button>
+            <button class="btn btn-outline-primary filter-btn" onclick="filterStagingRows('HIGH')">High Value (> $1,000)</button>
+        </div>
+
+        <div class="batch-bar mb-4 row g-3">
+            <div class="col-md-5"><input type="text" id="batchSearchInput" class="form-control form-control-sm" placeholder="Filter Vendor (e.g., Uber)"></div>
+            <div class="col-md-4"><select id="batchCategorySelect" class="form-select form-select-sm"><option value="Uncategorized">-- Assign Target Account --</option></select></div>
+            <div class="col-md-3"><button class="btn btn-app btn-sm w-100 fw-semibold" onclick="applyBatch()">Apply Category Match</button></div>
+        </div>
+        
         <table class="table table-hover table-sm align-middle">
             <thead class="table-light">
                 <tr>
                     <th>Src</th>
                     <th>Date</th>
-                    <th>Vendor</th>
+                    <th>Vendor (Hover Details)</th>
                     <th>Statement Line Item</th>
                     <th>Amount ($)</th>
                     <th>Expense Account</th>
                     <th>Stat</th>
                     <th>Bank Account</th>
-                    <th>Class</th>
+                    <th>Class Allocation</th>
+                    <th>Receipt OCR</th>
                 </tr>
             </thead>
             <tbody id="tb-staging"></tbody>
@@ -268,11 +361,24 @@
     </div>
 
     <div id="tab-impact" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
-        <h5 class="fw-bold mb-3">Pre-Sync Balance Impact Analysis</h5>
-        <table class="table table-bordered table-hover align-middle small bg-white">
-            <thead class="table-dark"><tr><th>Account Name</th><th>Account Type</th><th>Live QBO Balance</th><th>Pending Change</th><th>Proposed Balance</th></tr></thead>
-            <tbody id="tb-impact"></tbody>
-        </table>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0">Pre-Sync Balance Impact Analysis</h5>
+            <button class="btn btn-sm btn-outline-success fw-bold rounded-pill" onclick="syncQBOAccounts()">🔄 Refresh Live Balances</button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle small bg-white">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Account Name</th>
+                        <th>Account Type</th>
+                        <th>Live QBO Balance</th>
+                        <th>Pending Staging Change</th>
+                        <th>Proposed New Balance</th>
+                    </tr>
+                </thead>
+                <tbody id="tb-impact"></tbody>
+            </table>
+        </div>
     </div>
 
     <div id="tab-pnl" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
@@ -334,8 +440,16 @@
     </div>
 
     <div id="tab-gl" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
-        <h5 class="fw-bold mb-3">Active Chart of Accounts</h5>
-        <table class="table table-sm table-striped align-middle"><tbody id="tb-gl"></tbody></table>
+        <div class="d-flex justify-content-between mb-3 align-items-center">
+            <h5 class="fw-bold mb-0">Active Chart of Accounts</h5>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-success btn-sm rounded-pill fw-semibold" onclick="syncQBOAccounts()">🔄 Sync QBO Accounts</button>
+                <button class="btn btn-outline-primary btn-sm rounded-pill fw-semibold" onclick="document.getElementById('dashGLFileInput').click()">Upload New GL CSV</button>
+                <input type="file" id="dashGLFileInput" accept=".csv" style="display:none" onchange="uploadGLFromDash(this)">
+                <button class="btn btn-outline-secondary btn-sm rounded-pill fw-semibold" onclick="downloadQBTemplate()">Download Standard Template</button>
+            </div>
+        </div>
+        <div class="table-responsive"><table class="table table-sm table-striped align-middle"><tbody id="tb-gl"></tbody></table></div>
     </div>
 
     <div id="tab-history" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
@@ -344,12 +458,14 @@
     </div>
     
     <div id="tab-je-bank" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
-        <h5 class="fw-bold mb-3 text-dark">Bank Statement Journal Entry</h5>
+        <h5 class="fw-bold mb-3 text-dark">Bank Statement Journal Entry & Cash Reconciliation View</h5>
+        <div id="jeBalanceAlertBank" class="alert mb-4 text-center fw-bold"></div>
         <div id="jeListBank" class="mt-3 font-monospace"></div>
     </div>
 
     <div id="tab-je-cc" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
-        <h5 class="fw-bold mb-3 text-dark">Credit Card Statement Journal Entry</h5>
+        <h5 class="fw-bold mb-3 text-dark">Credit Card Statement Journal Entry & Liability Reconciliation View</h5>
+        <div id="jeBalanceAlertCC" class="alert mb-4 text-center fw-bold"></div>
         <div id="jeListCC" class="mt-3 font-monospace"></div>
     </div>
 
@@ -359,7 +475,45 @@
     </div>
 </div>
 
+<!-- Floating Widgets Dock -->
+<div class="widgets-dock" id="floatingWidgetsDock">
+    <div class="chat-trigger-btn" onclick="toggleChat('chat-window')">
+        <svg class="icon-svg" style="width:16px; height:16px;" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
+        <span class="fw-semibold small">LUFFY</span>
+        <span class="chat-bar-badge">System</span>
+    </div>
+    <div class="chat-trigger-btn" onclick="toggleChat('zoro-chat-window')">
+        <svg class="icon-svg" style="width:16px; height:16px;" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+        <span class="fw-semibold small">ZORO</span>
+        <span class="chat-bar-badge">Dashboard</span>
+    </div>
+</div>
+
+<div id="chat-window" class="chat-window-popup">
+    <div class="chat-header-bar d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2"><span>LUFFY Assistant</span></div>
+        <button class="btn-close btn-close-white btn-sm" onclick="toggleChat('chat-window')"></button>
+    </div>
+    <div id="chat-content" class="chat-body-content">LUFFY active. Ask questions regarding system workflow, setup, or features.</div>
+    <div class="p-2 border-top"><input id="chat-input" class="form-control form-control-sm rounded-pill" placeholder="Type system command..." onkeydown="if(event.key==='Enter') sendChat()"></div>
+</div>
+
+<div id="zoro-chat-window" class="chat-window-popup">
+    <div class="chat-header-bar d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2"><span>ZORO Dashboard Assistant</span></div>
+        <button class="btn-close btn-close-white btn-sm" onclick="toggleChat('zoro-chat-window')"></button>
+    </div>
+    <div id="zoro-chat-content" class="chat-body-content">ZORO active. Ask questions regarding current dashboard data, spend breakdown, or ledger balances.</div>
+    <div class="p-2 border-top"><input id="zoro-chat-input" class="form-control form-control-sm rounded-pill" placeholder="Ask about dashboard data..." onkeydown="if(event.key==='Enter') sendZoroChat()"></div>
+</div>
+
+<datalist id="glChoices"></datalist>
+<div id="st"><strong>Processing Request...</strong></div>
+
 <script>
+    const INTUIT_CLIENT_ID = "ABgu8RDrvNPOLdMBsAE4d7aIMSioPtPclJJOBxJ36vOLQ7VIS4";
+    const INTUIT_REDIRECT_URI = "https://oxhwhxnoysowuokdhmtr.supabase.co/functions/v1/qbo-oauth";
+
     const SUPABASE_URL = "https://oxhwhxnoysowuokdhmtr.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94aHdoeG5veXNvd3Vva2RobXRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NDU1MTEsImV4cCI6MjEwMzIyMTUxMX0.hQm9RsFit-TVz1pH0Y1Q3VITdbfwLUKA42uq2frZkyc";
     
@@ -371,49 +525,508 @@
 
     let currentClient = "";
     let localData = [], historyData = [];
-    let appGLOptions = [], rawQBOAccountDetails = [];
+    let appGLOptions = [], rawQBOAccountDetails = [], activeRules = [];
     let stmtStart = 0, stmtEnd = 0, barChart = null;
+
+    const CLASS_OPTIONS = ["General", "Marketing", "Sales", "Operations", "NY-Office"];
+
+    function lockKey() { 
+        const keyVal = document.getElementById('master_gk').value;
+        if(!keyVal) return alert("Please enter a Gemini API Key");
+        localStorage.setItem('hca_gk', keyVal); 
+        location.reload(); 
+    }
+
+    function connectToQuickBooks() {
+        const selected = document.getElementById('masterClient').value;
+        if (!selected) return alert("Please select a client account from the dropdown first!");
+        localStorage.setItem('connecting_client', selected);
+        const authUrl = `https://appcenter.intuit.com/connect/oauth2?client_id=${INTUIT_CLIENT_ID}&response_type=code&scope=com.intuit.quickbooks.accounting&redirect_uri=${encodeURIComponent(INTUIT_REDIRECT_URI)}&state=${encodeURIComponent(selected)}`;
+        window.location.href = authUrl;
+    }
+
+    function generateAuthorizationLink() {
+        const cName = document.getElementById('n').value.trim();
+        if(!cName) return alert("Please enter the Company Legal Name first");
+        const directIntuitUrl = `https://appcenter.intuit.com/connect/oauth2?client_id=${INTUIT_CLIENT_ID}&response_type=code&scope=com.intuit.quickbooks.accounting&redirect_uri=${encodeURIComponent(INTUIT_REDIRECT_URI)}&state=${encodeURIComponent(cName)}`;
+        navigator.clipboard.writeText(directIntuitUrl);
+        alert(`✓ Direct Intuit Link copied to clipboard!\n\nSend this link to your client:\n${directIntuitUrl}`);
+    }
+
+    function sendAuthEmailFromMeta() {
+        if (!currentClient) return alert("Please select a client first.");
+        const directIntuitUrl = `https://appcenter.intuit.com/connect/oauth2?client_id=${INTUIT_CLIENT_ID}&response_type=code&scope=com.intuit.quickbooks.accounting&redirect_uri=${encodeURIComponent(INTUIT_REDIRECT_URI)}&state=${encodeURIComponent(currentClient)}`;
+        navigator.clipboard.writeText(directIntuitUrl);
+
+        const boxContainer = document.getElementById('emailMessageBox');
+        if (boxContainer) {
+            boxContainer.style.display = 'block';
+            document.getElementById('emailTextToCopy').value = 
+                `Subject: Action Required: Authorize QuickBooks Connection for ${currentClient}\n\n` +
+                `Hello,\n\nPlease click the official Intuit authorization link below to connect your QuickBooks Online company account for ${currentClient}:\n\n` +
+                `${directIntuitUrl}\n\nThank you,\nLedgerIQ Support Team`;
+        }
+        alert(`✓ Direct Intuit authorization link generated below and copied to clipboard!`);
+    }
+
+    async function disconnectQuickBooks() {
+        initSupabase();
+        if (!currentClient || !db) return alert("Please select a client account first");
+        if (!confirm(`Are you sure you want to disconnect QuickBooks for ${currentClient}?`)) return;
+
+        document.getElementById('st').style.display = 'block';
+        const { error } = await db.from('client_metadata').update({ qbo_id: null, qbo_refresh_token: null }).ilike('client_name', currentClient.trim());
+        document.getElementById('st').style.display = 'none';
+
+        if (error) alert("Disconnection Error: " + error.message);
+        else { alert(`✓ Successfully disconnected QuickBooks for ${currentClient}`); await pingStatus(); }
+    }
+
+    async function syncQBOAccounts() {
+        const targetClient = currentClient || document.getElementById('n').value.trim() || document.getElementById('masterClient').value;
+        if (!targetClient) return alert("Please select or enter a client name first.");
+
+        document.getElementById('st').style.display = 'block';
+        try {
+            const res = await fetch("https://oxhwhxnoysowuokdhmtr.supabase.co/functions/v1/qbo-get-accounts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` },
+                body: JSON.stringify({ client_name: targetClient })
+            });
+
+            const result = await res.json();
+            if (!res.ok || !result.success) throw new Error(result.error || "Failed to fetch accounts from QuickBooks.");
+
+            appGLOptions = result.accounts;
+            if (result.account_details) rawQBOAccountDetails = result.account_details;
+
+            const badge = document.getElementById('glCountBadge');
+            if (badge) { badge.style.display = 'block'; badge.innerText = `✓ Synced ${result.count} Accounts Live from QBO`; }
+
+            alert(`✓ Success! Retrieved ${result.count} Chart of Accounts & Balances straight from QuickBooks Online.`);
+            if (document.getElementById('view-dash').style.display !== 'none') await loadDash();
+        } catch (err) { alert("QBO Account Sync Error: " + err.message); } 
+        finally { document.getElementById('st').style.display = 'none'; }
+    }
 
     window.onload = async () => {
         initSupabase();
         if (localStorage.getItem('hca_gk')) {
             document.getElementById('keyGate').style.display = 'none'; 
             document.getElementById('mainPortal').style.display = 'block';
+            document.getElementById('dot-gemini').classList.add('dot-green');
             await getClientList();
         }
     };
 
     async function getClientList() {
         initSupabase();
-        const { data } = await db.from('client_metadata').select('client_name');
+        if (!db) return;
+        const { data, error } = await db.from('client_metadata').select('client_name');
+        if (error) console.error("Database fetch error:", error);
+
         const sel = document.getElementById('masterClient');
         sel.innerHTML = '<option value="">-- Select Client Account --</option>';
         if (data) data.forEach(v => sel.innerHTML += `<option value="${v.client_name}">${v.client_name}</option>`);
     }
 
-    async function pingStatus() {
-        currentClient = document.getElementById('masterClient').value;
-        if (!currentClient) return;
-        document.getElementById('actionGrid').style.opacity = "1";
-        document.getElementById('actionGrid').style.pointerEvents = "auto";
+    async function save() { 
+        initSupabase();
+        if(!db) return alert("Database connection uninitialized");
+        const cName = document.getElementById('n').value.trim();
+        if(!cName) return alert("Company Legal Name is required");
+
+        document.getElementById('st').style.display = 'block';
+        const payload = {
+            client_name: cName, nature: document.getElementById('nature').value || "General",
+            client_email: document.getElementById('client_email').value || "",
+            gl_list: (typeof appGLOptions !== 'undefined') ? appGLOptions.join(",") : ""
+        };
+
+        const { error } = await db.from('client_metadata').upsert(payload, { onConflict: 'client_name' });
+        document.getElementById('st').style.display = 'none';
+
+        if (error) alert("Database Save Error: " + error.message);
+        else { alert("✓ Client profile saved successfully!"); showPane('launchpad'); await getClientList(); document.getElementById('masterClient').value = cName; pingStatus(); }
     }
 
-    /* GLOBAL DATE FILTERING LOGIC */
+    async function pingStatus() {
+        currentClient = document.getElementById('masterClient').value;
+        if(!currentClient) return;
+        document.getElementById('actionGrid').style.opacity = "1";
+        document.getElementById('actionGrid').style.pointerEvents = "auto";
+        
+        initSupabase();
+        if (db) {
+            const { data } = await db.from('client_metadata').select('*').ilike('client_name', currentClient.trim()).maybeSingle();
+            document.getElementById('dot-ledger').className = 'status-dot dot-green';
+            const connBtn = document.getElementById('btnConnectQBO');
+            const discBtn = document.getElementById('btnDisconnectQBO');
+
+            if (data && data.qbo_id && data.qbo_refresh_token) {
+                document.getElementById('dot-qbo').className = 'status-dot dot-green';
+                connBtn.style.display = 'none'; discBtn.style.display = 'inline-flex';
+            } else {
+                document.getElementById('dot-qbo').className = 'status-dot dot-red';
+                connBtn.style.display = 'inline-flex'; discBtn.style.display = 'none';
+            }
+            await loadRules();
+        }
+    }
+
+    async function pushQBO() {
+        initSupabase();
+        if(!db) return;
+        const { data: approved } = await db.from('review_staging').select('*').ilike('client_name', currentClient.trim()).eq('status', 'APPROVED');
+        if(!approved || approved.length === 0) return alert("No rows marked as APPROVED.");
+
+        document.getElementById('st').style.display = 'block';
+        try {
+            const res = await fetch("https://oxhwhxnoysowuokdhmtr.supabase.co/functions/v1/qbo-sync", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` },
+                body: JSON.stringify({ client_name: currentClient, transactions: approved })
+            });
+            const result = await res.json();
+            if (!res.ok || !result.success) throw new Error(result.error || "Edge Function processing error");
+
+            await loadDash();
+            alert(`✓ Success! Journal Entry #${result.journalEntryId} posted to QuickBooks Online!`);
+        } catch (err) {
+            document.getElementById('st').style.display = 'none';
+            alert(`⚠️ Sync Failed! Rows remain safely in Staging Queue.\n\nDetails: ${err.message}`);
+        }
+    }
+
+    async function convertPDFToExcel(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const apiKey = localStorage.getItem('hca_gk');
+        if (!apiKey) return alert("Missing Gemini API Key. Please authenticate.");
+
+        document.getElementById('st').style.display = 'block';
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const pdfData = e.target.result.split(',')[1];
+                const prompt = `ACT AS: Financial Data Analyst. Extract ALL tables and structured transactional rows from this PDF document.
+Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "Amount", "Category"], ["2026-01-01", "Sample Item", "1001", 150.00, "Expenses"]]`;
+
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        "contents": [{ "parts": [{ "text": prompt }, { "inline_data": { "mime_type": "application/pdf", "data": pdfData }}] }],
+                        "generationConfig": { "response_mime_type": "application/json" }
+                    })
+                });
+
+                const jsonRes = await res.json();
+                const rawText = jsonRes.candidates[0].content.parts[0].text;
+                const rowsData = JSON.parse(rawText.replace(/```json|```/g, '').trim());
+
+                const ws = XLSX.utils.aoa_to_sheet(rowsData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Converted Statement");
+                XLSX.writeFile(wb, file.name.replace(/\.[^/.]+$/, "") + "_Converted.xlsx");
+                document.getElementById('st').style.display = 'none';
+                alert("✓ PDF converted to Excel successfully!");
+            } catch (err) { alert("PDF to Excel Conversion Error: " + err.message); document.getElementById('st').style.display = 'none'; }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    async function convertExcelToPDF(input) {
+        const file = input.files[0];
+        if (!file) return;
+        document.getElementById('st').style.display = 'block';
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                if (!jsonData || jsonData.length === 0) { document.getElementById('st').style.display = 'none'; return alert("Excel file contains no data."); }
+
+                const headers = jsonData[0], bodyRows = jsonData.slice(1);
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "letter" });
+                doc.setFontSize(14); doc.setTextColor(44, 62, 80); doc.text("Converted Financial Statement", 40, 40);
+                doc.setFontSize(9); doc.setTextColor(100); doc.text(`Source File: ${file.name} | Generated: ${new Date().toLocaleDateString()}`, 40, 55);
+
+                doc.autoTable({
+                    head: [headers], body: bodyRows, startY: 70, theme: "striped",
+                    headStyles: { fillColor: [44, 62, 80], textColor: [255, 255, 255], fontStyle: "bold" },
+                    styles: { fontSize: 8, cellPadding: 5 }
+                });
+                doc.save(file.name.replace(/\.[^/.]+$/, "") + "_Converted.pdf");
+                document.getElementById('st').style.display = 'none';
+                alert("✓ Excel converted to PDF successfully!");
+            } catch (err) { alert("Excel to PDF Conversion Error: " + err.message); document.getElementById('st').style.display = 'none'; }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function downloadQBTemplate() {
+        const headers = "Account Name,Account Type,Sub Account\n";
+        const sampleRows = "1010 Operating Bank Account,Bank,No\n1020 Credit Card Account,Credit Card,No\n6010 Office Supplies & Expenses,Expense,No\n6020 Travel & Lodging,Expense,No\n6030 Meals & Entertainment,Expense,No\n6040 Software & Subscriptions,Expense,No\n6050 Professional Fees,Expense,No\n4010 Consulting Revenue,Income,No\n";
+        const blob = new Blob([headers + sampleRows], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "QuickBooks_GL_Template.csv"; a.click();
+    }
+
+    function handleGLFileUpload(input) {
+        const file = input.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const lines = e.target.result.split(/\r?\n/);
+            appGLOptions = lines.map(l => l.split(',')[0].replace(/"/g, '').trim()).filter(v => v && v.toLowerCase() !== "account name" && v.toLowerCase() !== "account");
+            const badge = document.getElementById('glCountBadge'); badge.style.display = 'block'; badge.innerText = `Parsed ${appGLOptions.length} Accounts from CSV`;
+            populateRuleSelects();
+        };
+        reader.readAsText(file);
+    }
+
+    async function uploadGLFromDash(input) {
+        const file = input.files[0];
+        if (!file || !currentClient) return;
+        initSupabase(); if (!db) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            document.getElementById('st').style.display = 'block';
+            const lines = e.target.result.split(/\r?\n/);
+            appGLOptions = lines.map(l => l.split(',')[0].replace(/"/g, '').trim()).filter(v => v && v.toLowerCase() !== "account name" && v.toLowerCase() !== "account");
+            const { error } = await db.from('client_metadata').update({ gl_list: appGLOptions.join(",") }).ilike('client_name', currentClient.trim());
+            document.getElementById('st').style.display = 'none';
+            if (error) alert("Error updating GL List: " + error.message);
+            else { alert(`Successfully updated ${appGLOptions.length} GL Accounts.`); await loadDash(); }
+        };
+        reader.readAsText(file);
+    }
+
+    async function loadRules() {
+        initSupabase(); if (!db || !currentClient) return;
+        const { data } = await db.from('category_rules').select('*').ilike('client_name', currentClient.trim());
+        activeRules = data || []; renderRulesUI();
+    }
+
+    function renderRulesUI() {
+        const listDiv = document.getElementById('rulesList');
+        listDiv.innerHTML = activeRules.map((r, i) => `<div class="d-flex justify-content-between align-items-center bg-light p-2 mb-1 rounded"><span class="small fw-semibold">${r.keyword} &rarr; <span class="text-primary">${r.target_account}</span></span><button onclick="removeRule(${i})" class="btn btn-xs btn-outline-danger py-0 px-1">&times;</button></div>`).join('');
+        populateRuleSelects();
+    }
+
+    function populateRuleSelects() {
+        const sel = document.getElementById('ruleAccount'); sel.innerHTML = appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('');
+    }
+
+    function addRuleRow() {
+        const kw = document.getElementById('ruleKeyword').value.trim(); const acc = document.getElementById('ruleAccount').value;
+        if(!kw) return alert("Enter a keyword");
+        activeRules.push({ client_name: currentClient, keyword: kw, target_account: acc });
+        document.getElementById('ruleKeyword').value = ''; renderRulesUI();
+    }
+
+    async function removeRule(idx) {
+        initSupabase(); if(activeRules[idx].id && db) await db.from('category_rules').delete().eq('id', activeRules[idx].id);
+        activeRules.splice(idx, 1); renderRulesUI();
+    }
+
+    async function saveRules() {
+        initSupabase(); if(!db || !currentClient) return;
+        document.getElementById('st').style.display = 'block';
+        await db.from('category_rules').delete().ilike('client_name', currentClient.trim());
+        if(activeRules.length > 0) {
+            const rows = activeRules.map(r => ({ client_name: currentClient, keyword: r.keyword, target_account: r.target_account }));
+            await db.from('category_rules').insert(rows);
+        }
+        document.getElementById('st').style.display = 'none'; alert("Rules saved.");
+    }
+
+    function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
+
+    async function handleFile(input, type) { 
+        currentClient = document.getElementById('masterClient').value; 
+        if(!currentClient) return alert("Select client account first");
+
+        document.getElementById('st').style.display = 'block'; 
+        const reader = new FileReader(); reader.onload = async (e) => { 
+            try {
+                const pdfData = e.target.result.split(',')[1]; const apiKey = localStorage.getItem('hca_gk');
+                if (!apiKey) { document.getElementById('st').style.display = 'none'; return alert("Missing Gemini API Key. Please authenticate."); }
+
+                initSupabase();
+                if (db) {
+                    const { data: meta } = await db.from('client_metadata').select('gl_list').ilike('client_name', currentClient.trim()).maybeSingle();
+                    if (meta && meta.gl_list) appGLOptions = meta.gl_list.split(',').filter(Boolean);
+                    const { data: ledger } = await db.from('permanent_ledger').select('*').ilike('client_name', currentClient.trim()).limit(50);
+                    if (ledger) historyData = ledger.map(l => ({ date: l.txn_date, vendor: l.vendor || "", desc: l.description, amt: String(l.amount), cat: l.category }));
+                }
+
+                const glContext = appGLOptions.length > 0 ? appGLOptions.join(", ") : "Payroll, Rent, Utilities, Office Supplies & Expenses, Bank Fees, Consulting Revenue, Travel & Lodging, Software & Subscriptions, Meals & Entertainment, Automobile & Fuel";
+                const pastHistoryContext = historyData.length > 0 ? historyData.slice(0, 30).map(h => `${h.vendor || h.desc} -> ${h.cat}`).join("\n") : "No historical patterns recorded yet.";
+                const behavior = type === "CC" ? "Spend is positive, Payments and Credits are negative." : "Inflows are positive, Outflows are negative.";
+                
+                const prompt = `ACT AS: Senior Bookkeeper & Forensic Auditor. Extract all statement transactions.
+
+CHART OF ACCOUNTS (MUST SELECT CATEGORIES FROM THIS LIST):
+[${glContext}]
+
+HISTORICAL CATEGORIZATION PATTERNS:
+${pastHistoryContext}
+
+STRICT EXTRACTION RULES:
+1. 'vendor': Extract the clean entity, merchant, or organization name from the statement line. Set to "" only if generic internal fee with no entity name.
+2. 'desc': Store the exact raw statement line text.
+3. 'category': Categorize EVERY transaction using the CHART OF ACCOUNTS list above.
+4. 'date': STRICT REQUIREMENT: Format dates strictly as YYYY-MM-DD.
+
+${behavior}
+
+Return ONLY JSON Object:
+{
+  "starting_balance": 0.0,
+  "ending_balance": 0.0,
+  "transactions": [
+    {
+      "date": "YYYY-MM-DD",
+      "desc": "raw statement line",
+      "vendor": "Clean Entity Name",
+      "amount": 0.00,
+      "category": "Selected GL Account Name"
+    }
+  ]
+}`;
+
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ "contents": [{ "parts": [{ "text": prompt }, { "inline_data": { "mime_type": "application/pdf", "data": pdfData }}] }], "generationConfig": { "response_mime_type": "application/json" } })
+                });
+
+                const jsonRes = await res.json();
+                if (jsonRes.error) throw new Error("Gemini API Error: " + jsonRes.error.message);
+                if (!jsonRes.candidates?.[0]?.content?.parts?.[0]?.text) throw new Error("Gemini returned invalid or empty candidates array.");
+
+                const rawText = jsonRes.candidates[0].content.parts[0].text;
+                const extracted = JSON.parse(rawText.replace(/```json|```/g, '').trim());
+
+                stmtStart = extracted.starting_balance || 0; stmtEnd = extracted.ending_balance || 0;
+                document.getElementById('inputStmtStart').value = stmtStart; document.getElementById('inputStmtEnd').value = stmtEnd;
+
+                if (db) await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).ilike('client_name', currentClient.trim());
+
+                const rows = (extracted.transactions || []).map(t => {
+                    let assignedCategory = t.category || "Uncategorized";
+                    activeRules.forEach(rule => {
+                        const targetText = ((t.vendor || "") + " " + (t.desc || "")).toLowerCase();
+                        if(targetText.includes(rule.keyword.toLowerCase())) assignedCategory = rule.target_account;
+                    });
+                    if (assignedCategory && assignedCategory !== "Uncategorized" && !appGLOptions.includes(assignedCategory)) appGLOptions.push(assignedCategory);
+
+                    return {
+                        client_name: currentClient, source: type === 'PDF' ? 'BANK' : 'CREDIT CARD',
+                        txn_date: t.date, vendor: t.vendor || "", description: t.desc || "Statement Line",
+                        amount: t.amount, category: assignedCategory, status: "PENDING", bank_category: "Uncategorized",
+                        class_name: "General", fingerprint: btoa((t.date || "") + (t.desc || "") + (t.amount || ""))
+                    };
+                });
+
+                if (rows.length === 0) { document.getElementById('st').style.display = 'none'; return alert("No valid transactions found in statement."); }
+                if (db) await db.from('review_staging').upsert(rows, { onConflict: 'client_name,fingerprint', ignoreDuplicates: true });
+                await loadDash();
+            } catch(err) { alert("Processing Error: " + err.message); document.getElementById('st').style.display = 'none'; }
+        }; 
+        reader.readAsDataURL(input.files[0]); 
+    }
+
+    async function loadDash() { 
+        currentClient = document.getElementById('masterClient').value; 
+        if(!currentClient) return alert("Select client account first"); 
+
+        document.getElementById('st').style.display = 'block'; 
+        initSupabase();
+        let staging = [], ledger = [], meta = null;
+        if (db) {
+            const { data: sData } = await db.from('review_staging').select('*').ilike('client_name', currentClient.trim());
+            const { data: lData } = await db.from('permanent_ledger').select('*').ilike('client_name', currentClient.trim());
+            const { data: mData } = await db.from('client_metadata').select('*').ilike('client_name', currentClient.trim()).maybeSingle();
+            staging = sData || []; ledger = lData || []; meta = mData;
+        }
+
+        const seenFingerprints = {};
+        localData = staging.map(s => {
+            const fp = s.fingerprint || btoa(s.txn_date + s.description + s.amount);
+            const isDup = !!seenFingerprints[fp]; seenFingerprints[fp] = true;
+            return { 
+                row: s.id, src: s.source, date: s.txn_date, vendor: s.vendor || "", desc: s.description || "",
+                amt: String(s.amount), cat: s.category || "Uncategorized", stat: s.status || "PENDING",
+                bnk: s.bank_category || "Uncategorized", cls: s.class_name || "General", dup: isDup, receipt: s.receipt_linked || false
+            };
+        });
+
+        if (meta) {
+            stmtStart = parseFloat(meta.stmt_start || 0); stmtEnd = parseFloat(meta.stmt_end || 0);
+            document.getElementById('inputStmtStart').value = stmtStart; document.getElementById('inputStmtEnd').value = stmtEnd;
+            if (meta.gl_list) appGLOptions = meta.gl_list.split(',').filter(Boolean);
+        }
+
+        historyData = ledger.map(l => ({ date: l.txn_date, vendor: l.vendor || "", desc: l.description, amt: String(l.amount), cat: l.category, qbo: l.qbo_id || "SYNCED" }));
+        renderDashboard({ staging: localData, history: historyData, metadata: meta }); 
+    }
+
+    function renderDashboard(res) {
+        document.getElementById('st').style.display = 'none'; 
+        showPane('dash'); document.getElementById('activeTitle').innerText = currentClient;
+        
+        const dl = document.getElementById('glChoices'); dl.innerHTML = ""; 
+        const batchSel = document.getElementById('batchCategorySelect'); batchSel.innerHTML = '<option value="Uncategorized">-- Assign Target Account --</option>';
+        appGLOptions.forEach(opt => { dl.innerHTML += `<option value="${opt}">`; batchSel.innerHTML += `<option value="${opt}">${opt}</option>`; });
+
+        const glBody = document.getElementById('tb-gl'); glBody.innerHTML = "";
+        appGLOptions.forEach((acc, idx) => { glBody.innerHTML += `<tr><td>${idx + 1}</td><td class="fw-semibold">${acc}</td></tr>`; });
+
+        document.getElementById('tb-history').innerHTML = ""; 
+        res.history.forEach(i => { document.getElementById('tb-history').innerHTML += `<tr><td>${i.date}</td><td class="fw-bold">${i.vendor || 'N/A'}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; });
+        
+        const meta = res.metadata || {};
+        document.getElementById('metaList').innerHTML = `
+            <div class="row g-3">
+                <div class="col-md-6"><label class="small fw-bold">Client Legal Name</label><input id="edit_m_name" class="form-control form-control-sm" value="${meta.client_name || currentClient}" readonly></div>
+                <div class="col-md-6"><label class="small fw-bold">Business Industry / Nature</label><input id="edit_m_nature" class="form-control form-control-sm" value="${meta.nature || 'General'}"></div>
+                <div class="col-md-6"><label class="small fw-bold">Client Authorization Email</label><input id="edit_m_email" class="form-control form-control-sm" value="${meta.client_email || ''}"></div>
+                <div class="col-md-6"><label class="small fw-bold">QBO Realm ID</label><input id="edit_m_qbo" class="form-control form-control-sm" value="${meta.qbo_id || 'Not Connected'}" readonly></div>
+                <div class="col-12"><label class="small fw-bold">Chart of Accounts (Comma Separated)</label><textarea id="edit_m_gl" class="form-control form-control-sm" rows="3">${appGLOptions.join(', ')}</textarea></div>
+                <div class="col-12 d-flex gap-2 justify-content-end mt-3">
+                    <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="sendAuthEmailFromMeta()">Generate Authorization Message</button>
+                    <button class="btn btn-dark-app btn-sm rounded-pill px-3" onclick="updateClientMetadataFromTab()">Update Client Metadata</button>
+                </div>
+                <div class="col-12 mt-3" id="emailMessageBox" style="display:none;">
+                    <div class="card p-3 bg-light border">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold small text-primary">Formatted Client Email Message</span>
+                            <button class="btn btn-xs btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('emailTextToCopy').value); alert('Message copied to clipboard!');">Copy Text</button>
+                        </div>
+                        <textarea id="emailTextToCopy" class="form-control form-control-sm font-monospace" rows="8" readonly></textarea>
+                    </div>
+                </div>
+            </div>`;
+        
+        recalcJE(); applyGlobalDateFilter();
+    }
+
+    /* GLOBAL DATE FILTERING CONTROLLER */
     function filterBySelectedPeriod(arr) {
         const selYear = document.getElementById('globalFilterYear').value;
         const selMonth = document.getElementById('globalFilterMonth').value;
 
         return arr.filter(item => {
             if (!item.date) return true;
-            const parts = item.date.split('-'); // YYYY-MM-DD
+            const parts = item.date.split('-');
             if (parts.length < 2) return true;
 
-            const itemYear = parts[0];
-            const itemMonth = parts[1];
-
-            const matchesYear = (selYear === 'ALL' || itemYear === selYear);
-            const matchesMonth = (selMonth === 'ALL' || itemMonth === selMonth);
-
+            const matchesYear = (selYear === 'ALL' || parts[0] === selYear);
+            const matchesMonth = (selMonth === 'ALL' || parts[1] === selMonth);
             return matchesYear && matchesMonth;
         });
     }
@@ -431,83 +1044,55 @@
         applyGlobalDateFilter();
     }
 
-    async function loadDash() { 
-        currentClient = document.getElementById('masterClient').value; 
-        if(!currentClient) return alert("Select client account first"); 
-
-        initSupabase();
-        const { data: sData } = await db.from('review_staging').select('*').ilike('client_name', currentClient.trim());
-        const { data: lData } = await db.from('permanent_ledger').select('*').ilike('client_name', currentClient.trim());
-        const { data: mData } = await db.from('client_metadata').select('*').ilike('client_name', currentClient.trim()).maybeSingle();
-
-        localData = (sData || []).map(s => ({
-            row: s.id, src: s.source, date: s.txn_date, vendor: s.vendor || "", desc: s.description || "",
-            amt: String(s.amount), cat: s.category || "Uncategorized", stat: s.status || "PENDING",
-            bnk: s.bank_category || "Uncategorized", cls: s.class_name || "General"
-        }));
-
-        historyData = (lData || []).map(l => ({
-            date: l.txn_date, vendor: l.vendor || "", desc: l.description, amt: String(l.amount), cat: l.category
-        }));
-
-        if (mData) {
-            stmtStart = parseFloat(mData.stmt_start || 0);
-            stmtEnd = parseFloat(mData.stmt_end || 0);
-            document.getElementById('inputStmtStart').value = stmtStart;
-            document.getElementById('inputStmtEnd').value = stmtEnd;
-            if (mData.gl_list) appGLOptions = mData.gl_list.split(',').filter(Boolean);
-        }
-
-        showPane('dash');
-        document.getElementById('activeTitle').innerText = currentClient;
-        applyGlobalDateFilter();
-    }
-
-    function renderStagingTable(rows) {
-        const tbody = document.getElementById('tb-staging'); tbody.innerHTML = "";
-        rows.forEach(i => {
-            tbody.innerHTML += `<tr>
-                <td>${i.src}</td><td>${i.date}</td><td>${i.vendor}</td><td><small>${i.desc}</small></td>
-                <td><input type="number" step="0.01" class="form-control form-control-sm input-amount-cell" value="${parseFloat(i.amt) || 0}"></td>
-                <td><select class="form-select form-select-sm row-cat" data-row="${i.row}">${appGLOptions.map(o => `<option value="${o}" ${i.cat==o?'selected':''}>${o}</option>`).join('')}</select></td>
-                <td><span class="badge bg-secondary">${i.stat}</span></td>
-                <td><select class="form-select form-select-sm">${appGLOptions.map(o => `<option value="${o}" ${i.bnk==o?'selected':''}>${o}</option>`).join('')}</select></td>
-                <td>${i.cls}</td>
-            </tr>`;
-        });
-    }
-
-    function renderPnLCharts() {
-        let tRev = 0, tExp = 0, catBreakdown = {}, months = {};
-        const filteredData = filterBySelectedPeriod([...historyData, ...localData]);
-
-        filteredData.forEach(i => {
-            let val = parseFloat(String(i.amt).replace(/[^0-9.-]+/g,"")), m = i.date ? i.date.substring(0, 7) : "Current";
-            if(!months[m]) months[m] = { inc: 0, exp: 0 };
-            if (val > 0) { months[m].inc += val; tRev += val; }
-            else { let absVal = Math.abs(val); months[m].exp += absVal; tExp += absVal; catBreakdown[i.cat || 'Uncategorized'] = (catBreakdown[i.cat || 'Uncategorized'] || 0) + absVal; }
-        });
-
-        document.getElementById('stat-rev').innerText = `$${tRev.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
-        document.getElementById('stat-exp').innerText = `$${tExp.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
-        document.getElementById('stat-net').innerText = `$${(tRev - tExp).toLocaleString('en-US', {minimumFractionDigits: 2})}`;
-        document.getElementById('stat-margin').innerText = tRev ? `${((tRev - tExp) / tRev * 100).toFixed(1)}%` : "0%";
-    }
-
+    /* VENDOR MONTHLY AUDIT MATRIX RENDERER */
     function renderVendorMatrix() {
         const th = document.getElementById('th-vendor-matrix');
         const tb = document.getElementById('tb-vendor-matrix');
+        if (!th || !tb) return;
+
         const filteredData = filterBySelectedPeriod([...historyData, ...localData]);
+        const monthSet = new Set();
         const vendorMap = {};
 
         filteredData.forEach(item => {
-            const vName = item.vendor || "Unspecified";
+            const vendorName = item.vendor && item.vendor.trim() !== "" ? item.vendor.trim() : "Unspecified Vendor";
+            const monthKey = item.date ? item.date.substring(0, 7) : "Current";
             const val = Math.abs(parseFloat(String(item.amt).replace(/[^0-9.-]+/g, "")) || 0);
-            vendorMap[vName] = (vendorMap[vName] || 0) + val;
+
+            monthSet.add(monthKey);
+            if (!vendorMap[vendorName]) vendorMap[vendorName] = { total: 0, months: {} };
+
+            vendorMap[vendorName].months[monthKey] = (vendorMap[vendorName].months[monthKey] || 0) + val;
+            vendorMap[vendorName].total += val;
         });
 
-        th.innerHTML = `<tr><th>Vendor Legal Name</th><th class="text-end">Filtered Spend ($)</th></tr>`;
-        tb.innerHTML = Object.keys(vendorMap).map(v => `<tr><td>${v}</td><td class="text-end fw-bold">$${vendorMap[v].toLocaleString('en-US', {minimumFractionDigits: 2})}</td></tr>`).join('');
+        const sortedMonths = Array.from(monthSet).sort();
+        const latestMonth = sortedMonths.length > 0 ? sortedMonths[sortedMonths.length - 1] : null;
+
+        let headerHtml = `<tr><th>Vendor Legal Name</th>`;
+        sortedMonths.forEach(m => headerHtml += `<th class="text-end">${m}</th>`);
+        headerHtml += `<th class="text-end bg-secondary text-white">Lifetime Paid ($)</th><th class="text-center">Current Status</th></tr>`;
+        th.innerHTML = headerHtml;
+
+        tb.innerHTML = "";
+        const vendors = Object.keys(vendorMap).sort((a, b) => vendorMap[b].total - vendorMap[a].total);
+        document.getElementById('vendorCountBadge').innerText = `${vendors.length} Total Vendors Tracked`;
+
+        vendors.forEach(vendor => {
+            const vData = vendorMap[vendor];
+            const currentMonthSpend = latestMonth ? (vData.months[latestMonth] || 0) : 0;
+            const isInactiveThisMonth = latestMonth && currentMonthSpend === 0;
+
+            let rowHtml = `<tr><td class="fw-bold">${vendor}</td>`;
+            sortedMonths.forEach(m => {
+                const amt = vData.months[m] || 0;
+                rowHtml += `<td class="text-end ${amt > 0 ? 'fw-semibold' : 'text-muted opacity-50'}">${amt > 0 ? `$${amt.toLocaleString('en-US', {minimumFractionDigits: 2})}` : '-'}</td>`;
+            });
+
+            const statusBadge = isInactiveThisMonth ? `<span class="badge bg-danger">Inactive This Month</span>` : `<span class="badge bg-success">Active ($${currentMonthSpend.toFixed(2)})</span>`;
+            rowHtml += `<td class="text-end fw-bold text-primary">$${vData.total.toLocaleString('en-US', {minimumFractionDigits: 2})}</td><td class="text-center">${statusBadge}</td></tr>`;
+            tb.innerHTML += rowHtml;
+        });
     }
 
     /* MD&A NOTES CONTROLLER */
@@ -554,9 +1139,306 @@
         };
 
         const { error } = await db.from('mda_notes').upsert(payload, { onConflict: 'client_name,period_year,period_month' });
-
         if (error) alert("Error saving MD&A notes: " + error.message);
         else alert(`✓ MD&A Notes saved successfully for period ${month}/${year}!`);
+    }
+
+    async function updateStatementTargetBalances() {
+        stmtStart = parseFloat(document.getElementById('inputStmtStart').value) || 0;
+        stmtEnd = parseFloat(document.getElementById('inputStmtEnd').value) || 0;
+
+        initSupabase();
+        if (db && currentClient) {
+            await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).ilike('client_name', currentClient.trim());
+        }
+        recalcJE();
+    }
+
+    function renderImpactTab(qboAccountsList) {
+        const tbody = document.getElementById('tb-impact');
+        if (!tbody) return;
+        tbody.innerHTML = "";
+
+        let stagedActivityMap = {};
+        document.querySelectorAll('.row-cat').forEach(inp => {
+            let r = inp.getAttribute('data-row');
+            let item = localData.find(x => x.row == r);
+            if (!item || item.stat !== "APPROVED") return;
+
+            let amtInput = document.getElementById('a' + r);
+            let amt = amtInput ? parseFloat(amtInput.value || 0) : parseFloat(String(item.amt).replace(/[^0-9.-]+/g, ""));
+            let expAcc = inp.value;
+            let bnkAcc = document.getElementById('b' + r) ? document.getElementById('b' + r).value : "";
+
+            if (expAcc && expAcc !== "Uncategorized") stagedActivityMap[expAcc] = (stagedActivityMap[expAcc] || 0) + amt;
+            if (bnkAcc && bnkAcc !== "Uncategorized") stagedActivityMap[bnkAcc] = (stagedActivityMap[bnkAcc] || 0) - amt;
+        });
+
+        qboAccountsList.forEach(acc => {
+            let pendingChange = stagedActivityMap[acc.name] || 0;
+            let proposedBalance = acc.current_balance + pendingChange;
+            let changeClass = pendingChange > 0 ? "text-success fw-bold" : (pendingChange < 0 ? "text-danger fw-bold" : "text-muted");
+
+            tbody.innerHTML += `<tr>
+                <td class="fw-bold">${acc.name}</td>
+                <td><span class="badge bg-light text-dark border">${acc.type}</span></td>
+                <td>$${acc.current_balance.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td class="${changeClass}">${pendingChange >= 0 ? '+' : ''}$${pendingChange.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td class="fw-bold">$${proposedBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+            </tr>`;
+        });
+    }
+
+    async function updateClientMetadataFromTab() {
+        initSupabase(); if (!db || !currentClient) return;
+        document.getElementById('st').style.display = 'block';
+        const newNature = document.getElementById('edit_m_nature').value.trim();
+        const newEmail = document.getElementById('edit_m_email').value.trim();
+        const rawGL = document.getElementById('edit_m_gl').value;
+        const newGL = rawGL.split(',').map(x => x.trim()).filter(Boolean).join(',');
+
+        const { error } = await db.from('client_metadata').update({ nature: newNature, client_email: newEmail, gl_list: newGL }).ilike('client_name', currentClient.trim());
+        document.getElementById('st').style.display = 'none';
+
+        if (error) alert("Metadata Update Error: " + error.message);
+        else { alert("✓ Client Metadata updated successfully in Supabase!"); await loadDash(); }
+    }
+
+    function renderStagingTable(dataRows) {
+        const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
+        dataRows.forEach(i => {
+            const dupBadge = i.dup ? `<span class="badge-dup">DUP</span>` : '';
+            const receiptCell = i.receipt ? `✓ Verified` : `<button class="btn btn-xs btn-outline-secondary py-0" onclick="document.getElementById('rup${i.row}').click()">📁 Match</button><input type="file" id="rup${i.row}" style="display:none" onchange="handleReceiptUpload(this, ${i.row})">`;
+            const popupId = `vpop_${i.row}`;
+            const vendorHtml = (i.vendor && i.vendor.trim() !== "") ? `<span class="vendor-hover" onmouseenter="fetchVendorIntelligence('${i.vendor.replace(/'/g, "\\'")}', '${popupId}')">${i.vendor} ${dupBadge}</span><div class="vendor-card-popup" id="${popupId}">Fetching merchant insights...</div>` : `<span class="text-muted small">N/A</span> ${dupBadge}`;
+
+            sBody.innerHTML += `<tr>
+                <td>${i.src}</td><td>${i.date}</td><td class="vendor-cell">${vendorHtml}</td><td><small class="text-muted">${i.desc}</small></td>
+                <td><input type="number" step="0.01" id="a${i.row}" class="form-control form-control-sm input-amount-cell" value="${parseFloat(i.amt.replace(/[^0-9.-]+/g, '')) || 0}" onchange="recalcJE()"></td>
+                <td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td>
+                <td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat" onchange="recalcJE()"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td>
+                <td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td>
+                <td><select id="l${i.row}" class="form-select form-select-sm">${CLASS_OPTIONS.map(c => `<option value="${c}" ${i.cls==c?'selected':''}>${c}</option>`).join('')}</select></td>
+                <td>${receiptCell}</td>
+            </tr>`;
+        });
+        
+        dataRows.forEach(i => { 
+            if(document.getElementById('c'+i.row)) document.getElementById('c'+i.row).value = i.cat || "Uncategorized"; 
+            if(document.getElementById('b'+i.row)) document.getElementById('b'+i.row).value = i.bnk || "Uncategorized"; 
+        });
+    }
+
+    async function fetchVendorIntelligence(vendorName, targetElementId) {
+        initSupabase(); if (!vendorName || !db) return;
+        const popupEl = document.getElementById(targetElementId); if (!popupEl) return;
+
+        const { data: cached } = await db.from('vendor_knowledge').select('*').eq('vendor_name', vendorName).maybeSingle();
+        if (cached && cached.description) {
+            const linkHtml = cached.website ? `<br><a href="${cached.website}" target="_blank" class="small text-primary">${cached.website}</a>` : '';
+            popupEl.innerHTML = `<span class="vendor-badge">VERIFIED MERCHANT</span><br><strong>${vendorName}</strong><br><span class="text-muted">${cached.description}</span>${linkHtml}`;
+            return;
+        }
+
+        popupEl.innerHTML = `<em>Querying merchant intelligence...</em>`; const apiKey = localStorage.getItem('hca_gk');
+        try {
+            const prompt = `ACT AS: Corporate Intelligence Agent. Provide details for vendor "${vendorName}".\nReturn ONLY JSON:\n{\n  "description": "1-2 sentence business summary of what they sell or provide.",\n  "website": "Official website URL (e.g. https://www.adobe.com)"\n}`;
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ "contents": [{ "parts": [{ "text": prompt }] }], "generationConfig": { "response_mime_type": "application/json" } })
+            });
+
+            const jsonRes = await res.json(); if (!jsonRes.candidates?.[0]?.content?.parts?.[0]?.text) throw new Error("Invalid response");
+            const info = JSON.parse(jsonRes.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim());
+            const linkHtml = info.website ? `<br><a href="${info.website}" target="_blank" class="small text-primary">${info.website}</a>` : '';
+            popupEl.innerHTML = `<span class="vendor-badge">AI MERCHANT SUMMARY</span><br><strong>${vendorName}</strong><br><span>${info.description}</span>${linkHtml}`;
+
+            await db.from('vendor_knowledge').insert([{ vendor_name: vendorName, description: info.description, website: info.website || "" }]);
+        } catch (e) { popupEl.innerHTML = `<strong>${vendorName}</strong><br><span class="text-muted">Merchant details unavailable.</span>`; }
+    }
+
+    function filterStagingRows(filterType) {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+
+        if(filterType === 'ALL') renderStagingTable(filterBySelectedPeriod(localData));
+        else if(filterType === 'UNCAT') renderStagingTable(filterBySelectedPeriod(localData.filter(r => r.cat === 'Uncategorized')));
+        else if(filterType === 'DUP') renderStagingTable(filterBySelectedPeriod(localData.filter(r => r.dup)));
+        else if(filterType === 'HIGH') renderStagingTable(filterBySelectedPeriod(localData.filter(r => Math.abs(parseFloat(r.amt)) > 1000)));
+    }
+
+    async function handleReceiptUpload(input, rowId) {
+        const file = input.files[0]; if(!file) return;
+        document.getElementById('st').style.display = 'block';
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const imgData = e.target.result.split(',')[1]; const apiKey = localStorage.getItem('hca_gk');
+                const prompt = "Extract JSON: {'vendor':'', 'amount':0.00}";
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ "contents": [{ "parts": [{ "text": prompt }, { "inline_data": { "mime_type": "image/jpeg", "data": imgData }}] }] })
+                });
+
+                const jsonRes = await res.json();
+                const extracted = JSON.parse(jsonRes.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim());
+
+                const rowItem = localData.find(r => r.row == rowId);
+                const targetAmt = Math.abs(parseFloat(rowItem.amt));
+                const matchAmt = Math.abs(parseFloat(extracted.amount));
+
+                if(Math.abs(targetAmt - matchAmt) <= (targetAmt * 0.02)) {
+                    initSupabase(); if (db) await db.from('review_staging').update({ receipt_linked: true }).eq('id', rowId);
+                    alert("✓ Receipt Verified & Linked!"); await loadDash();
+                } else {
+                    alert(`Mismatch! Statement: $${targetAmt} vs Receipt: $${matchAmt}`);
+                    document.getElementById('st').style.display = 'none';
+                }
+            } catch(err) { alert("Receipt OCR Error: " + err.message); document.getElementById('st').style.display = 'none'; }
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+
+    function applyBatch() {
+        const query = document.getElementById('batchSearchInput').value.toLowerCase();
+        const newCat = document.getElementById('batchCategorySelect').value;
+        if(!query) return alert("Please enter a search filter query");
+        localData.forEach(item => { if((item.vendor + " " + item.desc).toLowerCase().includes(query)) { const target = document.getElementById('c' + item.row); if(target) target.value = newCat; } });
+        recalcJE();
+    }
+
+    /* DYNAMIC BANK & CREDIT CARD SEPARATED RECONCILIATION ENGINE */
+    function recalcJE() {
+        let jeBank = {}, jeCC = {};
+        let tDrBank = 0, tCrBank = 0, netActBank = 0;
+        let tDrCC = 0, tCrCC = 0, netActCC = 0;
+
+        const filteredLocalData = filterBySelectedPeriod(localData);
+        const isCreditCard = filteredLocalData.length > 0 && filteredLocalData[0].src === 'CREDIT CARD';
+        const startBox = document.getElementById('boxStartBalance');
+        if (startBox) startBox.style.display = 'flex';
+
+        document.querySelectorAll('.row-cat').forEach(inp => {
+            let r = inp.getAttribute('data-row');
+            let item = filteredLocalData.find(x => x.row == r);
+            if(!item) return;
+
+            let amtInput = document.getElementById('a' + r);
+            let val = amtInput ? parseFloat(amtInput.value || 0) : parseFloat(item.amt.replace(/[^0-9.-]+/g,""));
+            let exp = inp.value;
+            let bnk = document.getElementById('b'+r) ? document.getElementById('b'+r).value : "Uncategorized";
+            let cls = document.getElementById('l'+r) ? document.getElementById('l'+r).value : "General";
+
+            if (item.src === 'CREDIT CARD') {
+                netActCC += val;
+                if(exp) jeCC[exp + "|" + cls] = (jeCC[exp + "|" + cls] || 0) + val; 
+                if(bnk && bnk !== "Uncategorized") jeCC[bnk + "|" + cls] = (jeCC[bnk + "|" + cls] || 0) - val;
+            } else {
+                netActBank += val;
+                if(exp) jeBank[exp + "|" + cls] = (jeBank[exp + "|" + cls] || 0) + val; 
+                if(bnk && bnk !== "Uncategorized") jeBank[bnk + "|" + cls] = (jeBank[bnk + "|" + cls] || 0) - val;
+            }
+        });
+
+        const calcEndBank = stmtStart + netActBank;
+        const diffBank = Math.abs(calcEndBank - stmtEnd);
+        const calcEndCC = stmtStart + netActCC;
+        const diffCC = Math.abs(calcEndCC - stmtEnd);
+
+        const activeDiff = isCreditCard ? diffCC : diffBank;
+        const activeCalcEnding = isCreditCard ? calcEndCC : calcEndBank;
+
+        const reconBadge = document.getElementById('reconStatusBadge');
+        if (reconBadge) {
+            if (activeDiff < 0.01) {
+                reconBadge.className = "recon-status-badge status-success text-center";
+                reconBadge.innerText = `✓ Statement Reconciled (Previous Balance: $${stmtStart.toFixed(2)} + Net Activity: $${(isCreditCard ? netActCC : netActBank).toFixed(2)} = Target Statement: $${stmtEnd.toFixed(2)})`;
+            } else {
+                reconBadge.className = "recon-status-badge status-error text-center";
+                reconBadge.innerText = `⚠️ Statement Out of Balance: Discrepancy $${activeDiff.toFixed(2)} (Calculated: $${activeCalcEnding.toFixed(2)} | Target Statement: $${stmtEnd.toFixed(2)})`;
+            }
+        }
+
+        const syncBtns = document.querySelectorAll('.sync-gate-btn');
+        syncBtns.forEach(b => b.disabled = activeDiff >= 0.01);
+
+        const divBank = document.getElementById('jeListBank');
+        if (divBank) {
+            divBank.innerHTML = `<div class="je-item fw-bold border-bottom"><span>Account Identifier | Class</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
+            for (let acc in jeBank) {
+                let bal = jeBank[acc]; if(Math.abs(bal) < 0.01) continue;
+                let dr = bal < 0 ? Math.abs(bal) : 0, cr = bal > 0 ? bal : 0;
+                tDrBank += dr; tCrBank += cr;
+                divBank.innerHTML += `<div class="je-item"><span>${acc}</span><span class="dr">${dr?`$${dr.toFixed(2)}`:''}</span><span class="cr">${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
+            }
+            const alertBank = document.getElementById('jeBalanceAlertBank');
+            if(alertBank) {
+                alertBank.className = Math.abs(tDrBank - tCrBank) < 0.01 ? "alert alert-success mb-4 text-center fw-bold" : "alert alert-danger mb-4 text-center fw-bold";
+                alertBank.innerText = `Bank Journal Balanced: $${tDrBank.toFixed(2)}`;
+            }
+        }
+
+        const divCC = document.getElementById('jeListCC');
+        if (divCC) {
+            divCC.innerHTML = `<div class="je-item fw-bold border-bottom"><span>Account Identifier | Class</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
+            for (let acc in jeCC) {
+                let bal = jeCC[acc]; if(Math.abs(bal) < 0.01) continue;
+                let dr = bal > 0 ? bal : 0, cr = bal < 0 ? Math.abs(bal) : 0;
+                tDrCC += dr; tCrCC += cr;
+                divCC.innerHTML += `<div class="je-item"><span>${acc}</span><span class="dr">${dr?`$${dr.toFixed(2)}`:''}</span><span class="cr">${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
+            }
+            const alertCC = document.getElementById('jeBalanceAlertCC');
+            if(alertCC) {
+                alertCC.className = Math.abs(tDrCC - tCrCC) < 0.01 ? "alert alert-success mb-4 text-center fw-bold" : "alert alert-danger mb-4 text-center fw-bold";
+                alertCC.innerText = `Credit Card Journal Balanced: $${tDrCC.toFixed(2)}`;
+            }
+        }
+
+        if (rawQBOAccountDetails.length > 0) renderImpactTab(rawQBOAccountDetails);
+    }
+
+    function toggleChat(windowId) {
+        const target = document.getElementById(windowId); if (!target) return;
+        target.style.display = (target.style.display === 'flex') ? 'none' : 'flex';
+    }
+    
+    async function sendChat() {
+        const i = document.getElementById('chat-input'), b = document.getElementById('chat-content'), q = i.value; if(!q) return; i.value = "";
+        b.innerHTML += `<div class="chat-bubble text-primary"><strong>You:</strong> ${q}</div>`;
+        b.innerHTML += `<div id="chat-thinking" class="chat-bubble text-muted small"><em>Processing query...</em></div>`;
+        b.scrollTop = b.scrollHeight;
+
+        const apiKey = localStorage.getItem('hca_gk');
+        const projectContext = "You are LUFFY, the support assistant. Current Client Context: " + (currentClient || "None Selected");
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ "contents": [{ "parts": [{ "text": projectContext + ". User Query: " + q }] }] })
+        });
+        
+        const jsonRes = await res.json();
+        const thinking = document.getElementById('chat-thinking'); if(thinking) thinking.remove();
+        const reply = jsonRes.candidates?.[0]?.content?.parts?.[0]?.text || "Unable to retrieve AI response.";
+        b.innerHTML += `<div class="chat-bubble text-dark"><strong>AI:</strong><br>${reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>')}</div>`; 
+        b.scrollTop = b.scrollHeight;
+    }
+
+    async function sendZoroChat() {
+        const i = document.getElementById('zoro-chat-input'), b = document.getElementById('zoro-chat-content'), q = i.value; if(!q) return; i.value = "";
+        b.innerHTML += `<div class="chat-bubble text-primary"><strong>You:</strong> ${q}</div>`;
+        b.innerHTML += `<div id="zoro-thinking" class="chat-bubble text-muted small"><em>Scanning dashboard dataset...</em></div>`;
+        b.scrollTop = b.scrollHeight;
+
+        const apiKey = localStorage.getItem('hca_gk');
+        const dashboardContext = `YOU ARE: ZORO DASHBOARD ASSISTANT. Current Client: ${currentClient || "Unselected"}. Staging rows: ${localData.length}. History rows: ${historyData.length}.`;
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ "contents": [{ "parts": [{ "text": dashboardContext + "\n\nUser Question: " + q }] }] })
+        });
+        
+        const jsonRes = await res.json();
+        const thinking = document.getElementById('zoro-thinking'); if(thinking) thinking.remove();
+        const reply = jsonRes.candidates?.[0]?.content?.parts?.[0]?.text || "Unable to analyze dashboard context.";
+        b.innerHTML += `<div class="chat-bubble text-dark"><strong>ZORO:</strong><br>${reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>')}</div>`; 
+        b.scrollTop = b.scrollHeight;
     }
 
     function switchTab(t) { 
@@ -565,6 +1447,25 @@
         document.getElementById('tab-'+t).style.display = 'block'; 
         document.getElementById('nav-'+t).classList.add('active'); 
         if (t === 'mda') loadMDANotes();
+    }
+
+    function approveAll() { document.querySelectorAll('.row-stat').forEach(s => s.value = "APPROVED"); recalcJE(); }
+    
+    async function saveAll() {
+        initSupabase(); if(!db) return;
+        document.getElementById('st').style.display = 'block'; 
+        for (let item of localData) {
+            const amtVal = document.getElementById('a' + item.row) ? parseFloat(document.getElementById('a' + item.row).value) : parseFloat(item.amt);
+            const catVal = document.getElementById('c' + item.row) ? document.getElementById('c' + item.row).value : item.cat;
+            const statVal = document.getElementById('s' + item.row) ? document.getElementById('s' + item.row).value : item.stat;
+            const bnkVal = document.getElementById('b' + item.row) ? document.getElementById('b' + item.row).value : item.bnk;
+            const clsVal = document.getElementById('l' + item.row) ? document.getElementById('l' + item.row).value : item.cls;
+
+            await db.from('review_staging').update({
+                amount: amtVal, category: catVal, status: statVal, bank_category: bnkVal, class_name: clsVal
+            }).eq('id', item.row);
+        }
+        await loadDash();
     }
 
     function showPane(p) { document.querySelectorAll('.view-pane, #view-launchpad').forEach(el => el.style.display = 'none'); document.getElementById('view-' + p).style.display = 'block'; }
