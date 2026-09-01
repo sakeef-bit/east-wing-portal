@@ -867,7 +867,7 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
                 const pastHistoryContext = historyData.length > 0 ? historyData.slice(0, 30).map(h => `${h.vendor || h.desc} -> ${h.cat}`).join("\n") : "No historical patterns recorded yet.";
                 const behavior = type === "CC" ? "Spend is positive, Payments and Credits are negative." : "Inflows are positive, Outflows are negative.";
                 
-                const prompt = `ACT AS: Senior Bookkeeper & Forensic Auditor. Extract all statement transactions.
+                const prompt = `ACT AS: Senior Bookkeeper & Forensic Auditor. Extract all statement transactions AND generate executive MD&A notes.
 
 CHART OF ACCOUNTS (MUST SELECT CATEGORIES FROM THIS LIST):
 [${glContext}]
@@ -895,7 +895,13 @@ Return ONLY JSON Object:
       "amount": 0.00,
       "category": "Selected GL Account Name"
     }
-  ]
+  ],
+  "mda_summary": {
+    "executive_summary": "1-2 sentence executive overview of cash flow and statement period performance.",
+    "revenue_commentary": "Analysis of key inflows, deposits, or sales drivers.",
+    "expense_commentary": "Breakdown of top cost drivers, recurring subscriptions, or notable vendor payments.",
+    "action_items": "2-3 strategic recommendations or accounting audit follow-ups."
+  }
 }`;
 
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
@@ -913,7 +919,28 @@ Return ONLY JSON Object:
                 stmtStart = extracted.starting_balance || 0; stmtEnd = extracted.ending_balance || 0;
                 document.getElementById('inputStmtStart').value = stmtStart; document.getElementById('inputStmtEnd').value = stmtEnd;
 
-                if (db) await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).ilike('client_name', currentClient.trim());
+                if (db) {
+                    await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).ilike('client_name', currentClient.trim());
+
+                    // Auto-Save Gemini Generated MD&A Summary to Supabase
+                    if (extracted.mda_summary) {
+                        const firstTxnDate = extracted.transactions?.[0]?.date || new Date().toISOString().split('T')[0];
+                        const dateParts = firstTxnDate.split('-');
+                        const periodYear = parseInt(dateParts[0]) || new Date().getFullYear();
+                        const periodMonth = parseInt(dateParts[1]) || (new Date().getMonth() + 1);
+
+                        await db.from('mda_notes').upsert({
+                            client_name: currentClient,
+                            period_year: periodYear,
+                            period_month: periodMonth,
+                            executive_summary: extracted.mda_summary.executive_summary || "",
+                            revenue_commentary: extracted.mda_summary.revenue_commentary || "",
+                            expense_commentary: extracted.mda_summary.expense_commentary || "",
+                            action_items: extracted.mda_summary.action_items || "",
+                            updated_at: new Date()
+                        }, { onConflict: 'client_name,period_year,period_month' });
+                    }
+                }
 
                 const rows = (extracted.transactions || []).map(t => {
                     let assignedCategory = t.category || "Uncategorized";
