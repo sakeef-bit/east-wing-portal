@@ -15,39 +15,38 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <style>
         :root { 
-            --hca-sage: #C5D1B8; 
-            --hca-dark: #2C3E50; 
-            --hca-bg: #F8F9FA; 
-            --hca-border: #E2E8F0;
+            --app-sage: #C5D1B8; 
+            --app-dark: #2C3E50; 
+            --app-bg: #F8F9FA; 
+            --app-border: #E2E8F0;
         }
-        body { background: var(--hca-bg); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--hca-dark); padding-bottom: 70px; }
+        body { background: var(--app-bg); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--app-dark); padding-bottom: 70px; }
         .rounded-xl { border-radius: 16px !important; }
         
         /* Navbar & Branding */
-        .navbar { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); border-bottom: 2px solid var(--hca-sage); padding: 0.8rem 2rem; }
-        .brand-logo-badge { background: var(--hca-dark); color: white; font-weight: 900; font-size: 0.9rem; padding: 4px 10px; border-radius: 8px; letter-spacing: 1px; }
+        .navbar { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); border-bottom: 2px solid var(--app-sage); padding: 0.8rem 2rem; }
         .brand-logo-text { font-weight: 800; letter-spacing: -0.5px; }
-        .brand-badge { background: var(--hca-sage); color: var(--hca-dark); font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; margin-left: 8px; letter-spacing: 0.5px; }
+        .brand-badge { background: var(--app-sage); color: var(--app-dark); font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; margin-left: 8px; letter-spacing: 0.5px; }
 
-        .hero-section { background: var(--hca-dark); color: white; padding: 40px 20px 60px; text-align: center; border-radius: 0 0 32px 35px; margin-bottom: 40px; }
+        .hero-section { background: var(--app-dark); color: white; padding: 40px 20px 60px; text-align: center; border-radius: 0 0 32px 35px; margin-bottom: 40px; }
         .privacy-disclaimer-box { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 8px 16px; font-size: 0.78rem; color: #E2E8F0; max-width: 850px; margin: 0 auto 20px auto; }
 
-        .card-custom { background: white; border: 1px solid var(--hca-border); border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03); height: 100%; display: flex; flex-direction: column; transition: all 0.25s ease-in-out; }
-        .card-custom:hover { transform: translateY(-6px); box-shadow: 0 16px 32px rgba(44,62,80,0.1); border-color: var(--hca-sage); }
+        .card-custom { background: white; border: 1px solid var(--app-border); border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03); height: 100%; display: flex; flex-direction: column; transition: all 0.25s ease-in-out; }
+        .card-custom:hover { transform: translateY(-6px); box-shadow: 0 16px 32px rgba(44,62,80,0.1); border-color: var(--app-sage); }
         .card-img-container { height: 170px; overflow: hidden; position: relative; }
         .card-img-top { height: 100%; width: 100%; object-fit: cover; filter: brightness(0.95); transition: transform 0.3s ease; }
         .card-custom:hover .card-img-top { transform: scale(1.05); filter: brightness(1.02); }
         
-        .btn-hca { background: var(--hca-sage); color: var(--hca-dark); border: none; font-weight: 600; padding: 12px 20px; border-radius: 12px; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-hca:hover { background: #b5c2a5; color: var(--hca-dark); }
-        .btn-dark-hca { background: var(--hca-dark); color: white; border-radius: 12px; padding: 12px 20px; font-weight: 600; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-dark-hca:hover { background: #1a252f; color: white; }
+        .btn-app { background: var(--app-sage); color: var(--app-dark); border: none; font-weight: 600; padding: 12px 20px; border-radius: 12px; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-app:hover { background: #b5c2a5; color: var(--app-dark); }
+        .btn-dark-app { background: var(--app-dark); color: white; border-radius: 12px; padding: 12px 20px; font-weight: 600; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-dark-app:hover { background: #1a252f; color: white; }
         .btn-qbo { background: #2CA01C; color: white; font-weight: 600; border-radius: 12px; padding: 10px 18px; border: none; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
         .btn-qbo:hover { background: #248216; color: white; }
         .btn-disconnect { background: #EF4444; color: white; font-weight: 600; border-radius: 12px; padding: 10px 18px; border: none; transition: 0.2s; display: none; align-items: center; gap: 8px; }
         .btn-disconnect:hover { background: #DC2626; color: white; }
         
-        .status-pill { background: white; padding: 6px 16px; border-radius: 30px; border: 1px solid var(--hca-border); }
+        .status-pill { background: white; padding: 6px 16px; border-radius: 30px; border: 1px solid var(--app-border); }
         .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; background: #CBD5E1; }
         .dot-green { background: #22C55E; box-shadow: 0 0 8px #22C55E; animation: signalPulse 2s infinite; }
         .dot-amber { background: #F59E0B; box-shadow: 0 0 8px #F59E0B; }
@@ -56,25 +55,25 @@
 
         /* Floating Widgets Container */
         .widgets-dock { position: fixed; bottom: 25px; left: 25px; display: flex; gap: 12px; z-index: 3000; }
-        .chat-trigger-btn { background: var(--hca-dark); color: white; border-radius: 30px; padding: 8px 18px 8px 12px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 10px 25px rgba(44,62,80,0.25); transition: all 0.25s ease; border: 1px solid rgba(255,255,255,0.1); }
-        .chat-trigger-btn:hover { background: #1a252f; border-color: var(--hca-sage); transform: translateY(-2px); }
-        .chat-bar-badge { background: var(--hca-sage); color: var(--hca-dark); font-size: 0.65rem; font-weight: 800; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .chat-trigger-btn { background: var(--app-dark); color: white; border-radius: 30px; padding: 8px 18px 8px 12px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 10px 25px rgba(44,62,80,0.25); transition: all 0.25s ease; border: 1px solid rgba(255,255,255,0.1); }
+        .chat-trigger-btn:hover { background: #1a252f; border-color: var(--app-sage); transform: translateY(-2px); }
+        .chat-bar-badge { background: var(--app-sage); color: var(--app-dark); font-size: 0.65rem; font-weight: 800; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        .chat-window-popup { position: fixed; bottom: 80px; width: 380px; height: 500px; background: white; border-radius: 20px; box-shadow: 0 16px 40px rgba(0,0,0,0.15); display: none; flex-direction: column; z-index: 3000; border: 1px solid var(--hca-border); overflow: hidden; }
+        .chat-window-popup { position: fixed; bottom: 80px; width: 380px; height: 500px; background: white; border-radius: 20px; box-shadow: 0 16px 40px rgba(0,0,0,0.15); display: none; flex-direction: column; z-index: 3000; border: 1px solid var(--app-border); overflow: hidden; }
         #chat-window { left: 25px; }
         #zoro-chat-window { left: 180px; }
-        .chat-window-popup .chat-header-bar { background: var(--hca-dark); color: white; padding: 16px 20px; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .chat-window-popup .chat-header-bar { background: var(--app-dark); color: white; padding: 16px 20px; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.08); }
         .chat-window-popup .chat-body-content { flex-grow: 1; padding: 18px; overflow-y: auto; font-size: 0.88rem; line-height: 1.5; }
         .chat-bubble { margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #F1F5F9; }
 
         .view-pane { display: none; }
-        .app-nav { background: white; border-radius: 14px; display: flex; overflow: hidden; margin-bottom: 30px; border: 1px solid var(--hca-border); }
-        .app-nav-btn { flex: 1; text-align: center; padding: 14px; cursor: pointer; font-weight: 600; border-right: 1px solid var(--hca-border); color: #64748B; transition: 0.2s; font-size: 0.85rem; }
-        .app-nav-btn.active { background: var(--hca-sage); color: var(--hca-dark); }
-        .summary-card { background: white; border-radius: 16px; padding: 22px; border-left: 5px solid var(--hca-sage); border-top: 1px solid var(--hca-border); border-right: 1px solid var(--hca-border); border-bottom: 1px solid var(--hca-border); }
-        .upload-box { border: 2px dashed var(--hca-sage); background: #FAFDF7; border-radius: 14px; padding: 20px; }
-        #st { background: white; border-radius: 16px; padding: 20px 30px; position: fixed; bottom: 30px; right: 30px; box-shadow: 0 12px 32px rgba(0,0,0,0.12); display: none; z-index: 2000; border: 1px solid var(--hca-sage); }
-        .batch-bar { background: #F1F5F9; padding: 16px; border-radius: 14px; border: 1px solid var(--hca-border); }
+        .app-nav { background: white; border-radius: 14px; display: flex; overflow: hidden; margin-bottom: 30px; border: 1px solid var(--app-border); }
+        .app-nav-btn { flex: 1; text-align: center; padding: 14px; cursor: pointer; font-weight: 600; border-right: 1px solid var(--app-border); color: #64748B; transition: 0.2s; font-size: 0.85rem; }
+        .app-nav-btn.active { background: var(--app-sage); color: var(--app-dark); }
+        .summary-card { background: white; border-radius: 16px; padding: 22px; border-left: 5px solid var(--app-sage); border-top: 1px solid var(--app-border); border-right: 1px solid var(--app-border); border-bottom: 1px solid var(--app-border); }
+        .upload-box { border: 2px dashed var(--app-sage); background: #FAFDF7; border-radius: 14px; padding: 20px; }
+        #st { background: white; border-radius: 16px; padding: 20px 30px; position: fixed; bottom: 30px; right: 30px; box-shadow: 0 12px 32px rgba(0,0,0,0.12); display: none; z-index: 2000; border: 1px solid var(--app-sage); }
+        .batch-bar { background: #F1F5F9; padding: 16px; border-radius: 14px; border: 1px solid var(--app-border); }
         
         .icon-svg { width: 18px; height: 18px; fill: currentColor; vertical-align: middle; }
         .je-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; font-family: monospace; }
@@ -84,13 +83,13 @@
         .filter-btn { border-radius: 20px; font-size: 0.8rem; font-weight: 600; padding: 4px 12px; }
 
         .vendor-cell { position: relative; }
-        .vendor-hover { cursor: pointer; font-weight: 700; color: var(--hca-dark); text-decoration: underline dotted var(--hca-sage); }
-        .vendor-card-popup { display: none; position: absolute; bottom: 125%; left: 0; width: 290px; background: white; border: 1px solid var(--hca-sage); border-radius: 14px; padding: 14px; box-shadow: 0 12px 32px rgba(0,0,0,0.15); z-index: 1000; font-size: 0.82rem; color: var(--hca-dark); }
+        .vendor-hover { cursor: pointer; font-weight: 700; color: var(--app-dark); text-decoration: underline dotted var(--app-sage); }
+        .vendor-card-popup { display: none; position: absolute; bottom: 125%; left: 0; width: 290px; background: white; border: 1px solid var(--app-sage); border-radius: 14px; padding: 14px; box-shadow: 0 12px 32px rgba(0,0,0,0.15); z-index: 1000; font-size: 0.82rem; color: var(--app-dark); }
         .vendor-cell:hover .vendor-card-popup { display: block; }
-        .vendor-badge { font-size: 0.65rem; font-weight: bold; background: var(--hca-dark); color: white; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; display: inline-block; }
+        .vendor-badge { font-size: 0.65rem; font-weight: bold; background: var(--app-dark); color: white; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; display: inline-block; }
         
         /* Unified Parameters & Banner Integration */
-        .stmt-balance-bar { background: #FFFFFF; border: 1px solid var(--hca-border); border-radius: 16px; padding: 16px 20px; margin-bottom: 20px; }
+        .stmt-balance-bar { background: #FFFFFF; border: 1px solid var(--app-border); border-radius: 16px; padding: 16px 20px; margin-bottom: 20px; }
         .input-amount-cell { width: 110px; font-weight: bold; text-align: right; }
         .recon-status-badge { font-size: 0.85rem; font-weight: 700; padding: 8px 16px; border-radius: 30px; margin-top: 12px; }
         .status-success { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
@@ -101,7 +100,6 @@
 
 <nav class="navbar d-flex justify-content-between align-items-center">
     <div class="d-flex align-items-center gap-2">
-        <span class="brand-logo-badge">HCA</span>
         <span class="fs-4 brand-logo-text">Ledger<span class="fw-light text-muted">IQ</span></span>
         <span class="brand-badge">PRO</span>
     </div>
@@ -120,7 +118,7 @@
 <div id="view-launchpad">
     <header class="hero-section">
         <div class="privacy-disclaimer-box">
-            Your HCA Consulting Group chats aren’t used to improve our models. Gemini is AI and can make mistakes. Your privacy & Gemini.
+            ⚡ Powered by Google Gemini AI. Your financial documents and chat interactions are processed securely and are never used to train or improve AI models.
         </div>
         <h1 class="display-5 fw-bold mb-2">Financial Automation Portal</h1>
         <p class="lead opacity-75 mb-0 fs-6">Professional Forensic Ledger Processing & Sync System</p>
@@ -130,7 +128,7 @@
             <div class="col-md-5"><div class="card card-custom p-4 text-center">
                 <h5 class="mb-3 fw-bold">System Authorization</h5>
                 <input type="password" id="master_gk" class="form-control mb-3 text-center rounded-pill" placeholder="Enter Gemini API Key">
-                <button class="btn btn-dark-hca w-100 rounded-pill" onclick="lockKey()">
+                <button class="btn btn-dark-app w-100 rounded-pill" onclick="lockKey()">
                     <svg class="icon-svg" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
                     Authenticate Workspace
                 </button>
@@ -150,7 +148,7 @@
                         <button id="btnDisconnectQBO" class="btn btn-disconnect" onclick="disconnectQuickBooks()">
                             Disconnect QBO
                         </button>
-                        <button class="btn btn-dark-hca rounded-pill" onclick="showPane('config')">
+                        <button class="btn btn-dark-app rounded-pill" onclick="showPane('config')">
                             <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6z"/></svg>
                             Client Settings
                         </button>
@@ -163,7 +161,7 @@
                         <img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80" class="card-img-top">
                     </div>
                     <div class="card-body p-4 text-center">
-                        <button class="btn btn-hca w-100" onclick="triggerFile('PDF')">Process Bank Statement</button>
+                        <button class="btn btn-app w-100" onclick="triggerFile('PDF')">Process Bank Statement</button>
                     </div>
                 </div></div>
                 <div class="col-md-4"><div class="card card-custom">
@@ -171,7 +169,7 @@
                         <img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=600&q=80" class="card-img-top">
                     </div>
                     <div class="card-body p-4 text-center">
-                        <button class="btn btn-hca w-100" onclick="triggerFile('CC')">Process Credit Card PDF</button>
+                        <button class="btn btn-app w-100" onclick="triggerFile('CC')">Process Credit Card PDF</button>
                     </div>
                 </div></div>
                 <div class="col-md-4"><div class="card card-custom">
@@ -179,7 +177,7 @@
                         <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80" class="card-img-top">
                     </div>
                     <div class="card-body p-4 text-center">
-                        <button class="btn btn-hca w-100" onclick="loadDash()">Open Review Dashboard</button>
+                        <button class="btn btn-app w-100" onclick="loadDash()">Open Review Dashboard</button>
                     </div>
                 </div></div>
             </div>
@@ -194,7 +192,7 @@
                         <div class="upload-box text-center">
                             <h6 class="fw-bold mb-1">PDF to Excel (.xlsx) Converter</h6>
                             <p class="small text-muted mb-2">Convert financial PDF statements into clean, editable Excel spreadsheets.</p>
-                            <button class="btn btn-sm btn-dark-hca rounded-pill" onclick="document.getElementById('pdfToExcelInput').click()">
+                            <button class="btn btn-sm btn-dark-app rounded-pill" onclick="document.getElementById('pdfToExcelInput').click()">
                                 Convert PDF to Excel
                             </button>
                             <input type="file" id="pdfToExcelInput" accept=".pdf" style="display:none" onchange="convertPDFToExcel(this)">
@@ -204,7 +202,7 @@
                         <div class="upload-box text-center">
                             <h6 class="fw-bold mb-1">Excel (.xlsx/.csv) to PDF Converter</h6>
                             <p class="small text-muted mb-2">Generate formatted PDF documents complete with headers from Excel files.</p>
-                            <button class="btn btn-sm btn-hca rounded-pill" onclick="document.getElementById('excelToPdfInput').click()">
+                            <button class="btn btn-sm btn-app rounded-pill" onclick="document.getElementById('excelToPdfInput').click()">
                                 Convert Excel to PDF
                             </button>
                             <input type="file" id="excelToPdfInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="convertExcelToPDF(this)">
@@ -245,7 +243,7 @@
                 </div>
 
                 <div class="col-12 d-flex gap-2 mt-3">
-                    <button onclick="save()" class="btn btn-dark-hca flex-grow-1">Save Profile</button>
+                    <button onclick="save()" class="btn btn-dark-app flex-grow-1">Save Profile</button>
                     <button onclick="generateAuthorizationLink()" class="btn btn-outline-primary">Generate Email Link</button>
                     <button onclick="showPane('launchpad')" class="btn btn-outline-secondary">Cancel</button>
                 </div>
@@ -261,7 +259,7 @@
                 <select id="ruleAccount" class="form-select form-select-sm"></select>
                 <button class="btn btn-primary btn-sm" onclick="addRuleRow()">Add Rule</button>
             </div>
-            <button class="btn btn-dark-hca w-100" onclick="saveRules()">Save Rules Matrix</button>
+            <button class="btn btn-dark-app w-100" onclick="saveRules()">Save Rules Matrix</button>
         </div></div>
     </div>
 </div>
@@ -324,7 +322,7 @@
         <div class="batch-bar mb-4 row g-3">
             <div class="col-md-5"><input type="text" id="batchSearchInput" class="form-control form-control-sm" placeholder="Filter Vendor (e.g., Uber)"></div>
             <div class="col-md-4"><select id="batchCategorySelect" class="form-select form-select-sm"><option value="Uncategorized">-- Assign Target Account --</option></select></div>
-            <div class="col-md-3"><button class="btn btn-hca btn-sm w-100 fw-semibold" onclick="applyBatch()">Apply Category Match</button></div>
+            <div class="col-md-3"><button class="btn btn-app btn-sm w-100 fw-semibold" onclick="applyBatch()">Apply Category Match</button></div>
         </div>
         
         <table class="table table-hover table-sm align-middle">
@@ -544,7 +542,7 @@
                 `Please click the official Intuit authorization link below to connect your QuickBooks Online company account for ${currentClient}:\n\n` +
                 `${directIntuitUrl}\n\n` +
                 `This link will take you directly to Intuit's official sign-in page, where you can select your company and click "Authorize".\n\n` +
-                `Thank you,\nHCA Consulting Group`;
+                `Thank you,\nLedgerIQ Support Team`;
         }
 
         alert(`✓ Direct Intuit authorization link generated below and copied to clipboard!`);
@@ -1179,7 +1177,7 @@ Return ONLY JSON Object:
                 <div class="col-12"><label class="small fw-bold">Chart of Accounts (Comma Separated)</label><textarea id="edit_m_gl" class="form-control form-control-sm" rows="3">${appGLOptions.join(', ')}</textarea></div>
                 <div class="col-12 d-flex gap-2 justify-content-end mt-3">
                     <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="sendAuthEmailFromMeta()">Generate Authorization Message</button>
-                    <button class="btn btn-dark-hca btn-sm rounded-pill px-3" onclick="updateClientMetadataFromTab()">Update Client Metadata</button>
+                    <button class="btn btn-dark-app btn-sm rounded-pill px-3" onclick="updateClientMetadataFromTab()">Update Client Metadata</button>
                 </div>
                 <div class="col-12 mt-3" id="emailMessageBox" style="display:none;">
                     <div class="card p-3 bg-light border">
