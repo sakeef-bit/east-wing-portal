@@ -224,6 +224,7 @@
                 <div class="col-12 mt-2">
                     <div class="upload-box text-center">
                         <h6 class="fw-bold mb-1">QuickBooks Chart of Accounts Source</h6>
+                        <!-- OPTION 2: LIVE QBO SYNC BUTTON -->
                         <div class="mb-2">
                             <button type="button" class="btn btn-sm btn-outline-success w-100 fw-bold rounded-pill" onclick="syncQBOAccounts()">
                                 🔄 Sync Live QBO Chart of Accounts
@@ -263,6 +264,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 id="activeTitle" class="fw-bold mb-0">Dashboard</h2>
         <div class="gap-2 d-flex">
+            <!-- OPTION 2: LIVE QBO SYNC BUTTON IN DASHBOARD -->
             <button class="btn btn-outline-success btn-sm rounded-pill px-3 fw-bold" onclick="syncQBOAccounts()">🔄 Sync QBO Accounts</button>
             <button class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold" onclick="approveAll()">Approve All Rows</button>
             <button class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold" onclick="saveAll()">Save Staging Updates</button>
@@ -332,6 +334,7 @@
         <div class="d-flex justify-content-between mb-3 align-items-center">
             <h5 class="fw-bold mb-0">Active Chart of Accounts</h5>
             <div class="d-flex gap-2">
+                <!-- OPTION 2: LIVE QBO SYNC BUTTON IN CHART OF ACCOUNTS TAB -->
                 <button class="btn btn-outline-success btn-sm rounded-pill fw-semibold" onclick="syncQBOAccounts()">🔄 Sync QBO Accounts</button>
                 <button class="btn btn-outline-primary btn-sm rounded-pill fw-semibold" onclick="document.getElementById('dashGLFileInput').click()">Upload New GL CSV</button>
                 <input type="file" id="dashGLFileInput" accept=".csv" style="display:none" onchange="uploadGLFromDash(this)">
@@ -368,7 +371,6 @@
     </div>
     <div class="chat-trigger-btn" onclick="toggleChat('zoro-chat-window')">
         <svg class="icon-svg" style="width:16px; height:16px;" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-        <span class="fw-semibold small">ZORO</span>
         <span class="chat-bar-badge">Dashboard</span>
     </div>
 </div>
@@ -405,7 +407,7 @@
     const INTUIT_REDIRECT_URI = "https://oxhwhxnoysowuokdhmtr.supabase.co/functions/v1/qbo-oauth";
 
     const SUPABASE_URL = "https://oxhwhxnoysowuokdhmtr.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94aHdoeG5veXNvd3Vva2RobXRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NDU1MTEsImV4cCI6MjA4NzA1NDUxMX0.hQm9RsFit-TVz1pH0Y1Q3VITdbfwLUKA42uq2frZkyc";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94aHdoeG5veXNvd3Vva2RobXRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NDU1MTEsImV4cCI6MjEwMzIyMTUxMX0.hQm9RsFit-TVz1pH0Y1Q3VITdbfwLUKA42uq2frZkyc";
     
     let db = null;
     function initSupabase() {
@@ -429,90 +431,6 @@
         if(!keyVal) return alert("Please enter a Gemini API Key");
         localStorage.setItem('hca_gk', keyVal); 
         location.reload(); 
-    }
-
-    // OAUTH RETURN HANDLER (STYLED CARD FIX)
-    async function handleOAuthReturn() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        const realmId = urlParams.get('realmId');
-        const state = urlParams.get('state');
-
-        if (!code || !realmId) return false;
-
-        const rawClientName = state || "Client Account";
-        const cleanClientName = decodeURIComponent(rawClientName.replace(/\+/g, ' ')).trim();
-
-        document.getElementById('keyGate').style.display = 'none';
-        const mainP = document.getElementById('mainPortal');
-        if(mainP) mainP.style.display = 'none';
-
-        const successCard = document.createElement('div');
-        successCard.style.cssText = `
-            background: #F8F9FA;
-            font-family: 'Segoe UI', sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw;
-            z-index: 999999;
-        `;
-
-        successCard.innerHTML = `
-            <div class="card shadow-sm p-5 text-center" style="max-width:500px; border-radius:20px; border:1px solid #C5D1B8;">
-                <div class="spinner-border text-success mx-auto mb-3" role="status"></div>
-                <h3 style="font-weight:700; color:#2C3E50;">Connecting QuickBooks...</h3>
-                <p style="color:#64748B; font-size:0.95rem;">Please wait while we finalize authorization for <strong>"${cleanClientName}"</strong>.</p>
-            </div>
-        `;
-        document.body.appendChild(successCard);
-
-        try {
-            const res = await fetch("https://oxhwhxnoysowuokdhmtr.supabase.co/functions/v1/qbo-oauth", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    code: code,
-                    realmId: realmId,
-                    client_name: cleanClientName,
-                    redirect_uri: window.location.origin + window.location.pathname
-                })
-            });
-
-            const data = await res.json();
-            if (!res.ok || !data.success) {
-                throw new Error(data.error || "Failed to exchange authorization tokens.");
-            }
-
-            successCard.innerHTML = `
-                <div class="card shadow-sm p-5 text-center" style="max-width:500px; border-radius:20px; border:1px solid #C5D1B8; background: #ffffff;">
-                    <div style="font-size:3.5rem; color:#22C55E; margin-bottom:15px;">✓</div>
-                    <h3 style="font-weight:700; color:#2C3E50;">QuickBooks Connected!</h3>
-                    <p style="color:#64748B; font-size:0.95rem; margin-bottom:25px;">
-                        Successfully linked QuickBooks Realm ID <strong>${realmId}</strong> to account <strong>"${cleanClientName}"</strong>.
-                    </p>
-                    <div class="alert alert-success fw-bold m-0" role="alert" style="border-radius: 10px;">
-                        You may now safely close this window.
-                    </div>
-                </div>
-            `;
-        } catch (err) {
-            successCard.innerHTML = `
-                <div class="card shadow-sm p-5 text-center" style="max-width:500px; border-radius:20px; border:1px solid #EF4444; background: #ffffff;">
-                    <div style="font-size:3.5rem; color:#EF4444; margin-bottom:15px;">⚠️</div>
-                    <h3 style="font-weight:700; color:#2C3E50;">Connection Failed</h3>
-                    <p style="color:#64748B; font-size:0.95rem; margin-bottom:20px;">${err.message}</p>
-                    <div class="alert alert-danger fw-bold m-0" role="alert" style="border-radius: 10px;">
-                        Please close this window and try linking again from the portal.
-                    </div>
-                </div>
-            `;
-        }
-        return true;
     }
 
     function connectToQuickBooks() {
@@ -589,7 +507,7 @@
         }
     }
 
-    // DIRECT QBO CHART OF ACCOUNTS SYNC FUNCTION
+    /* OPTION 2: DIRECT QBO CHART OF ACCOUNTS SYNC FUNCTION */
     async function syncQBOAccounts() {
         const targetClient = currentClient || document.getElementById('n').value.trim() || document.getElementById('masterClient').value;
         if (!targetClient) return alert("Please select or enter a client name first.");
@@ -629,9 +547,7 @@
     window.onload = async () => {
         initSupabase();
 
-        const isOAuth = await handleOAuthReturn();
-
-        if (!isOAuth && localStorage.getItem('hca_gk')) {
+        if (localStorage.getItem('hca_gk')) {
             document.getElementById('keyGate').style.display = 'none'; 
             document.getElementById('mainPortal').style.display = 'block';
             document.getElementById('dot-gemini').classList.add('dot-green');
