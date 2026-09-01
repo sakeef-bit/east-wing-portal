@@ -88,6 +88,9 @@
         .vendor-card-popup { display: none; position: absolute; bottom: 125%; left: 0; width: 290px; background: white; border: 1px solid var(--hca-sage); border-radius: 14px; padding: 14px; box-shadow: 0 12px 32px rgba(0,0,0,0.15); z-index: 1000; font-size: 0.82rem; color: var(--hca-dark); }
         .vendor-cell:hover .vendor-card-popup { display: block; }
         .vendor-badge { font-size: 0.65rem; font-weight: bold; background: var(--hca-dark); color: white; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; display: inline-block; }
+        
+        .stmt-balance-bar { background: #FFFFFF; border: 1px solid var(--hca-border); border-radius: 14px; padding: 12px 20px; margin-bottom: 20px; }
+        .input-amount-cell { width: 110px; font-weight: bold; text-align: right; }
     </style>
 </head>
 <body>
@@ -280,6 +283,22 @@
         <div id="nav-meta" class="app-nav-btn" onclick="switchTab('meta')">CLIENT METADATA</div>
     </div>
 
+    <!-- Statement Reconciliation Control Header -->
+    <div class="stmt-balance-bar d-flex align-items-center justify-content-between shadow-sm">
+        <div class="d-flex align-items-center gap-3">
+            <span class="fw-bold text-dark small"><svg class="icon-svg me-1" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg> Statement Reconciliation Parameters:</span>
+            <div class="d-flex align-items-center gap-1">
+                <label class="small text-muted fw-semibold me-1">Start Balance ($):</label>
+                <input type="number" step="0.01" id="inputStmtStart" class="form-control form-control-sm rounded-pill text-end fw-bold" style="width: 130px;" value="0.00" onchange="updateStatementTargetBalances()">
+            </div>
+            <div class="d-flex align-items-center gap-1">
+                <label class="small text-muted fw-semibold me-1">Target Ending Balance ($):</label>
+                <input type="number" step="0.01" id="inputStmtEnd" class="form-control form-control-sm rounded-pill text-end fw-bold text-primary" style="width: 130px;" value="0.00" onchange="updateStatementTargetBalances()">
+            </div>
+        </div>
+        <button class="btn btn-sm btn-outline-secondary rounded-pill fw-semibold px-3" onclick="updateStatementTargetBalances()">Re-Calculate Balance Gate</button>
+    </div>
+
     <div id="tab-review" class="bg-white p-4 rounded-xl shadow-sm">
         <div class="d-flex justify-content-between mb-3 align-items-center">
             <h5 class="fw-bold mb-0">Staging Queue</h5>
@@ -307,7 +326,7 @@
                     <th>Date</th>
                     <th>Vendor (Hover Details)</th>
                     <th>Statement Line Item</th>
-                    <th>Amount</th>
+                    <th>Amount ($)</th>
                     <th>Expense Account</th>
                     <th>Stat</th>
                     <th>Bank Account</th>
@@ -384,6 +403,7 @@
     </div>
 </div>
 
+<!-- Floating Widgets Dock -->
 <div class="widgets-dock" id="floatingWidgetsDock">
     <div class="chat-trigger-btn" onclick="toggleChat('chat-window')">
         <svg class="icon-svg" style="width:16px; height:16px;" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
@@ -392,6 +412,7 @@
     </div>
     <div class="chat-trigger-btn" onclick="toggleChat('zoro-chat-window')">
         <svg class="icon-svg" style="width:16px; height:16px;" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+        <span class="fw-semibold small">ZORO</span>
         <span class="chat-bar-badge">Dashboard</span>
     </div>
 </div>
@@ -1003,6 +1024,10 @@ Return ONLY JSON Object:
 
                 stmtStart = extracted.starting_balance || 0;
                 stmtEnd = extracted.ending_balance || 0;
+
+                document.getElementById('inputStmtStart').value = stmtStart;
+                document.getElementById('inputStmtEnd').value = stmtEnd;
+
                 if (db) {
                     await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).ilike('client_name', currentClient.trim());
                 }
@@ -1095,6 +1120,8 @@ Return ONLY JSON Object:
         if (meta) {
             stmtStart = parseFloat(meta.stmt_start || 0);
             stmtEnd = parseFloat(meta.stmt_end || 0);
+            document.getElementById('inputStmtStart').value = stmtStart;
+            document.getElementById('inputStmtEnd').value = stmtEnd;
             if (meta.gl_list) appGLOptions = meta.gl_list.split(',').filter(Boolean);
         }
 
@@ -1157,6 +1184,17 @@ Return ONLY JSON Object:
         }
     }
 
+    async function updateStatementTargetBalances() {
+        stmtStart = parseFloat(document.getElementById('inputStmtStart').value) || 0;
+        stmtEnd = parseFloat(document.getElementById('inputStmtEnd').value) || 0;
+
+        initSupabase();
+        if (db && currentClient) {
+            await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).ilike('client_name', currentClient.trim());
+        }
+        recalcJE();
+    }
+
     function renderImpactTab(qboAccountsList) {
         const tbody = document.getElementById('tb-impact');
         if (!tbody) return;
@@ -1168,7 +1206,8 @@ Return ONLY JSON Object:
             let item = localData.find(x => x.row == r);
             if (!item || item.stat !== "APPROVED") return;
 
-            let amt = parseFloat(String(item.amt).replace(/[^0-9.-]+/g, ""));
+            let amtInput = document.getElementById('a' + r);
+            let amt = amtInput ? parseFloat(amtInput.value || 0) : parseFloat(String(item.amt).replace(/[^0-9.-]+/g, ""));
             let expAcc = inp.value;
             let bnkAcc = document.getElementById('b' + r) ? document.getElementById('b' + r).value : "";
 
@@ -1243,10 +1282,10 @@ Return ONLY JSON Object:
                     <td>${i.date}</td>
                     <td class="vendor-cell">${vendorHtml}</td>
                     <td><small class="text-muted">${i.desc}</small></td>
-                    <td class="fw-bold">$${i.amt}</td>
+                    <td><input type="number" step="0.01" id="a${i.row}" class="form-control form-control-sm input-amount-cell" value="${parseFloat(i.amt.replace(/[^0-9.-]+/g, '')) || 0}" onchange="recalcJE()"></td>
                     <td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td>
-                    <td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td>
-                    <td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option></select></td>
+                    <td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat" onchange="recalcJE()"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td>
+                    <td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td>
                     <td><select id="l${i.row}" class="form-select form-select-sm">${CLASS_OPTIONS.map(c => `<option value="${c}" ${i.cls==c?'selected':''}>${c}</option>`).join('')}</select></td>
                     <td>${receiptCell}</td>
                 </tr>`;
@@ -1375,10 +1414,17 @@ Return ONLY JSON:
         document.querySelectorAll('.row-cat').forEach(inp => {
             let r = inp.getAttribute('data-row'), item = localData.find(x => x.row == r);
             if(!item) return;
-            let val = parseFloat(item.amt.replace(/[^0-9.-]+/g,"")), exp = inp.value, bnk = document.getElementById('b'+r).value, cls = document.getElementById('l'+r) ? document.getElementById('l'+r).value : "General";
+
+            let amtInput = document.getElementById('a' + r);
+            let val = amtInput ? parseFloat(amtInput.value || 0) : parseFloat(item.amt.replace(/[^0-9.-]+/g,""));
+
+            let exp = inp.value;
+            let bnk = document.getElementById('b'+r) ? document.getElementById('b'+r).value : "Uncategorized";
+            let cls = document.getElementById('l'+r) ? document.getElementById('l'+r).value : "General";
+
             netAct += val; 
             if(exp) jeData[exp + "|" + cls] = (jeData[exp + "|" + cls] || 0) + val; 
-            if(bnk) jeData[bnk + "|" + cls] = (jeData[bnk + "|" + cls] || 0) - val;
+            if(bnk && bnk !== "Uncategorized") jeData[bnk + "|" + cls] = (jeData[bnk + "|" + cls] || 0) - val;
         });
 
         const calcEnd = stmtStart + netAct;
@@ -1517,12 +1563,14 @@ Provide accurate, direct answers regarding spend, vendor totals, uncategorized r
         if(!db) return;
         document.getElementById('st').style.display = 'block'; 
         for (let item of localData) {
+            const amtVal = document.getElementById('a' + item.row) ? parseFloat(document.getElementById('a' + item.row).value) : parseFloat(item.amt);
             const catVal = document.getElementById('c' + item.row) ? document.getElementById('c' + item.row).value : item.cat;
             const statVal = document.getElementById('s' + item.row) ? document.getElementById('s' + item.row).value : item.stat;
             const bnkVal = document.getElementById('b' + item.row) ? document.getElementById('b' + item.row).value : item.bnk;
             const clsVal = document.getElementById('l' + item.row) ? document.getElementById('l' + item.row).value : item.cls;
 
             await db.from('review_staging').update({
+                amount: amtVal,
                 category: catVal,
                 status: statVal,
                 bank_category: bnkVal,
