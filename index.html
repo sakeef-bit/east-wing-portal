@@ -985,7 +985,7 @@ Return ONLY JSON array of arrays (rows with column values):
                     ? historyData.slice(0, 30).map(h => `${h.vendor || h.desc} -> ${h.cat}`).join("\n")
                     : "No historical patterns recorded yet.";
 
-                const behavior = type === "CC" ? "Spend is negative, Payments positive." : "Debits are negative, Credits positive.";
+                const behavior = type === "CC" ? "Spend is positive, Payments and Credits are negative." : "Inflows are positive, Outflows are negative.";
                 
                 const prompt = `ACT AS: Senior Bookkeeper & Forensic Auditor. Extract all statement transactions.
 
@@ -1414,7 +1414,7 @@ Return ONLY JSON:
                 document.getElementById('st').style.display = 'none';
             }
         };
-        reader.readAsDataURL(input.files[0]);
+        reader.readAsDataURL(file);
     }
 
     function applyBatch() {
@@ -1434,7 +1434,7 @@ Return ONLY JSON:
         const isCreditCard = localData.length > 0 && localData[0].src === 'CREDIT CARD';
         const startBox = document.getElementById('boxStartBalance');
         if (startBox) {
-            startBox.style.display = 'flex'; // Keep Previous Balance visible for both Bank & CC
+            startBox.style.display = 'flex'; // Display Previous Balance for both Bank & CC
         }
 
         document.querySelectorAll('.row-cat').forEach(inp => {
@@ -1463,11 +1463,12 @@ Return ONLY JSON:
             }
         });
 
-        // 1. BANK STATEMENT EVALUATION
+        // 1. BANK STATEMENT EVALUATION (Cash Account)
         const calcEndBank = stmtStart + netActBank;
         const diffBank = Math.abs(calcEndBank - stmtEnd);
 
-        // 2. CREDIT CARD STATEMENT EVALUATION
+        // 2. CREDIT CARD STATEMENT EVALUATION (Liability Account)
+        // Add net liability activity (+ charges / - payments) to previous balance
         const calcEndCC = stmtStart + netActCC;
         const diffCC = Math.abs(calcEndCC - stmtEnd);
 
