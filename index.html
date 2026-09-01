@@ -1027,6 +1027,7 @@ STRICT EXTRACTION RULES:
 1. 'vendor': Extract the clean entity, merchant, or organization name from the statement line (e.g. 'Con Edison', 'ACME Corp', 'Local Supermarket', 'Stripe', 'H. Sharma', 'Adobe', 'Uber', 'Delta Air Lines'). Set to "" only if generic internal fee with no entity name.
 2. 'desc': Store the exact raw statement line text.
 3. 'category': Categorize EVERY transaction using the CHART OF ACCOUNTS list above. Match payroll to Payroll, rent to Rent, utilities to Utilities, supermarket/catering to Meals/Office Supplies & Expenses, wire/inflow to Consulting Revenue, fees to Bank Fees. DO NOT RETURN BLANK OR NULL CATEGORIES.
+4. 'date': STRICT REQUIREMENT: Format dates strictly as YYYY-MM-DD.
 
 ${behavior}
 
@@ -1101,7 +1102,7 @@ Return ONLY JSON Object:
                         status: "PENDING",
                         bank_category: "Uncategorized",
                         class_name: "General",
-                        fingerprint: btoa(t.date + (t.desc || "") + t.amount)
+                        fingerprint: btoa((t.date || "") + (t.desc || "") + (t.amount || ""))
                     };
                 });
 
@@ -1111,7 +1112,8 @@ Return ONLY JSON Object:
                 }
 
                 if (db) {
-                    await db.from('review_staging').insert(rows);
+                    // Non-blocking duplicate prevention via onConflict upsert
+                    await db.from('review_staging').upsert(rows, { onConflict: 'client_name,fingerprint', ignoreDuplicates: true });
                 }
                 await loadDash();
             } catch(err) {
@@ -1196,7 +1198,6 @@ Return ONLY JSON Object:
         document.getElementById('tb-history').innerHTML = ""; 
         res.history.forEach(i => { document.getElementById('tb-history').innerHTML += `<tr><td>${i.date}</td><td class="fw-bold">${i.vendor || 'N/A'}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; });
         
-        // Render Controls + In-App Email Message Box
         const meta = res.metadata || {};
         document.getElementById('metaList').innerHTML = `
             <div class="row g-3">
@@ -1257,7 +1258,6 @@ Return ONLY JSON Object:
         const sortedMonths = Array.from(monthSet).sort();
         const latestMonth = sortedMonths.length > 0 ? sortedMonths[sortedMonths.length - 1] : null;
 
-        // Render Table Headers
         let headerHtml = `<tr><th>Vendor Legal Name</th>`;
         sortedMonths.forEach(m => {
             headerHtml += `<th class="text-end">${m}</th>`;
@@ -1265,7 +1265,6 @@ Return ONLY JSON Object:
         headerHtml += `<th class="text-end bg-secondary text-white">Lifetime Paid ($)</th><th class="text-center">Current Status</th></tr>`;
         th.innerHTML = headerHtml;
 
-        // Render Vendor Rows
         tb.innerHTML = "";
         const vendors = Object.keys(vendorMap).sort((a, b) => vendorMap[b].total - vendorMap[a].total);
 
@@ -1276,8 +1275,7 @@ Return ONLY JSON Object:
             const currentMonthSpend = latestMonth ? (vData.months[latestMonth] || 0) : 0;
             const isInactiveThisMonth = latestMonth && currentMonthSpend === 0;
 
-            let rowHtml = `<tr>
-                <td class="fw-bold">${vendor}</td>`;
+            let rowHtml = `<tr><td class="fw-bold">${vendor}</td>`;
 
             sortedMonths.forEach(m => {
                 const amt = vData.months[m] || 0;
@@ -1512,7 +1510,7 @@ Return ONLY JSON:
                 document.getElementById('st').style.display = 'none';
             }
         };
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(input.files[0]);
     }
 
     function applyBatch() {
