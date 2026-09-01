@@ -89,8 +89,12 @@
         .vendor-cell:hover .vendor-card-popup { display: block; }
         .vendor-badge { font-size: 0.65rem; font-weight: bold; background: var(--hca-dark); color: white; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; display: inline-block; }
         
-        .stmt-balance-bar { background: #FFFFFF; border: 1px solid var(--hca-border); border-radius: 14px; padding: 12px 20px; margin-bottom: 20px; }
+        /* Unified Parameters & Banner Integration */
+        .stmt-balance-bar { background: #FFFFFF; border: 1px solid var(--hca-border); border-radius: 16px; padding: 16px 20px; margin-bottom: 20px; }
         .input-amount-cell { width: 110px; font-weight: bold; text-align: right; }
+        .recon-status-badge { font-size: 0.85rem; font-weight: 700; padding: 8px 16px; border-radius: 30px; margin-top: 12px; }
+        .status-success { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
+        .status-error { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
     </style>
 </head>
 <body>
@@ -284,20 +288,23 @@
         <div id="nav-meta" class="app-nav-btn" onclick="switchTab('meta')">CLIENT METADATA</div>
     </div>
 
-    <!-- Statement Reconciliation Control Header -->
-    <div class="stmt-balance-bar d-flex align-items-center justify-content-between shadow-sm">
-        <div class="d-flex align-items-center gap-3">
-            <span class="fw-bold text-dark small"><svg class="icon-svg me-1" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg> Statement Reconciliation Parameters:</span>
-            <div class="d-flex align-items-center gap-1">
-                <label class="small text-muted fw-semibold me-1">Start Balance ($):</label>
-                <input type="number" step="0.01" id="inputStmtStart" class="form-control form-control-sm rounded-pill text-end fw-bold" style="width: 130px;" value="0.00" onchange="updateStatementTargetBalances()">
+    <!-- Unified Parameters & Live Reconciliation Gate Bar -->
+    <div class="stmt-balance-bar shadow-sm">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+                <span class="fw-bold text-dark small"><svg class="icon-svg me-1" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg> Statement Reconciliation Parameters:</span>
+                <div class="d-flex align-items-center gap-1" id="boxStartBalance">
+                    <label class="small text-muted fw-semibold me-1">Start Cash Balance ($):</label>
+                    <input type="number" step="0.01" id="inputStmtStart" class="form-control form-control-sm rounded-pill text-end fw-bold" style="width: 130px;" value="0.00" onchange="updateStatementTargetBalances()">
+                </div>
+                <div class="d-flex align-items-center gap-1">
+                    <label class="small text-muted fw-semibold me-1">Target Statement Balance ($):</label>
+                    <input type="number" step="0.01" id="inputStmtEnd" class="form-control form-control-sm rounded-pill text-end fw-bold text-primary" style="width: 130px;" value="0.00" onchange="updateStatementTargetBalances()">
+                </div>
             </div>
-            <div class="d-flex align-items-center gap-1">
-                <label class="small text-muted fw-semibold me-1">Target Ending Balance ($):</label>
-                <input type="number" step="0.01" id="inputStmtEnd" class="form-control form-control-sm rounded-pill text-end fw-bold text-primary" style="width: 130px;" value="0.00" onchange="updateStatementTargetBalances()">
-            </div>
+            <button class="btn btn-sm btn-outline-secondary rounded-pill fw-semibold px-3" onclick="updateStatementTargetBalances()">Re-Calculate Balance Gate</button>
         </div>
-        <button class="btn btn-sm btn-outline-secondary rounded-pill fw-semibold px-3" onclick="updateStatementTargetBalances()">Re-Calculate Balance Gate</button>
+        <div id="reconStatusBadge" class="recon-status-badge text-center">Evaluating Statement Balance Gate...</div>
     </div>
 
     <div id="tab-review" class="bg-white p-4 rounded-xl shadow-sm">
@@ -395,7 +402,6 @@
     <!-- Bank Journal Entry View -->
     <div id="tab-je-bank" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <h5 class="fw-bold mb-3 text-dark">Bank Statement Journal Entry & Cash Reconciliation View</h5>
-        <div id="reconGateBannerBank" class="card p-3 mb-3 text-white fw-bold"></div>
         <div id="jeBalanceAlertBank" class="alert mb-4 text-center fw-bold"></div>
         <div id="jeListBank" class="mt-3 font-monospace"></div>
     </div>
@@ -403,7 +409,6 @@
     <!-- Credit Card Journal Entry View -->
     <div id="tab-je-cc" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <h5 class="fw-bold mb-3 text-dark">Credit Card Statement Journal Entry & Liability Reconciliation View</h5>
-        <div id="reconGateBannerCC" class="card p-3 mb-3 text-white fw-bold"></div>
         <div id="jeBalanceAlertCC" class="alert mb-4 text-center fw-bold"></div>
         <div id="jeListCC" class="mt-3 font-monospace"></div>
     </div>
@@ -1426,6 +1431,12 @@ Return ONLY JSON:
         let tDrBank = 0, tCrBank = 0, netActBank = 0;
         let tDrCC = 0, tCrCC = 0, netActCC = 0;
 
+        const isCreditCard = localData.length > 0 && localData[0].src === 'CREDIT CARD';
+        const startBox = document.getElementById('boxStartBalance');
+        if (startBox) {
+            startBox.style.display = isCreditCard ? 'none' : 'flex';
+        }
+
         document.querySelectorAll('.row-cat').forEach(inp => {
             let r = inp.getAttribute('data-row');
             let item = localData.find(x => x.row == r);
@@ -1439,54 +1450,52 @@ Return ONLY JSON:
             let cls = document.getElementById('l'+r) ? document.getElementById('l'+r).value : "General";
 
             if (item.src === 'CREDIT CARD') {
-                // Credit Card: Charges (+val) increase ending liability
-                netActCC += Math.abs(val);
+                // Credit Card Statement Logic:
+                // Charges (+val) increase statement balance, Payments/Credits (-val) reduce it
+                if (val < 0) {
+                    netActCC += Math.abs(val); 
+                } else {
+                    netActCC -= Math.abs(val); 
+                }
+
                 if(exp) jeCC[exp + "|" + cls] = (jeCC[exp + "|" + cls] || 0) + val; 
                 if(bnk && bnk !== "Uncategorized") jeCC[bnk + "|" + cls] = (jeCC[bnk + "|" + cls] || 0) - val;
             } else {
-                // Bank Account: Standard Net Cash Activity
+                // Bank Account Logic: Standard Net Cash Activity
                 netActBank += val;
                 if(exp) jeBank[exp + "|" + cls] = (jeBank[exp + "|" + cls] || 0) + val; 
                 if(bnk && bnk !== "Uncategorized") jeBank[bnk + "|" + cls] = (jeBank[bnk + "|" + cls] || 0) - val;
             }
         });
 
-        // 1. BANK RECONCILIATION EVALUATION
+        // 1. EVALUATE STATEMENT BALANCE CALCULATIONS
         const calcEndBank = stmtStart + netActBank;
         const diffBank = Math.abs(calcEndBank - stmtEnd);
-        const bannerBank = document.getElementById('reconGateBannerBank');
 
-        if (bannerBank) {
-            if (diffBank < 0.01) {
-                bannerBank.className = "card p-3 mb-3 bg-success text-white fw-bold";
-                bannerBank.innerText = "✓ Bank Statement Reconciled (Starting Cash + Net Cash Activity = Target Ending Balance)";
-            } else {
-                bannerBank.className = "card p-3 mb-3 bg-danger text-white fw-bold";
-                bannerBank.innerText = `⚠️ Bank Out of Balance: Discrepancy $${diffBank.toFixed(2)} (Calc Ending: $${calcEndBank.toFixed(2)} | Target Ending: $${stmtEnd.toFixed(2)})`;
-            }
-        }
-
-        // 2. CREDIT CARD RECONCILIATION EVALUATION
-        const calcEndCC = stmtStart + netActCC;
+        // Credit Card: Calc Balance = Net Activity of Statement Charges - Payments
+        const calcEndCC = netActCC;
         const diffCC = Math.abs(calcEndCC - stmtEnd);
-        const bannerCC = document.getElementById('reconGateBannerCC');
 
-        if (bannerCC) {
-            if (diffCC < 0.01) {
-                bannerCC.className = "card p-3 mb-3 bg-success text-white fw-bold";
-                bannerCC.innerText = "✓ Credit Card Reconciled (Previous Balance + New Charges = Target Statement Ending Balance)";
+        const activeDiff = isCreditCard ? diffCC : diffBank;
+        const activeCalcEnding = isCreditCard ? calcEndCC : calcEndBank;
+
+        // Render Unified Status Badge in Top Control Bar
+        const reconBadge = document.getElementById('reconStatusBadge');
+        if (reconBadge) {
+            if (activeDiff < 0.01) {
+                reconBadge.className = "recon-status-badge status-success text-center";
+                reconBadge.innerText = `✓ Statement Reconciled (Calculated Balance: $${activeCalcEnding.toFixed(2)} = Target Statement Balance: $${stmtEnd.toFixed(2)})`;
             } else {
-                bannerCC.className = "card p-3 mb-3 bg-danger text-white fw-bold";
-                bannerCC.innerText = `⚠️ Credit Card Out of Balance: Discrepancy $${diffCC.toFixed(2)} (Calc Ending: $${calcEndCC.toFixed(2)} | Target Ending: $${stmtEnd.toFixed(2)})`;
+                reconBadge.className = "recon-status-badge status-error text-center";
+                reconBadge.innerText = `⚠️ Statement Out of Balance: Discrepancy $${activeDiff.toFixed(2)} (Calculated: $${activeCalcEnding.toFixed(2)} | Target Statement: $${stmtEnd.toFixed(2)})`;
             }
         }
 
         // Active Gate Button Control
-        const activeDiff = (localData.length > 0 && localData[0].src === 'CREDIT CARD') ? diffCC : diffBank;
         const syncBtns = document.querySelectorAll('.sync-gate-btn');
         syncBtns.forEach(b => b.disabled = activeDiff >= 0.01);
 
-        // 3. RENDER BANK JE LINES
+        // 2. RENDER BANK JE LINES
         const divBank = document.getElementById('jeListBank');
         if (divBank) {
             divBank.innerHTML = `<div class="je-item fw-bold border-bottom"><span>Account Identifier | Class</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
@@ -1503,7 +1512,7 @@ Return ONLY JSON:
             }
         }
 
-        // 4. RENDER CREDIT CARD JE LINES
+        // 3. RENDER CREDIT CARD JE LINES
         const divCC = document.getElementById('jeListCC');
         if (divCC) {
             divCC.innerHTML = `<div class="je-item fw-bold border-bottom"><span>Account Identifier | Class</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
