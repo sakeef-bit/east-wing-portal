@@ -224,7 +224,6 @@
                 <div class="col-12 mt-2">
                     <div class="upload-box text-center">
                         <h6 class="fw-bold mb-1">QuickBooks Chart of Accounts Source</h6>
-                        <!-- OPTION 2: LIVE QBO SYNC BUTTON -->
                         <div class="mb-2">
                             <button type="button" class="btn btn-sm btn-outline-success w-100 fw-bold rounded-pill" onclick="syncQBOAccounts()">
                                 🔄 Sync Live QBO Chart of Accounts
@@ -264,7 +263,6 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 id="activeTitle" class="fw-bold mb-0">Dashboard</h2>
         <div class="gap-2 d-flex">
-            <!-- OPTION 2: LIVE QBO SYNC BUTTON IN DASHBOARD -->
             <button class="btn btn-outline-success btn-sm rounded-pill px-3 fw-bold" onclick="syncQBOAccounts()">🔄 Sync QBO Accounts</button>
             <button class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold" onclick="approveAll()">Approve All Rows</button>
             <button class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold" onclick="saveAll()">Save Staging Updates</button>
@@ -334,7 +332,6 @@
         <div class="d-flex justify-content-between mb-3 align-items-center">
             <h5 class="fw-bold mb-0">Active Chart of Accounts</h5>
             <div class="d-flex gap-2">
-                <!-- OPTION 2: LIVE QBO SYNC BUTTON IN CHART OF ACCOUNTS TAB -->
                 <button class="btn btn-outline-success btn-sm rounded-pill fw-semibold" onclick="syncQBOAccounts()">🔄 Sync QBO Accounts</button>
                 <button class="btn btn-outline-primary btn-sm rounded-pill fw-semibold" onclick="document.getElementById('dashGLFileInput').click()">Upload New GL CSV</button>
                 <input type="file" id="dashGLFileInput" accept=".csv" style="display:none" onchange="uploadGLFromDash(this)">
@@ -507,7 +504,7 @@
         }
     }
 
-    /* OPTION 2: DIRECT QBO CHART OF ACCOUNTS SYNC FUNCTION */
+    /* DIRECT QBO CHART OF ACCOUNTS SYNC FUNCTION */
     async function syncQBOAccounts() {
         const targetClient = currentClient || document.getElementById('n').value.trim() || document.getElementById('masterClient').value;
         if (!targetClient) return alert("Please select or enter a client name first.");
@@ -517,7 +514,11 @@
         try {
             const res = await fetch("https://oxhwhxnoysowuokdhmtr.supabase.co/functions/v1/qbo-get-accounts", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json",
+                    "apikey": SUPABASE_KEY,
+                    "Authorization": `Bearer ${SUPABASE_KEY}`
+                },
                 body: JSON.stringify({ client_name: targetClient })
             });
 
