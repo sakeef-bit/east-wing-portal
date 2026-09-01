@@ -110,25 +110,6 @@
     </div>
 </nav>
 
-<!-- CLIENT AUTHORIZATION SUCCESS CARD -->
-<div id="view-client-success" class="container py-5" style="display:none;">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card card-custom p-5 text-center">
-                <div class="mb-3">
-                    <span style="font-size: 3rem; color: #22C55E;">✓</span>
-                </div>
-                <h3 class="fw-bold mb-2" id="clientSuccessTitle">Connecting QuickBooks...</h3>
-                <p class="text-muted small mb-4" id="clientSuccessMessage">Please wait while we finalize your secure connection with HCA LedgerIQ.</p>
-                <div class="spinner-border text-primary mx-auto mb-3" id="clientSuccessSpinner" role="status"></div>
-                <div id="clientSuccessButton" style="display:none;">
-                    <p class="text-success fw-bold">You may now close this tab.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <div id="view-launchpad">
     <header class="hero-section">
         <div class="privacy-disclaimer-box">
@@ -412,12 +393,11 @@
 
 <script>
     const INTUIT_CLIENT_ID = "ABgu8RDrvNPOLdMBsAE4d7aIMSioPtPclJJOBxJ36vOLQ7VIS4";
-    const INTUIT_REDIRECT_URI = "https://east-wing-portal-ogfr8bhdh-adfh.vercel.app";
+    const INTUIT_REDIRECT_URI = "https://oxhwhxnoysowuokdhmtr.supabase.co/functions/v1/qbo-oauth";
 
     const SUPABASE_URL = "https://oxhwhxnoysowuokdhmtr.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94aHdoeG5veXNvd3Vva2RobXRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NDU1MTEsImV4cCI6MjEwMzIyMTUxMX0.hQm9RsFit-TVz1pH0Y1Q3VITdbfwLUKA42uq2frZkyc";
     
-    // IMMEDIATE SUPABASE CLIENT INITIALIZATION TO PREVENT CDN LOAD DELAYS
     let db = null;
     function initSupabase() {
         if (!db && window.supabase) {
@@ -516,75 +496,10 @@
         }
     }
 
-    // CLIENT OAUTH SUCCESS CARD INTERCEPTOR (EXECUTES DIRECTLY ON REDIRECT)
-    async function handleOAuthReturn() {
-        const globalUrlParams = new URLSearchParams(window.location.search);
-        const code = globalUrlParams.get('code');
-        const realmId = globalUrlParams.get('realmId');
-        const stateClient = globalUrlParams.get('state');
-
-        if (!code || !realmId) return false;
-
-        // Hide full portal UI and floating widgets instantly
-        document.getElementById('view-launchpad').style.display = 'none';
-        document.getElementById('floatingWidgetsDock').style.display = 'none';
-        document.getElementById('view-client-success').style.display = 'block';
-
-        // Convert '+' signs and %20 sequences into clean spaces
-        let targetClient = stateClient ? decodeURIComponent(stateClient.replace(/\+/g, ' ')).trim() : localStorage.getItem('connecting_client');
-
-        if (!targetClient) {
-            targetClient = "Demo version";
-        }
-
-        document.getElementById('clientSuccessTitle').innerText = `Connecting ${targetClient} to QuickBooks...`;
-
-        try {
-            const res = await fetch("https://oxhwhxnoysowuokdhmtr.supabase.co/functions/v1/qbo-oauth", {
-                method: "POST",
-                headers: { 
-                    "Content-Type": "application/json",
-                    "apikey": SUPABASE_KEY,
-                    "Authorization": `Bearer ${SUPABASE_KEY}`
-                },
-                body: JSON.stringify({
-                    code: code,
-                    realmId: realmId,
-                    client_name: targetClient,
-                    redirect_uri: INTUIT_REDIRECT_URI
-                })
-            });
-
-            const result = await res.json();
-
-            if (!res.ok || !result.success) {
-                throw new Error(result.error || "OAuth Exchange Failed");
-            }
-
-            // Show Success Message Card
-            document.getElementById('clientSuccessSpinner').style.display = 'none';
-            document.getElementById('clientSuccessTitle').innerText = "QuickBooks Online Connected!";
-            document.getElementById('clientSuccessMessage').innerText = `✓ Successfully authorized & linked QuickBooks Realm ID ${realmId} for "${result.client_name || targetClient}".`;
-            document.getElementById('clientSuccessButton').style.display = 'block';
-
-            localStorage.removeItem('connecting_client');
-            return true;
-        } catch (err) {
-            document.getElementById('clientSuccessSpinner').style.display = 'none';
-            document.getElementById('clientSuccessTitle').innerText = "Authorization Error";
-            document.getElementById('clientSuccessMessage').innerHTML = `<span class="text-danger">${err.message}</span>`;
-            return false;
-        }
-    }
-
     window.onload = async () => {
         initSupabase();
 
-        // 1. Process OAuth Return First
-        const isOAuthCallback = await handleOAuthReturn();
-
-        // 2. Render UI only if NOT an OAuth callback page
-        if (!isOAuthCallback && localStorage.getItem('hca_gk')) {
+        if (localStorage.getItem('hca_gk')) {
             document.getElementById('keyGate').style.display = 'none'; 
             document.getElementById('mainPortal').style.display = 'block';
             document.getElementById('dot-gemini').classList.add('dot-green');
@@ -663,7 +578,6 @@
         }
     }
 
-    // UPDATED PUSH QBO FUNCTION WITH EXPLICIT AUTH HEADERS
     async function pushQBO() {
         initSupabase();
         if(!db) return;
