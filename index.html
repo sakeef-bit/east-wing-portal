@@ -294,7 +294,7 @@
             <div class="d-flex align-items-center gap-3">
                 <span class="fw-bold text-dark small"><svg class="icon-svg me-1" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg> Statement Reconciliation Parameters:</span>
                 <div class="d-flex align-items-center gap-1" id="boxStartBalance">
-                    <label class="small text-muted fw-semibold me-1">Start Cash Balance ($):</label>
+                    <label class="small text-muted fw-semibold me-1">Start / Previous Balance ($):</label>
                     <input type="number" step="0.01" id="inputStmtStart" class="form-control form-control-sm rounded-pill text-end fw-bold" style="width: 130px;" value="0.00" onchange="updateStatementTargetBalances()">
                 </div>
                 <div class="d-flex align-items-center gap-1">
@@ -1414,7 +1414,7 @@ Return ONLY JSON:
                 document.getElementById('st').style.display = 'none';
             }
         };
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(input.files[0]);
     }
 
     function applyBatch() {
@@ -1434,7 +1434,7 @@ Return ONLY JSON:
         const isCreditCard = localData.length > 0 && localData[0].src === 'CREDIT CARD';
         const startBox = document.getElementById('boxStartBalance');
         if (startBox) {
-            startBox.style.display = isCreditCard ? 'none' : 'flex';
+            startBox.style.display = 'flex'; // Keep Previous Balance visible for both Bank & CC
         }
 
         document.querySelectorAll('.row-cat').forEach(inp => {
@@ -1450,13 +1450,8 @@ Return ONLY JSON:
             let cls = document.getElementById('l'+r) ? document.getElementById('l'+r).value : "General";
 
             if (item.src === 'CREDIT CARD') {
-                // Credit Card Statement Logic:
-                // Charges (+val) increase statement balance, Payments/Credits (-val) reduce it
-                if (val < 0) {
-                    netActCC += Math.abs(val); 
-                } else {
-                    netActCC -= Math.abs(val); 
-                }
+                // Credit Card Logic: Positive = Charges (+ liability), Negative = Payments (- liability)
+                netActCC += val;
 
                 if(exp) jeCC[exp + "|" + cls] = (jeCC[exp + "|" + cls] || 0) + val; 
                 if(bnk && bnk !== "Uncategorized") jeCC[bnk + "|" + cls] = (jeCC[bnk + "|" + cls] || 0) - val;
@@ -1468,12 +1463,12 @@ Return ONLY JSON:
             }
         });
 
-        // 1. EVALUATE STATEMENT BALANCE CALCULATIONS
+        // 1. BANK STATEMENT EVALUATION
         const calcEndBank = stmtStart + netActBank;
         const diffBank = Math.abs(calcEndBank - stmtEnd);
 
-        // Credit Card: Calc Balance = Net Activity of Statement Charges - Payments
-        const calcEndCC = netActCC;
+        // 2. CREDIT CARD STATEMENT EVALUATION
+        const calcEndCC = stmtStart + netActCC;
         const diffCC = Math.abs(calcEndCC - stmtEnd);
 
         const activeDiff = isCreditCard ? diffCC : diffBank;
@@ -1484,7 +1479,7 @@ Return ONLY JSON:
         if (reconBadge) {
             if (activeDiff < 0.01) {
                 reconBadge.className = "recon-status-badge status-success text-center";
-                reconBadge.innerText = `✓ Statement Reconciled (Calculated Balance: $${activeCalcEnding.toFixed(2)} = Target Statement Balance: $${stmtEnd.toFixed(2)})`;
+                reconBadge.innerText = `✓ Statement Reconciled (Previous Balance: $${stmtStart.toFixed(2)} + Net Activity: $${(isCreditCard ? netActCC : netActBank).toFixed(2)} = Target Statement: $${stmtEnd.toFixed(2)})`;
             } else {
                 reconBadge.className = "recon-status-badge status-error text-center";
                 reconBadge.innerText = `⚠️ Statement Out of Balance: Discrepancy $${activeDiff.toFixed(2)} (Calculated: $${activeCalcEnding.toFixed(2)} | Target Statement: $${stmtEnd.toFixed(2)})`;
@@ -1495,7 +1490,7 @@ Return ONLY JSON:
         const syncBtns = document.querySelectorAll('.sync-gate-btn');
         syncBtns.forEach(b => b.disabled = activeDiff >= 0.01);
 
-        // 2. RENDER BANK JE LINES
+        // 3. RENDER BANK JE LINES
         const divBank = document.getElementById('jeListBank');
         if (divBank) {
             divBank.innerHTML = `<div class="je-item fw-bold border-bottom"><span>Account Identifier | Class</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
@@ -1512,13 +1507,13 @@ Return ONLY JSON:
             }
         }
 
-        // 3. RENDER CREDIT CARD JE LINES
+        // 4. RENDER CREDIT CARD JE LINES
         const divCC = document.getElementById('jeListCC');
         if (divCC) {
             divCC.innerHTML = `<div class="je-item fw-bold border-bottom"><span>Account Identifier | Class</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
             for (let acc in jeCC) {
                 let bal = jeCC[acc]; if(Math.abs(bal) < 0.01) continue;
-                let dr = bal < 0 ? Math.abs(bal) : 0, cr = bal > 0 ? bal : 0;
+                let dr = bal > 0 ? bal : 0, cr = bal < 0 ? Math.abs(bal) : 0;
                 tDrCC += dr; tCrCC += cr;
                 divCC.innerHTML += `<div class="je-item"><span>${acc}</span><span class="dr">${dr?`$${dr.toFixed(2)}`:''}</span><span class="cr">${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
             }
