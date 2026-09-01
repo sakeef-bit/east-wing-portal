@@ -1064,6 +1064,7 @@ Return ONLY JSON Object:
         renderPnLCharts();
         renderVendorMatrix();
         await loadMDANotes();
+        recalcJE();
     }
 
     function resetGlobalFilter() {
@@ -1394,41 +1395,47 @@ Return ONLY JSON Object:
         recalcJE();
     }
 
-    /* DYNAMIC BANK & CREDIT CARD SEPARATED RECONCILIATION ENGINE */
+    /* FIXED DYNAMIC BANK & CREDIT CARD RECONCILIATION ENGINE */
     function recalcJE() {
         let jeBank = {}, jeCC = {};
         let tDrBank = 0, tCrBank = 0, netActBank = 0;
         let tDrCC = 0, tCrCC = 0, netActCC = 0;
 
-        const filteredLocalData = filterBySelectedPeriod(localData);
-        const isCreditCard = filteredLocalData.length > 0 && filteredLocalData[0].src === 'CREDIT CARD';
+        const filteredRows = filterBySelectedPeriod(localData);
+        const isCreditCard = filteredRows.length > 0 && filteredRows[0].src === 'CREDIT CARD';
         const startBox = document.getElementById('boxStartBalance');
         if (startBox) startBox.style.display = 'flex';
 
-        document.querySelectorAll('.row-cat').forEach(inp => {
-            let r = inp.getAttribute('data-row');
-            let item = filteredLocalData.find(x => x.row == r);
-            if(!item) return;
+        filteredRows.forEach(item => {
+            let amtInput = document.getElementById('a' + item.row);
+            let val = amtInput ? parseFloat(amtInput.value || 0) : parseFloat(String(item.amt).replace(/[^0-9.-]+/g, ""));
+            if (isNaN(val)) val = 0;
 
-            let amtInput = document.getElementById('a' + r);
-            let val = amtInput ? parseFloat(amtInput.value || 0) : parseFloat(item.amt.replace(/[^0-9.-]+/g,""));
-            let exp = inp.value;
-            let bnk = document.getElementById('b'+r) ? document.getElementById('b'+r).value : "Uncategorized";
-            let cls = document.getElementById('l'+r) ? document.getElementById('l'+r).value : "General";
+            let expInput = document.getElementById('c' + item.row);
+            let exp = expInput ? expInput.value : item.cat;
+
+            let bnkInput = document.getElementById('b' + item.row);
+            let bnk = bnkInput ? bnkInput.value : item.bnk;
+
+            let clsInput = document.getElementById('l' + item.row);
+            let cls = clsInput ? clsInput.value : item.cls;
 
             if (item.src === 'CREDIT CARD') {
                 netActCC += val;
-                if(exp) jeCC[exp + "|" + cls] = (jeCC[exp + "|" + cls] || 0) + val; 
-                if(bnk && bnk !== "Uncategorized") jeCC[bnk + "|" + cls] = (jeCC[bnk + "|" + cls] || 0) - val;
+                if (exp) jeCC[exp + "|" + cls] = (jeCC[exp + "|" + cls] || 0) + val; 
+                if (bnk && bnk !== "Uncategorized") jeCC[bnk + "|" + cls] = (jeCC[bnk + "|" + cls] || 0) - val;
             } else {
                 netActBank += val;
-                if(exp) jeBank[exp + "|" + cls] = (jeBank[exp + "|" + cls] || 0) + val; 
-                if(bnk && bnk !== "Uncategorized") jeBank[bnk + "|" + cls] = (jeBank[bnk + "|" + cls] || 0) - val;
+                if (exp) jeBank[exp + "|" + cls] = (jeBank[exp + "|" + cls] || 0) + val; 
+                if (bnk && bnk !== "Uncategorized") jeBank[bnk + "|" + cls] = (jeBank[bnk + "|" + cls] || 0) - val;
             }
         });
 
+        // 1. BANK STATEMENT EVALUATION
         const calcEndBank = stmtStart + netActBank;
         const diffBank = Math.abs(calcEndBank - stmtEnd);
+
+        // 2. CREDIT CARD STATEMENT EVALUATION
         const calcEndCC = stmtStart + netActCC;
         const diffCC = Math.abs(calcEndCC - stmtEnd);
 
@@ -1449,6 +1456,7 @@ Return ONLY JSON Object:
         const syncBtns = document.querySelectorAll('.sync-gate-btn');
         syncBtns.forEach(b => b.disabled = activeDiff >= 0.01);
 
+        // 3. RENDER BANK JE LINES
         const divBank = document.getElementById('jeListBank');
         if (divBank) {
             divBank.innerHTML = `<div class="je-item fw-bold border-bottom"><span>Account Identifier | Class</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
@@ -1465,6 +1473,7 @@ Return ONLY JSON Object:
             }
         }
 
+        // 4. RENDER CREDIT CARD JE LINES
         const divCC = document.getElementById('jeListCC');
         if (divCC) {
             divCC.innerHTML = `<div class="je-item fw-bold border-bottom"><span>Account Identifier | Class</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
