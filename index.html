@@ -68,7 +68,7 @@
 
         .view-pane { display: none; }
         .app-nav { background: white; border-radius: 14px; display: flex; overflow: hidden; margin-bottom: 30px; border: 1px solid var(--app-border); }
-        .app-nav-btn { flex: 1; text-align: center; padding: 14px; cursor: pointer; font-weight: 600; border-right: 1px solid var(--app-border); color: #64748B; transition: 0.2s; font-size: 0.85rem; }
+        .app-nav-btn { flex: 1; text-align: center; padding: 14px; cursor: pointer; font-weight: 600; border-right: 1px solid var(--app-border); color: #64748B; transition: 0.2s; font-size: 0.82rem; }
         .app-nav-btn.active { background: var(--app-sage); color: var(--app-dark); }
         .summary-card { background: white; border-radius: 16px; padding: 22px; border-left: 5px solid var(--app-sage); border-top: 1px solid var(--app-border); border-right: 1px solid var(--app-border); border-bottom: 1px solid var(--app-border); }
         .upload-box { border: 2px dashed var(--app-sage); background: #FAFDF7; border-radius: 14px; padding: 20px; }
@@ -88,7 +88,6 @@
         .vendor-cell:hover .vendor-card-popup { display: block; }
         .vendor-badge { font-size: 0.65rem; font-weight: bold; background: var(--app-dark); color: white; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; display: inline-block; }
         
-        /* Unified Parameters & Banner Integration */
         .stmt-balance-bar { background: #FFFFFF; border: 1px solid var(--app-border); border-radius: 16px; padding: 16px 20px; margin-bottom: 20px; }
         .input-amount-cell { width: 110px; font-weight: bold; text-align: right; }
         .recon-status-badge { font-size: 0.85rem; font-weight: 700; padding: 8px 16px; border-radius: 30px; margin-top: 12px; }
@@ -279,6 +278,7 @@
         <div id="nav-review" class="app-nav-btn active" onclick="switchTab('review')">REVIEW STAGING</div>
         <div id="nav-impact" class="app-nav-btn" onclick="switchTab('impact')">PROPOSED IMPACT</div>
         <div id="nav-pnl" class="app-nav-btn" onclick="switchTab('pnl')">VISUAL P&L</div>
+        <div id="nav-vendor" class="app-nav-btn" onclick="switchTab('vendor')">VENDOR AUDIT</div>
         <div id="nav-gl" class="app-nav-btn" onclick="switchTab('gl')">CHART OF ACCOUNTS</div>
         <div id="nav-history" class="app-nav-btn" onclick="switchTab('history')">PERMANENT LEDGER</div>
         <div id="nav-je-bank" class="app-nav-btn" onclick="switchTab('je-bank')">BANK JE VIEW</div>
@@ -374,7 +374,37 @@
             <div class="col-md-3"><div class="summary-card"><h6>Net Income</h6><h3 id="stat-net" class="fw-bold mb-0">$0.00</h3></div></div>
             <div class="col-md-3"><div class="summary-card"><h6>Profit Margin</h6><h3 id="stat-margin" class="fw-bold mb-0">0%</h3></div></div>
         </div>
-        <div class="row"><div class="col-md-12"><canvas id="chart-bar" height="100"></canvas></div></div>
+        <div class="row g-4">
+            <div class="col-md-7">
+                <div class="card p-3 border">
+                    <h6 class="fw-bold text-muted mb-3">Revenue vs. Expense Trend</h6>
+                    <div style="height: 280px;"><canvas id="chart-bar"></canvas></div>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="card p-3 border">
+                    <h6 class="fw-bold text-muted mb-3">Expense Category Share</h6>
+                    <div style="height: 280px;"><canvas id="chart-doughnut"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vendor Monthly Audit Matrix Tab -->
+    <div id="tab-vendor" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="fw-bold mb-0">Vendor Monthly Consistency Audit</h5>
+                <p class="small text-muted mb-0">Track monthly vendor spending trends and easily spot vendors missing from the active period.</p>
+            </div>
+            <span id="vendorCountBadge" class="badge bg-dark px-3 py-2 fs-6">0 Active Vendors</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle small bg-white">
+                <thead id="th-vendor-matrix" class="table-dark"></thead>
+                <tbody id="tb-vendor-matrix"></tbody>
+            </table>
+        </div>
     </div>
 
     <div id="tab-gl" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
@@ -1193,9 +1223,79 @@ Return ONLY JSON Object:
         
         recalcJE();
         renderPnLCharts();
+        renderVendorMatrix();
         if (rawQBOAccountDetails.length > 0) {
             renderImpactTab(rawQBOAccountDetails);
         }
+    }
+
+    /* VENDOR MONTHLY AUDIT MATRIX RENDERER */
+    function renderVendorMatrix() {
+        const th = document.getElementById('th-vendor-matrix');
+        const tb = document.getElementById('tb-vendor-matrix');
+        if (!th || !tb) return;
+
+        const allData = [...historyData, ...localData];
+        const monthSet = new Set();
+        const vendorMap = {};
+
+        allData.forEach(item => {
+            const vendorName = item.vendor && item.vendor.trim() !== "" ? item.vendor.trim() : "Unspecified Vendor";
+            const monthKey = item.date ? item.date.substring(0, 7) : "Current";
+            const val = Math.abs(parseFloat(String(item.amt).replace(/[^0-9.-]+/g, "")) || 0);
+
+            monthSet.add(monthKey);
+
+            if (!vendorMap[vendorName]) {
+                vendorMap[vendorName] = { total: 0, months: {} };
+            }
+
+            vendorMap[vendorName].months[monthKey] = (vendorMap[vendorName].months[monthKey] || 0) + val;
+            vendorMap[vendorName].total += val;
+        });
+
+        const sortedMonths = Array.from(monthSet).sort();
+        const latestMonth = sortedMonths.length > 0 ? sortedMonths[sortedMonths.length - 1] : null;
+
+        // Render Table Headers
+        let headerHtml = `<tr><th>Vendor Legal Name</th>`;
+        sortedMonths.forEach(m => {
+            headerHtml += `<th class="text-end">${m}</th>`;
+        });
+        headerHtml += `<th class="text-end bg-secondary text-white">Lifetime Paid ($)</th><th class="text-center">Current Status</th></tr>`;
+        th.innerHTML = headerHtml;
+
+        // Render Vendor Rows
+        tb.innerHTML = "";
+        const vendors = Object.keys(vendorMap).sort((a, b) => vendorMap[b].total - vendorMap[a].total);
+
+        document.getElementById('vendorCountBadge').innerText = `${vendors.length} Total Vendors Tracked`;
+
+        vendors.forEach(vendor => {
+            const vData = vendorMap[vendor];
+            const currentMonthSpend = latestMonth ? (vData.months[latestMonth] || 0) : 0;
+            const isInactiveThisMonth = latestMonth && currentMonthSpend === 0;
+
+            let rowHtml = `<tr>
+                <td class="fw-bold">${vendor}</td>`;
+
+            sortedMonths.forEach(m => {
+                const amt = vData.months[m] || 0;
+                const cellClass = amt > 0 ? "fw-semibold" : "text-muted opacity-50";
+                rowHtml += `<td class="text-end ${cellClass}">${amt > 0 ? `$${amt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '-'}</td>`;
+            });
+
+            const statusBadge = isInactiveThisMonth 
+                ? `<span class="badge bg-danger">Inactive This Month</span>`
+                : `<span class="badge bg-success">Active ($${currentMonthSpend.toFixed(2)})</span>`;
+
+            rowHtml += `
+                <td class="text-end fw-bold text-primary">$${vData.total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td class="text-center">${statusBadge}</td>
+            </tr>`;
+
+            tb.innerHTML += rowHtml;
+        });
     }
 
     async function updateStatementTargetBalances() {
@@ -1432,7 +1532,7 @@ Return ONLY JSON:
         const isCreditCard = localData.length > 0 && localData[0].src === 'CREDIT CARD';
         const startBox = document.getElementById('boxStartBalance');
         if (startBox) {
-            startBox.style.display = 'flex'; // Display Previous Balance for both Bank & CC
+            startBox.style.display = 'flex';
         }
 
         document.querySelectorAll('.row-cat').forEach(inp => {
@@ -1448,32 +1548,28 @@ Return ONLY JSON:
             let cls = document.getElementById('l'+r) ? document.getElementById('l'+r).value : "General";
 
             if (item.src === 'CREDIT CARD') {
-                // Credit Card Logic: Positive = Charges (+ liability), Negative = Payments (- liability)
                 netActCC += val;
 
                 if(exp) jeCC[exp + "|" + cls] = (jeCC[exp + "|" + cls] || 0) + val; 
                 if(bnk && bnk !== "Uncategorized") jeCC[bnk + "|" + cls] = (jeCC[bnk + "|" + cls] || 0) - val;
             } else {
-                // Bank Account Logic: Standard Net Cash Activity
                 netActBank += val;
                 if(exp) jeBank[exp + "|" + cls] = (jeBank[exp + "|" + cls] || 0) + val; 
                 if(bnk && bnk !== "Uncategorized") jeBank[bnk + "|" + cls] = (jeBank[bnk + "|" + cls] || 0) - val;
             }
         });
 
-        // 1. BANK STATEMENT EVALUATION (Cash Account)
+        // 1. BANK STATEMENT EVALUATION
         const calcEndBank = stmtStart + netActBank;
         const diffBank = Math.abs(calcEndBank - stmtEnd);
 
-        // 2. CREDIT CARD STATEMENT EVALUATION (Liability Account)
-        // Add net liability activity (+ charges / - payments) to previous balance
+        // 2. CREDIT CARD STATEMENT EVALUATION
         const calcEndCC = stmtStart + netActCC;
         const diffCC = Math.abs(calcEndCC - stmtEnd);
 
         const activeDiff = isCreditCard ? diffCC : diffBank;
         const activeCalcEnding = isCreditCard ? calcEndCC : calcEndBank;
 
-        // Render Unified Status Badge in Top Control Bar
         const reconBadge = document.getElementById('reconStatusBadge');
         if (reconBadge) {
             if (activeDiff < 0.01) {
@@ -1485,7 +1581,6 @@ Return ONLY JSON:
             }
         }
 
-        // Active Gate Button Control
         const syncBtns = document.querySelectorAll('.sync-gate-btn');
         syncBtns.forEach(b => b.disabled = activeDiff >= 0.01);
 
@@ -1529,25 +1624,37 @@ Return ONLY JSON:
     }
 
     function renderPnLCharts() {
-        let months = {}, tRev = 0, tExp = 0; 
+        let months = {}, catBreakdown = {}; 
+        let tRev = 0, tExp = 0; 
         const allData = [...historyData, ...localData];
         
         allData.forEach(i => {
-            let val = parseFloat(String(i.amt).replace(/[^0-9.-]+/g,"")), m = i.date ? i.date.substring(0, 7) : "Current"; 
+            let val = parseFloat(String(i.amt).replace(/[^0-9.-]+/g,""));
+            let m = i.date ? i.date.substring(0, 7) : "Current"; 
+            let cat = i.cat || "Uncategorized";
+
             if(!months[m]) months[m] = { inc: 0, exp: 0 };
-            if(val > 0) { months[m].inc += val; tRev += val; } 
-            else { months[m].exp += Math.abs(val); tExp += Math.abs(val); }
+            
+            if(val > 0) { 
+                months[m].inc += val; 
+                tRev += val; 
+            } else { 
+                let absVal = Math.abs(val);
+                months[m].exp += absVal; 
+                tExp += absVal; 
+                catBreakdown[cat] = (catBreakdown[cat] || 0) + absVal;
+            }
         });
 
-        if (document.getElementById('stat-rev')) document.getElementById('stat-rev').innerText = `$${tRev.toLocaleString()}`; 
-        if (document.getElementById('stat-exp')) document.getElementById('stat-exp').innerText = `$${tExp.toLocaleString()}`;
-        if (document.getElementById('stat-net')) document.getElementById('stat-net').innerText = `$${(tRev - tExp).toLocaleString()}`;
+        if (document.getElementById('stat-rev')) document.getElementById('stat-rev').innerText = `$${tRev.toLocaleString('en-US', {minimumFractionDigits: 2})}`; 
+        if (document.getElementById('stat-exp')) document.getElementById('stat-exp').innerText = `$${tExp.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+        if (document.getElementById('stat-net')) document.getElementById('stat-net').innerText = `$${(tRev - tExp).toLocaleString('en-US', {minimumFractionDigits: 2})}`;
         if (document.getElementById('stat-margin')) document.getElementById('stat-margin').innerText = tRev ? `${((tRev - tExp) / tRev * 100).toFixed(1)}%` : "0%";
 
-        const ctx = document.getElementById('chart-bar');
-        if (ctx) {
+        const ctxBar = document.getElementById('chart-bar');
+        if (ctxBar) {
             if(barChart) barChart.destroy();
-            barChart = new Chart(ctx, { 
+            barChart = new Chart(ctxBar, { 
                 type: 'bar', 
                 data: { 
                     labels: Object.keys(months).sort(), 
@@ -1555,7 +1662,24 @@ Return ONLY JSON:
                         { label: 'Revenue', data: Object.keys(months).sort().map(m => months[m].inc), backgroundColor: '#C5D1B8' },
                         { label: 'Expenses', data: Object.keys(months).sort().map(m => months[m].exp), backgroundColor: '#2C3E50' }
                     ]
-                }
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        const ctxPie = document.getElementById('chart-doughnut');
+        if (ctxPie) {
+            if(window.doughnutChart) window.doughnutChart.destroy();
+            window.doughnutChart = new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(catBreakdown),
+                    datasets: [{
+                        data: Object.values(catBreakdown),
+                        backgroundColor: ['#2C3E50', '#C5D1B8', '#E74C3C', '#3498DB', '#F1C40F', '#9B59B6', '#1ABC9C']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
     }
