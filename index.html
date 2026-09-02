@@ -617,6 +617,21 @@
 
         document.getElementById('st').style.display = 'block';
         const { data, error } = await db.auth.signInWithPassword({ email, password });
+        
+        if (!error && data?.user) {
+            const { data: existingRole } = await db
+                .from('user_roles')
+                .select('role')
+                .eq('user_id', data.user.id)
+                .maybeSingle();
+
+            if (!existingRole) {
+                await db
+                    .from('user_roles')
+                    .insert([{ user_id: data.user.id, role: 'ACCOUNTANT' }]);
+            }
+        }
+
         document.getElementById('st').style.display = 'none';
 
         if (error) {
@@ -635,6 +650,21 @@
 
         document.getElementById('st').style.display = 'block';
         const { data, error } = await db.auth.signUp({ email, password });
+
+        if (!error && data?.user) {
+            const { data: existingRole } = await db
+                .from('user_roles')
+                .select('role')
+                .eq('user_id', data.user.id)
+                .maybeSingle();
+
+            if (!existingRole) {
+                await db
+                    .from('user_roles')
+                    .insert([{ user_id: data.user.id, role: 'ACCOUNTANT' }]);
+            }
+        }
+
         document.getElementById('st').style.display = 'none';
 
         if (error) {
