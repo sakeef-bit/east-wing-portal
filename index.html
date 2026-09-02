@@ -1731,27 +1731,37 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         }
     }
 
-    /* VERIFIED MERCHANT INTELLIGENCE FUNCTION WITH STRICT JSON FORMATTING & GEMINI 3.6 FLASH */
+    /* HYBRID LOCALSTORAGE & GEMINI MERCHANT INTELLIGENCE FUNCTION */
     async function fetchVendorIntelligence(vendorName, targetElementId) {
-        initSupabase(); if (!vendorName || !db) return;
+        if (!vendorName || vendorName.trim() === "") return;
         const popupEl = document.getElementById(targetElementId); if (!popupEl) return;
 
-        const { data: cached } = await db.from('vendor_knowledge').select('*').eq('vendor_name', vendorName).maybeSingle();
-        if (cached && cached.description) {
-            const linkHtml = cached.website ? `<br><a href="${cached.website}" target="_blank" class="small text-primary">${cached.website}</a>` : '';
-            popupEl.innerHTML = `<span class="vendor-badge">VERIFIED MERCHANT</span><br><strong>${vendorName}</strong><br><span class="text-muted">${cached.description}</span>${linkHtml}`;
-            return;
+        const cleanVendor = vendorName.trim();
+        const cacheKey = "vendor_cache_" + cleanVendor.toLowerCase().replace(/\s+/g, '_');
+
+        // 1. Instant local storage retrieval
+        const localCached = localStorage.getItem(cacheKey);
+        if (localCached) {
+            try {
+                const info = JSON.parse(localCached);
+                const linkHtml = info.website ? `<br><a href="${info.website}" target="_blank" class="small text-primary">${info.website}</a>` : '';
+                popupEl.innerHTML = `<span class="vendor-badge">MERCHANT DETAILS</span><br><strong>${cleanVendor}</strong><br><span>${info.description}</span>${linkHtml}`;
+                return;
+            } catch (e) {
+                localStorage.removeItem(cacheKey);
+            }
         }
 
+        // 2. Fetch from Gemini if not in local storage
         popupEl.innerHTML = `<em>Querying merchant intelligence...</em>`; 
         const apiKey = localStorage.getItem('hca_gk');
         if (!apiKey) {
-            popupEl.innerHTML = `<strong>${vendorName}</strong><br><span class="text-muted">API Key missing.</span>`;
+            popupEl.innerHTML = `<strong>${cleanVendor}</strong><br><span class="text-muted">API Key missing.</span>`;
             return;
         }
 
         try {
-            const prompt = `ACT AS: Corporate Intelligence Agent. Provide business details for vendor "${vendorName}".
+            const prompt = `ACT AS: Corporate Intelligence Agent. Provide business details for vendor "${cleanVendor}".
 Return ONLY a valid JSON object matching this structure:
 {
   "description": "1-2 sentence overview of what the merchant sells or provides.",
@@ -1780,12 +1790,13 @@ Return ONLY a valid JSON object matching this structure:
             const website = info.website || "";
             const linkHtml = website ? `<br><a href="${website}" target="_blank" class="small text-primary">${website}</a>` : '';
             
-            popupEl.innerHTML = `<span class="vendor-badge">AI MERCHANT SUMMARY</span><br><strong>${vendorName}</strong><br><span>${description}</span>${linkHtml}`;
+            // Save to browser memory for instant sub-millisecond future hovers
+            localStorage.setItem(cacheKey, JSON.stringify({ description, website }));
 
-            await db.from('vendor_knowledge').insert([{ vendor_name: vendorName, description: description, website: website }]);
+            popupEl.innerHTML = `<span class="vendor-badge">AI MERCHANT SUMMARY</span><br><strong>${cleanVendor}</strong><br><span>${description}</span>${linkHtml}`;
         } catch (e) { 
             console.error("Vendor Intelligence Fetch Error:", e);
-            popupEl.innerHTML = `<strong>${vendorName}</strong><br><span class="text-muted">Merchant details unavailable.</span>`; 
+            popupEl.innerHTML = `<strong>${cleanVendor}</strong><br><span class="text-muted">Merchant details unavailable.</span>`; 
         }
     }
 
