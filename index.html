@@ -961,12 +961,14 @@ Return ONLY JSON Object:
                 const rawText = jsonRes.candidates[0].content.parts[0].text;
                 const extracted = JSON.parse(rawText.replace(/```json|```/g, '').trim());
 
-                stmtStart = extracted.starting_balance || 0; stmtEnd = extracted.ending_balance || 0;
-                document.getElementById('inputStmtStart').value = stmtStart; document.getElementById('inputStmtEnd').value = stmtEnd;
+                const extractedTransactions = extracted.transactions || [];
+                if (extractedTransactions.length === 0) { 
+                    document.getElementById('st').style.display = 'none'; 
+                    return showToast("No valid transactions found in statement.", "danger"); 
+                }
 
-                if (db) await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).ilike('client_name', currentClient.trim());
-
-                const rows = (extracted.transactions || []).map(t => {
+                // Construct mapped transaction rows with fingerprints
+                const rows = extractedTransactions.map(t => {
                     let assignedCategory = t.category || "Uncategorized";
                     activeRules.forEach(rule => {
                         const targetText = ((t.vendor || "") + " " + (t.desc || "")).toLowerCase();
@@ -983,8 +985,42 @@ Return ONLY JSON Object:
                     };
                 });
 
-                if (rows.length === 0) { document.getElementById('st').style.display = 'none'; return showToast("No valid transactions found in statement.", "danger"); }
-                if (db) await db.from('review_staging').upsert(rows, { onConflict: 'client_name,fingerprint', ignoreDuplicates: true });
+                if (db) {
+                    // 1. Check for duplicates against permanent_ledger and review_staging
+                    const fingerprints = rows.map(r => r.fingerprint);
+
+                    const { data: existingStaging } = await db.from('review_staging').select('fingerprint').ilike('client_name', currentClient.trim()).in('fingerprint', fingerprints);
+                    const { data: existingLedger } = await db.from('permanent_ledger').select('fingerprint').ilike('client_name', currentClient.trim()).in('fingerprint', fingerprints);
+
+                    const existingSet = new Set([
+                        ...(existingStaging || []).map(s => s.fingerprint),
+                        ...(existingLedger || []).map(l => l.fingerprint)
+                    ]);
+
+                    const newRowsToInsert = rows.filter(r => !existingSet.has(r.fingerprint));
+
+                    // 2. Handle 100% duplicate uploads
+                    if (newRowsToInsert.length === 0) {
+                        document.getElementById('st').style.display = 'none';
+                        showToast(`⚠️ Duplicate Statement Detected! All ${rows.length} transactions from this statement have already been processed for ${currentClient}.`, "danger");
+                        return; // Stay on Launchpad, do not navigate to empty dashboard
+                    }
+
+                    // 3. Update statement target balances
+                    stmtStart = extracted.starting_balance || 0; stmtEnd = extracted.ending_balance || 0;
+                    document.getElementById('inputStmtStart').value = stmtStart; document.getElementById('inputStmtEnd').value = stmtEnd;
+                    await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).ilike('client_name', currentClient.trim());
+
+                    // 4. Insert only new transactions
+                    await db.from('review_staging').insert(newRowsToInsert);
+
+                    if (rows.length > newRowsToInsert.length) {
+                        showToast(`✓ Processed ${newRowsToInsert.length} new transactions (${rows.length - newRowsToInsert.length} duplicates skipped).`, "warning");
+                    } else {
+                        showToast(`✓ Successfully processed ${newRowsToInsert.length} statement transactions!`, "success");
+                    }
+                }
+
                 await loadDash();
             } catch(err) { showToast("Processing Error: " + err.message, "danger"); document.getElementById('st').style.display = 'none'; }
         }; 
