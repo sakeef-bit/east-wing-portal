@@ -1027,7 +1027,55 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
 
     function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
 
-    /* FULLY VERIFIED & SAFE DUAL STATEMENT OCR EXTRACTION WITH UTF-8 FINGERPRINTING */
+    /* OPTION A: ENRICH NEW VENDORS IN BACKGROUND AFTER OCR EXTRACTION */
+    async function processPostExtractionVendorEnrichment(uniqueVendorNames, apiKey) {
+        initSupabase(); if (!db || !uniqueVendorNames || uniqueVendorNames.length === 0) return;
+
+        try {
+            // 1. Query Supabase for vendors already stored in vendor_knowledge
+            const { data: existing } = await db.from('vendor_knowledge').select('vendor_name').in('vendor_name', uniqueVendorNames);
+            const existingSet = new Set((existing || []).map(v => v.vendor_name.trim().toLowerCase()));
+
+            // 2. Identify missing vendors
+            const missingVendors = uniqueVendorNames.filter(v => !existingSet.has(v.trim().toLowerCase()));
+            if (missingVendors.length === 0) return;
+
+            // 3. Batch query Gemini for missing vendors
+            for (const vendor of missingVendors) {
+                const prompt = `ACT AS: Corporate Intelligence Agent. Provide business details for vendor "${vendor}".
+Return ONLY a valid JSON object matching this structure:
+{
+  "description": "1-2 sentence overview of what the merchant sells or provides.",
+  "website": "Official website URL or empty string"
+}`;
+
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        "contents": [{ "parts": [{ "text": prompt }] }],
+                        "generationConfig": { "response_mime_type": "application/json" }
+                    })
+                });
+
+                const jsonRes = await res.json();
+                if (jsonRes.candidates?.[0]?.content?.parts?.[0]?.text) {
+                    const rawText = jsonRes.candidates[0].content.parts[0].text;
+                    const info = JSON.parse(rawText.replace(/```json|```/g, '').trim());
+                    
+                    const desc = info.description || "Commercial vendor or merchant.";
+                    const web = info.website || "";
+
+                    // Save to Supabase and browser memory
+                    await db.from('vendor_knowledge').upsert({ vendor_name: vendor, description: desc, website: web }, { onConflict: 'vendor_name' });
+                    localStorage.setItem("vendor_cache_" + vendor.toLowerCase().replace(/\s+/g, '_'), JSON.stringify({ description: desc, website: web }));
+                }
+            }
+        } catch (err) {
+            console.error("Option A Background Vendor Enrichment Error:", err);
+        }
+    }
+
+    /* FULLY VERIFIED DUAL STATEMENT OCR EXTRACTION */
     async function handleFile(input, type) { 
         currentClient = document.getElementById('masterClient').value; 
         if(!currentClient) return showToast("Select client account first", "danger");
@@ -1106,7 +1154,7 @@ Return ONLY JSON Object:
 
                 const extractedBankName = extracted.bank_name || (type === 'PDF' ? 'Bank Account' : 'Credit Card');
 
-                // Construct mapped transaction rows matching strictly existing table columns
+                // Construct mapped transaction rows
                 const rows = extractedTransactions.map(t => {
                     let assignedCategory = t.category || "Uncategorized";
                     activeRules.forEach(rule => {
@@ -1158,14 +1206,15 @@ Return ONLY JSON Object:
                     if (insErr) throw new Error("Supabase Database Insert Error: " + insErr.message);
 
                     showToast(`✓ Successfully processed ${rows.length} statement transactions!`, "success");
+
+                    // OPTION A: Trigger Background Post-Extraction Vendor Enrichment
+                    const uniqueVendors = Array.from(new Set(rows.map(r => r.vendor.trim()).filter(v => v !== "")));
+                    processPostExtractionVendorEnrichment(uniqueVendors, apiKey);
                 }
 
-                // In-memory cache for bank_name associated with this batch session
                 window.lastExtractedBankName = extractedBankName;
-
                 await loadDash();
 
-                // Auto-set the global Period Filter dropdowns to match the uploaded statement's year and month
                 if (rows.length > 0 && rows[0].txn_date) {
                     const parts = rows[0].txn_date.split('-');
                     if (parts.length >= 2) {
@@ -1194,7 +1243,6 @@ Return ONLY JSON Object:
             staging = sData || []; ledger = lData || []; meta = mData;
         }
 
-        // Exact match set against posted Permanent Ledger
         const postedSet = new Set(
             ledger.map(l => `${l.txn_date}|${(l.vendor || '').trim().toLowerCase()}|${(l.description || '').trim().toLowerCase()}|${parseFloat(l.amount).toFixed(2)}`)
         );
@@ -1740,7 +1788,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         }
     }
 
-    /* HYBRID LOCALSTORAGE & GEMINI MERCHANT INTELLIGENCE FUNCTION */
+    /* INSTANT HOVER READ FROM PRE-ENRICHED VENDOR_KNOWLEDGE TABLE OR LOCAL CACHE */
     async function fetchVendorIntelligence(vendorName, targetElementId) {
         if (!vendorName || vendorName.trim() === "") return;
         const popupEl = document.getElementById(targetElementId); if (!popupEl) return;
@@ -1748,7 +1796,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         const cleanVendor = vendorName.trim();
         const cacheKey = "vendor_cache_" + cleanVendor.toLowerCase().replace(/\s+/g, '_');
 
-        // 1. Instant local storage retrieval
+        // 1. Check local storage for sub-millisecond load
         const localCached = localStorage.getItem(cacheKey);
         if (localCached) {
             try {
@@ -1761,52 +1809,19 @@ Generate executive MD&A notes. Return ONLY JSON Object:
             }
         }
 
-        // 2. Fetch from Gemini if not in local storage
-        popupEl.innerHTML = `<em>Querying merchant intelligence...</em>`; 
-        const apiKey = localStorage.getItem('hca_gk');
-        if (!apiKey) {
-            popupEl.innerHTML = `<strong>${cleanVendor}</strong><br><span class="text-muted">API Key missing.</span>`;
-            return;
+        // 2. Query pre-populated Supabase vendor_knowledge table
+        initSupabase();
+        if (db) {
+            const { data: cached } = await db.from('vendor_knowledge').select('*').ilike('vendor_name', cleanVendor).maybeSingle();
+            if (cached && cached.description) {
+                const linkHtml = cached.website ? `<br><a href="${cached.website}" target="_blank" class="small text-primary">${cached.website}</a>` : '';
+                popupEl.innerHTML = `<span class="vendor-badge">VERIFIED MERCHANT</span><br><strong>${cleanVendor}</strong><br><span>${cached.description}</span>${linkHtml}`;
+                localStorage.setItem(cacheKey, JSON.stringify({ description: cached.description, website: cached.website || "" }));
+                return;
+            }
         }
 
-        try {
-            const prompt = `ACT AS: Corporate Intelligence Agent. Provide business details for vendor "${cleanVendor}".
-Return ONLY a valid JSON object matching this structure:
-{
-  "description": "1-2 sentence overview of what the merchant sells or provides.",
-  "website": "Official website URL or empty string"
-}`;
-
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
-                method: "POST", 
-                headers: { "Content-Type": "application/json" }, 
-                body: JSON.stringify({ 
-                    "contents": [{ "parts": [{ "text": prompt }] }], 
-                    "generationConfig": { 
-                        "response_mime_type": "application/json" 
-                    } 
-                })
-            });
-
-            const jsonRes = await res.json(); 
-            if (jsonRes.error) throw new Error(jsonRes.error.message);
-            if (!jsonRes.candidates?.[0]?.content?.parts?.[0]?.text) throw new Error("Invalid response from Gemini API");
-
-            const rawText = jsonRes.candidates[0].content.parts[0].text;
-            const info = JSON.parse(rawText.replace(/```json|```/g, '').trim());
-
-            const description = info.description || "Commercial vendor or merchant.";
-            const website = info.website || "";
-            const linkHtml = website ? `<br><a href="${website}" target="_blank" class="small text-primary">${website}</a>` : '';
-            
-            // Save to browser memory for instant sub-millisecond future hovers
-            localStorage.setItem(cacheKey, JSON.stringify({ description, website }));
-
-            popupEl.innerHTML = `<span class="vendor-badge">AI MERCHANT SUMMARY</span><br><strong>${cleanVendor}</strong><br><span>${description}</span>${linkHtml}`;
-        } catch (e) { 
-            console.error("Vendor Intelligence Fetch Error:", e);
-            popupEl.innerHTML = `<strong>${cleanVendor}</strong><br><span class="text-muted">Merchant details unavailable.</span>`; 
-        }
+        popupEl.innerHTML = `<strong>${cleanVendor}</strong><br><span class="text-muted">Merchant details pending post-processing.</span>`;
     }
 
     function filterStagingRows(filterType) {
