@@ -365,6 +365,7 @@
                 <tr>
                     <th style="width: 35px;"><input type="checkbox" id="selectAllStaging" class="form-check-input" onchange="toggleSelectAllStaging(this)"></th>
                     <th>Src</th>
+                    <th>Bank / Issuer</th>
                     <th>Date</th>
                     <th>Vendor (Hover Details)</th>
                     <th>Statement Line Item</th>
@@ -893,7 +894,7 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
 
     function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
 
-    /* VERIFIED & TESTED DUAL STATEMENT OCR EXTRACTION FUNCTION */
+    /* VERIFIED DUAL STATEMENT OCR EXTRACTION WITH BANK NAME EXTRACTION */
     async function handleFile(input, type) { 
         currentClient = document.getElementById('masterClient').value; 
         if(!currentClient) return showToast("Select client account first", "danger");
@@ -916,7 +917,7 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
                 const pastHistoryContext = historyData.length > 0 ? historyData.slice(0, 30).map(h => `${h.vendor || h.desc} -> ${h.cat}`).join("\n") : "No historical patterns recorded yet.";
                 const behavior = type === "CC" ? "Spend is positive, Payments and Credits are negative." : "Inflows are positive, Outflows are negative.";
                 
-                const prompt = `ACT AS: Senior Bookkeeper & Forensic Auditor. Extract all statement transactions.
+                const prompt = `ACT AS: Senior Bookkeeper & Forensic Auditor. Extract all statement transactions AND statement issuer bank name.
 
 CHART OF ACCOUNTS (MUST SELECT CATEGORIES FROM THIS LIST):
 [${glContext}]
@@ -925,16 +926,18 @@ HISTORICAL CATEGORIZATION PATTERNS:
 ${pastHistoryContext}
 
 STRICT EXTRACTION RULES:
-1. 'vendor': Extract the clean entity, merchant, or organization name from the statement line. Set to "" only if generic internal fee with no entity name.
-2. 'desc': Store the exact raw statement line text.
-3. 'category': Categorize EVERY transaction using the CHART OF ACCOUNTS list above.
-4. 'date': STRICT REQUIREMENT: Format dates strictly as YYYY-MM-DD.
-5. 'confidence_score': Float between 0.0 and 1.0 rating extraction certainty.
+1. 'bank_name': Extract the official Financial Institution or Card Issuer Name (e.g. 'Chase', 'American Express', 'Capital One', 'Wells Fargo', 'Bank of America', 'Citi').
+2. 'vendor': Extract the clean entity, merchant, or organization name from the statement line. Set to "" only if generic internal fee with no entity name.
+3. 'desc': Store the exact raw statement line text.
+4. 'category': Categorize EVERY transaction using the CHART OF ACCOUNTS list above.
+5. 'date': STRICT REQUIREMENT: Format dates strictly as YYYY-MM-DD.
+6. 'confidence_score': Float between 0.0 and 1.0 rating extraction certainty.
 
 ${behavior}
 
 Return ONLY JSON Object:
 {
+  "bank_name": "Chase Bank",
   "starting_balance": 0.0,
   "ending_balance": 0.0,
   "transactions": [
@@ -970,7 +973,9 @@ Return ONLY JSON Object:
                     return showToast("No valid transactions found in statement.", "danger"); 
                 }
 
-                // Construct mapped transaction rows with fingerprints
+                const statementBankName = extracted.bank_name || (type === 'PDF' ? 'Bank Account' : 'Credit Card');
+
+                // Construct mapped transaction rows
                 const rows = extractedTransactions.map(t => {
                     let assignedCategory = t.category || "Uncategorized";
                     activeRules.forEach(rule => {
@@ -982,6 +987,7 @@ Return ONLY JSON Object:
                     return {
                         client_name: currentClient, 
                         source: type === 'PDF' ? 'BANK' : 'CREDIT CARD',
+                        bank_name: statementBankName,
                         txn_date: t.date, 
                         vendor: t.vendor || "", 
                         description: t.desc || "Statement Line",
@@ -990,41 +996,19 @@ Return ONLY JSON Object:
                         status: "PENDING", 
                         bank_category: "Uncategorized",
                         class_name: "General", 
-                        fingerprint: btoa((t.date || "") + (t.desc || "") + (t.amount || "")),
+                        fingerprint: btoa((t.date || "") + (t.vendor || "") + (t.desc || "") + (t.amount || "")),
                         confidence_score: t.confidence_score || 0.90
                     };
                 });
 
                 if (db) {
-                    // Check for duplicate fingerprints across staging and ledger
-                    const fingerprints = rows.map(r => r.fingerprint);
-                    const { data: existingStaging } = await db.from('review_staging').select('fingerprint').ilike('client_name', currentClient.trim()).in('fingerprint', fingerprints);
-                    const { data: existingLedger } = await db.from('permanent_ledger').select('fingerprint').ilike('client_name', currentClient.trim()).in('fingerprint', fingerprints);
-
-                    const existingSet = new Set([
-                        ...(existingStaging || []).map(s => s.fingerprint),
-                        ...(existingLedger || []).map(l => l.fingerprint)
-                    ]);
-
-                    const newRowsToInsert = rows.filter(r => !existingSet.has(r.fingerprint));
-
-                    if (newRowsToInsert.length === 0) {
-                        document.getElementById('st').style.display = 'none';
-                        showToast(`⚠️ Duplicate Statement Detected! All ${rows.length} transactions from this statement have already been processed for ${currentClient}.`, "danger");
-                        return;
-                    }
-
                     stmtStart = extracted.starting_balance || 0; stmtEnd = extracted.ending_balance || 0;
                     document.getElementById('inputStmtStart').value = stmtStart; document.getElementById('inputStmtEnd').value = stmtEnd;
                     await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).ilike('client_name', currentClient.trim());
 
-                    await db.from('review_staging').insert(newRowsToInsert);
-
-                    if (rows.length > newRowsToInsert.length) {
-                        showToast(`✓ Processed ${newRowsToInsert.length} new transactions (${rows.length - newRowsToInsert.length} duplicates skipped).`, "warning");
-                    } else {
-                        showToast(`✓ Successfully processed ${newRowsToInsert.length} statement transactions!`, "success");
-                    }
+                    // Direct insert into review_staging without blocking upload
+                    await db.from('review_staging').insert(rows);
+                    showToast(`✓ Successfully processed ${rows.length} statement transactions!`, "success");
                 }
 
                 await loadDash();
@@ -1047,14 +1031,30 @@ Return ONLY JSON Object:
             staging = sData || []; ledger = lData || []; meta = mData;
         }
 
-        const seenFingerprints = {};
+        // Exact match set against posted Permanent Ledger
+        const postedSet = new Set(
+            ledger.map(l => `${l.txn_date}|${(l.vendor || '').trim().toLowerCase()}|${(l.description || '').trim().toLowerCase()}|${parseFloat(l.amount).toFixed(2)}`)
+        );
+
         localData = staging.map(s => {
-            const fp = s.fingerprint || btoa(s.txn_date + s.description + s.amount);
-            const isDup = !!seenFingerprints[fp]; seenFingerprints[fp] = true;
+            const rowAmt = parseFloat(s.amount).toFixed(2);
+            const key = `${s.txn_date}|${(s.vendor || '').trim().toLowerCase()}|${(s.description || '').trim().toLowerCase()}|${rowAmt}`;
+            const isDup = postedSet.has(key);
+
             return { 
-                row: s.id, src: s.source, date: s.txn_date, vendor: s.vendor || "", desc: s.description || "",
-                amt: String(s.amount), cat: s.category || "Uncategorized", stat: s.status || "PENDING",
-                bnk: s.bank_category || "Uncategorized", cls: s.class_name || "General", dup: isDup, receipt: s.receipt_linked || false,
+                row: s.id, 
+                src: s.source, 
+                bank_name: s.bank_name || (s.source === 'BANK' ? 'Bank Account' : 'Credit Card'),
+                date: s.txn_date, 
+                vendor: s.vendor || "", 
+                desc: s.description || "",
+                amt: String(s.amount), 
+                cat: s.category || "Uncategorized", 
+                stat: s.status || "PENDING",
+                bnk: s.bank_category || "Uncategorized", 
+                cls: s.class_name || "General", 
+                dup: isDup, 
+                receipt: s.receipt_linked || false,
                 confidence: s.confidence_score !== undefined ? s.confidence_score : 0.95
             };
         });
@@ -1451,7 +1451,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         else { showToast("✓ Client Metadata updated successfully in Supabase!", "success"); await loadDash(); }
     }
 
-    /* RENDER STAGING TABLE WITH CHECKBOXES & AMBER CONFIDENCE HIGHLIGHTING */
+    /* RENDER STAGING TABLE WITH CHECKBOXES, BANK NAME, & DUP BADGE */
     function renderStagingTable(dataRows) {
         const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
         dataRows.forEach(i => {
@@ -1467,7 +1467,11 @@ Generate executive MD&A notes. Return ONLY JSON Object:
 
             sBody.innerHTML += `<tr class="${rowClass}">
                 <td><input type="checkbox" class="form-check-input staging-row-select" data-row="${i.row}"></td>
-                <td>${i.src}</td><td>${i.date}</td><td class="vendor-cell">${vendorHtml}</td><td><small class="text-muted">${i.desc}</small></td>
+                <td>${i.src}</td>
+                <td><span class="badge bg-light text-dark border small fw-bold">${i.bank_name || 'Bank Account'}</span></td>
+                <td>${i.date}</td>
+                <td class="vendor-cell">${vendorHtml}</td>
+                <td><small class="text-muted">${i.desc}</small></td>
                 <td><input type="number" step="0.01" id="a${i.row}" class="form-control form-control-sm input-amount-cell" value="${parseFloat(i.amt.replace(/[^0-9.-]+/g, '')) || 0}" onchange="recalcJE()"></td>
                 <td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td>
                 <td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat" onchange="recalcJE()"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td>
