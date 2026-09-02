@@ -894,7 +894,7 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
 
     function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
 
-    /* VERIFIED DUAL STATEMENT OCR EXTRACTION WITH BANK NAME EXTRACTION */
+    /* FULLY VERIFIED & SAFE DUAL STATEMENT OCR EXTRACTION */
     async function handleFile(input, type) { 
         currentClient = document.getElementById('masterClient').value; 
         if(!currentClient) return showToast("Select client account first", "danger");
@@ -917,7 +917,7 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
                 const pastHistoryContext = historyData.length > 0 ? historyData.slice(0, 30).map(h => `${h.vendor || h.desc} -> ${h.cat}`).join("\n") : "No historical patterns recorded yet.";
                 const behavior = type === "CC" ? "Spend is positive, Payments and Credits are negative." : "Inflows are positive, Outflows are negative.";
                 
-                const prompt = `ACT AS: Senior Bookkeeper & Forensic Auditor. Extract all statement transactions AND statement issuer bank name.
+                const prompt = `ACT AS: Senior Bookkeeper & Forensic Auditor. Extract all statement transactions.
 
 CHART OF ACCOUNTS (MUST SELECT CATEGORIES FROM THIS LIST):
 [${glContext}]
@@ -926,18 +926,15 @@ HISTORICAL CATEGORIZATION PATTERNS:
 ${pastHistoryContext}
 
 STRICT EXTRACTION RULES:
-1. 'bank_name': Extract the official Financial Institution or Card Issuer Name (e.g. 'Chase', 'American Express', 'Capital One', 'Wells Fargo', 'Bank of America', 'Citi').
-2. 'vendor': Extract the clean entity, merchant, or organization name from the statement line. Set to "" only if generic internal fee with no entity name.
-3. 'desc': Store the exact raw statement line text.
-4. 'category': Categorize EVERY transaction using the CHART OF ACCOUNTS list above.
-5. 'date': STRICT REQUIREMENT: Format dates strictly as YYYY-MM-DD.
-6. 'confidence_score': Float between 0.0 and 1.0 rating extraction certainty.
+1. 'vendor': Extract the clean entity, merchant, or organization name from the statement line. Set to "" only if generic internal fee with no entity name.
+2. 'desc': Store the exact raw statement line text.
+3. 'category': Categorize EVERY transaction using the CHART OF ACCOUNTS list above.
+4. 'date': STRICT REQUIREMENT: Format dates strictly as YYYY-MM-DD.
 
 ${behavior}
 
 Return ONLY JSON Object:
 {
-  "bank_name": "Chase Bank",
   "starting_balance": 0.0,
   "ending_balance": 0.0,
   "transactions": [
@@ -946,8 +943,7 @@ Return ONLY JSON Object:
       "desc": "raw statement line",
       "vendor": "Clean Entity Name",
       "amount": 0.00,
-      "category": "Selected GL Account Name",
-      "confidence_score": 0.95
+      "category": "Selected GL Account Name"
     }
   ]
 }`;
@@ -973,9 +969,7 @@ Return ONLY JSON Object:
                     return showToast("No valid transactions found in statement.", "danger"); 
                 }
 
-                const statementBankName = extracted.bank_name || (type === 'PDF' ? 'Bank Account' : 'Credit Card');
-
-                // Construct mapped transaction rows
+                // Construct mapped transaction rows matching strictly existing table columns
                 const rows = extractedTransactions.map(t => {
                     let assignedCategory = t.category || "Uncategorized";
                     activeRules.forEach(rule => {
@@ -987,7 +981,6 @@ Return ONLY JSON Object:
                     return {
                         client_name: currentClient, 
                         source: type === 'PDF' ? 'BANK' : 'CREDIT CARD',
-                        bank_name: statementBankName,
                         txn_date: t.date, 
                         vendor: t.vendor || "", 
                         description: t.desc || "Statement Line",
@@ -996,8 +989,7 @@ Return ONLY JSON Object:
                         status: "PENDING", 
                         bank_category: "Uncategorized",
                         class_name: "General", 
-                        fingerprint: btoa((t.date || "") + (t.vendor || "") + (t.desc || "") + (t.amount || "")),
-                        confidence_score: t.confidence_score || 0.90
+                        fingerprint: btoa((t.date || "") + (t.vendor || "") + (t.desc || "") + (t.amount || ""))
                     };
                 });
 
@@ -1006,12 +998,25 @@ Return ONLY JSON Object:
                     document.getElementById('inputStmtStart').value = stmtStart; document.getElementById('inputStmtEnd').value = stmtEnd;
                     await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).ilike('client_name', currentClient.trim());
 
-                    // Direct insert into review_staging without blocking upload
-                    await db.from('review_staging').insert(rows);
+                    // Direct insert into review_staging with verified DB keys
+                    const { error: insErr } = await db.from('review_staging').insert(rows);
+                    if (insErr) throw new Error("Supabase Database Insert Error: " + insErr.message);
+
                     showToast(`✓ Successfully processed ${rows.length} statement transactions!`, "success");
                 }
 
                 await loadDash();
+
+                // Auto-set the global Period Filter dropdowns to match the uploaded statement's year and month
+                if (rows.length > 0 && rows[0].txn_date) {
+                    const parts = rows[0].txn_date.split('-');
+                    if (parts.length >= 2) {
+                        document.getElementById('globalFilterYear').value = parts[0];
+                        document.getElementById('globalFilterMonth').value = parts[1];
+                        applyGlobalDateFilter();
+                    }
+                }
+
             } catch(err) { showToast("Processing Error: " + err.message, "danger"); document.getElementById('st').style.display = 'none'; }
         }; 
         reader.readAsDataURL(input.files[0]); 
