@@ -6,7 +6,6 @@
     <title>LedgerIQ | Forensic Financial Automation</title>
     <!-- Dependencies -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- SheetJS for Excel Processing -->
@@ -95,21 +94,9 @@
         .recon-status-badge { font-size: 0.85rem; font-weight: 700; padding: 8px 16px; border-radius: 30px; margin-top: 12px; }
         .status-success { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
         .status-error { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
-
-        /* Confidence & Toast Styles */
-        .low-confidence-row { background-color: #FEF3C7 !important; }
-        .badge-confidence { font-size: 0.65rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
-        .badge-conf-high { background: #DCFCE7; color: #166534; }
-        .badge-conf-low { background: #FEE2E2; color: #991B1B; }
-
-        /* Bootstrap Toast Dock Position */
-        .toast-dock { position: fixed; top: 25px; right: 25px; z-index: 9999; }
     </style>
 </head>
 <body>
-
-<!-- Bootstrap Toast Dock -->
-<div class="toast-dock" id="toastContainer"></div>
 
 <nav class="navbar d-flex justify-content-between align-items-center">
     <div class="d-flex align-items-center gap-2">
@@ -337,12 +324,7 @@
     <div id="tab-review" class="bg-white p-4 rounded-xl shadow-sm">
         <div class="d-flex justify-content-between mb-3 align-items-center">
             <h5 class="fw-bold mb-0">Staging Queue</h5>
-            <div class="d-flex gap-2">
-                <button class="btn btn-outline-success btn-sm rounded-pill px-3 fw-semibold" onclick="bulkApproveSelected()">Approve Selected</button>
-                <button class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold" onclick="bulkPendingSelected()">Set Pending Selected</button>
-                <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold" onclick="bulkDeleteSelected()">Delete Selected</button>
-                <button class="btn btn-dark btn-sm rounded-pill px-4 fw-semibold sync-gate-btn" onclick="pushQBO()">Push Approved to QBO</button>
-            </div>
+            <button class="btn btn-dark btn-sm rounded-pill px-4 fw-semibold sync-gate-btn" onclick="pushQBO()">Push Approved to QBO</button>
         </div>
 
         <div class="d-flex gap-2 mb-3 align-items-center">
@@ -351,7 +333,6 @@
             <button class="btn btn-outline-secondary filter-btn" onclick="filterStagingRows('UNCAT')">Uncategorized Only</button>
             <button class="btn btn-outline-danger filter-btn" onclick="filterStagingRows('DUP')">Duplicates Only</button>
             <button class="btn btn-outline-primary filter-btn" onclick="filterStagingRows('HIGH')">High Value (> $1,000)</button>
-            <button class="btn btn-outline-warning filter-btn" onclick="filterStagingRows('LOWCONF')">Low Confidence Only</button>
         </div>
 
         <div class="batch-bar mb-4 row g-3">
@@ -363,7 +344,6 @@
         <table class="table table-hover table-sm align-middle">
             <thead class="table-light">
                 <tr>
-                    <th style="width: 35px;"><input type="checkbox" id="selectAllStaging" class="form-check-input" onchange="toggleSelectAllStaging(this)"></th>
                     <th>Src</th>
                     <th>Date</th>
                     <th>Vendor (Hover Details)</th>
@@ -373,7 +353,6 @@
                     <th>Stat</th>
                     <th>Bank Account</th>
                     <th>Class Allocation</th>
-                    <th>Conf. Score</th>
                     <th>Receipt OCR</th>
                 </tr>
             </thead>
@@ -551,43 +530,16 @@
 
     const CLASS_OPTIONS = ["General", "Marketing", "Sales", "Operations", "NY-Office"];
 
-    /* BOOTSTRAP TOAST NOTIFICATION HELPER */
-    function showToast(message, type = "success") {
-        const container = document.getElementById("toastContainer");
-        if (!container) return;
-
-        const bgClass = type === "success" ? "bg-success text-white" : (type === "error" || type === "danger" ? "bg-danger text-white" : "bg-dark text-white");
-        const toastId = "toast_" + Date.now();
-
-        const toastHtml = `
-            <div id="${toastId}" class="toast align-items-center ${bgClass} border-0 mb-2 shadow" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
-                    <div class="toast-body font-semibold small">
-                        ${message}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-            </div>
-        `;
-
-        container.insertAdjacentHTML("beforeend", toastHtml);
-        const toastEl = document.getElementById(toastId);
-        const bsToast = new bootstrap.Toast(toastEl, { delay: 4000 });
-        bsToast.show();
-
-        toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove());
-    }
-
     function lockKey() { 
         const keyVal = document.getElementById('master_gk').value;
-        if(!keyVal) return showToast("Please enter a Gemini API Key", "danger");
+        if(!keyVal) return alert("Please enter a Gemini API Key");
         localStorage.setItem('hca_gk', keyVal); 
         location.reload(); 
     }
 
     function connectToQuickBooks() {
         const selected = document.getElementById('masterClient').value;
-        if (!selected) return showToast("Please select a client account from the dropdown first!", "danger");
+        if (!selected) return alert("Please select a client account from the dropdown first!");
         localStorage.setItem('connecting_client', selected);
         const authUrl = `https://appcenter.intuit.com/connect/oauth2?client_id=${INTUIT_CLIENT_ID}&response_type=code&scope=com.intuit.quickbooks.accounting&redirect_uri=${encodeURIComponent(INTUIT_REDIRECT_URI)}&state=${encodeURIComponent(selected)}`;
         window.location.href = authUrl;
@@ -595,14 +547,14 @@
 
     function generateAuthorizationLink() {
         const cName = document.getElementById('n').value.trim();
-        if(!cName) return showToast("Please enter the Company Legal Name first", "danger");
+        if(!cName) return alert("Please enter the Company Legal Name first");
         const directIntuitUrl = `https://appcenter.intuit.com/connect/oauth2?client_id=${INTUIT_CLIENT_ID}&response_type=code&scope=com.intuit.quickbooks.accounting&redirect_uri=${encodeURIComponent(INTUIT_REDIRECT_URI)}&state=${encodeURIComponent(cName)}`;
         navigator.clipboard.writeText(directIntuitUrl);
-        showToast("✓ Direct Intuit Link copied to clipboard!", "success");
+        alert(`✓ Direct Intuit Link copied to clipboard!\n\nSend this link to your client:\n${directIntuitUrl}`);
     }
 
     function sendAuthEmailFromMeta() {
-        if (!currentClient) return showToast("Please select a client first.", "danger");
+        if (!currentClient) return alert("Please select a client first.");
         const directIntuitUrl = `https://appcenter.intuit.com/connect/oauth2?client_id=${INTUIT_CLIENT_ID}&response_type=code&scope=com.intuit.quickbooks.accounting&redirect_uri=${encodeURIComponent(INTUIT_REDIRECT_URI)}&state=${encodeURIComponent(currentClient)}`;
         navigator.clipboard.writeText(directIntuitUrl);
 
@@ -614,25 +566,25 @@
                 `Hello,\n\nPlease click the official Intuit authorization link below to connect your QuickBooks Online company account for ${currentClient}:\n\n` +
                 `${directIntuitUrl}\n\nThank you,\nLedgerIQ Support Team`;
         }
-        showToast("✓ Direct Intuit authorization link generated below and copied to clipboard!", "success");
+        alert(`✓ Direct Intuit authorization link generated below and copied to clipboard!`);
     }
 
     async function disconnectQuickBooks() {
         initSupabase();
-        if (!currentClient || !db) return showToast("Please select a client account first", "danger");
+        if (!currentClient || !db) return alert("Please select a client account first");
         if (!confirm(`Are you sure you want to disconnect QuickBooks for ${currentClient}?`)) return;
 
         document.getElementById('st').style.display = 'block';
         const { error } = await db.from('client_metadata').update({ qbo_id: null, qbo_refresh_token: null }).ilike('client_name', currentClient.trim());
         document.getElementById('st').style.display = 'none';
 
-        if (error) showToast("Disconnection Error: " + error.message, "danger");
-        else { showToast(`✓ Successfully disconnected QuickBooks for ${currentClient}`, "success"); await pingStatus(); }
+        if (error) alert("Disconnection Error: " + error.message);
+        else { alert(`✓ Successfully disconnected QuickBooks for ${currentClient}`); await pingStatus(); }
     }
 
     async function syncQBOAccounts() {
         const targetClient = currentClient || document.getElementById('n').value.trim() || document.getElementById('masterClient').value;
-        if (!targetClient) return showToast("Please select or enter a client name first.", "danger");
+        if (!targetClient) return alert("Please select or enter a client name first.");
 
         document.getElementById('st').style.display = 'block';
         try {
@@ -651,9 +603,9 @@
             const badge = document.getElementById('glCountBadge');
             if (badge) { badge.style.display = 'block'; badge.innerText = `✓ Synced ${result.count} Accounts Live from QBO`; }
 
-            showToast(`✓ Success! Retrieved ${result.count} Chart of Accounts Live from QBO.`, "success");
+            alert(`✓ Success! Retrieved ${result.count} Chart of Accounts & Balances straight from QuickBooks Online.`);
             if (document.getElementById('view-dash').style.display !== 'none') await loadDash();
-        } catch (err) { showToast("QBO Account Sync Error: " + err.message, "danger"); } 
+        } catch (err) { alert("QBO Account Sync Error: " + err.message); } 
         finally { document.getElementById('st').style.display = 'none'; }
     }
 
@@ -680,9 +632,9 @@
 
     async function save() { 
         initSupabase();
-        if(!db) return showToast("Database connection uninitialized", "danger");
+        if(!db) return alert("Database connection uninitialized");
         const cName = document.getElementById('n').value.trim();
-        if(!cName) return showToast("Company Legal Name is required", "danger");
+        if(!cName) return alert("Company Legal Name is required");
 
         document.getElementById('st').style.display = 'block';
         const payload = {
@@ -694,8 +646,8 @@
         const { error } = await db.from('client_metadata').upsert(payload, { onConflict: 'client_name' });
         document.getElementById('st').style.display = 'none';
 
-        if (error) showToast("Database Save Error: " + error.message, "danger");
-        else { showToast("✓ Client profile saved successfully!", "success"); showPane('launchpad'); await getClientList(); document.getElementById('masterClient').value = cName; pingStatus(); }
+        if (error) alert("Database Save Error: " + error.message);
+        else { alert("✓ Client profile saved successfully!"); showPane('launchpad'); await getClientList(); document.getElementById('masterClient').value = cName; pingStatus(); }
     }
 
     async function pingStatus() {
@@ -726,7 +678,7 @@
         initSupabase();
         if(!db) return;
         const { data: approved } = await db.from('review_staging').select('*').ilike('client_name', currentClient.trim()).eq('status', 'APPROVED');
-        if(!approved || approved.length === 0) return showToast("No rows marked as APPROVED.", "danger");
+        if(!approved || approved.length === 0) return alert("No rows marked as APPROVED.");
 
         document.getElementById('st').style.display = 'block';
         try {
@@ -739,10 +691,10 @@
             if (!res.ok || !result.success) throw new Error(result.error || "Edge Function processing error");
 
             await loadDash();
-            showToast(`✓ Success! Journal Entry #${result.journalEntryId} posted to QBO!`, "success");
+            alert(`✓ Success! Journal Entry #${result.journalEntryId} posted to QuickBooks Online!`);
         } catch (err) {
             document.getElementById('st').style.display = 'none';
-            showToast(`⚠️ Sync Failed! Details: ${err.message}`, "danger");
+            alert(`⚠️ Sync Failed! Rows remain safely in Staging Queue.\n\nDetails: ${err.message}`);
         }
     }
 
@@ -750,7 +702,7 @@
         const file = input.files[0];
         if (!file) return;
         const apiKey = localStorage.getItem('hca_gk');
-        if (!apiKey) return showToast("Missing Gemini API Key. Please authenticate.", "danger");
+        if (!apiKey) return alert("Missing Gemini API Key. Please authenticate.");
 
         document.getElementById('st').style.display = 'block';
         const reader = new FileReader();
@@ -777,8 +729,8 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
                 XLSX.utils.book_append_sheet(wb, ws, "Converted Statement");
                 XLSX.writeFile(wb, file.name.replace(/\.[^/.]+$/, "") + "_Converted.xlsx");
                 document.getElementById('st').style.display = 'none';
-                showToast("✓ PDF converted to Excel successfully!", "success");
-            } catch (err) { showToast("PDF to Excel Conversion Error: " + err.message, "danger"); document.getElementById('st').style.display = 'none'; }
+                alert("✓ PDF converted to Excel successfully!");
+            } catch (err) { alert("PDF to Excel Conversion Error: " + err.message); document.getElementById('st').style.display = 'none'; }
         };
         reader.readAsDataURL(file);
     }
@@ -794,7 +746,7 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
                 const workbook = XLSX.read(data, { type: 'array' });
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-                if (!jsonData || jsonData.length === 0) { document.getElementById('st').style.display = 'none'; return showToast("Excel file contains no data.", "danger"); }
+                if (!jsonData || jsonData.length === 0) { document.getElementById('st').style.display = 'none'; return alert("Excel file contains no data."); }
 
                 const headers = jsonData[0], bodyRows = jsonData.slice(1);
                 const { jsPDF } = window.jspdf;
@@ -809,8 +761,8 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
                 });
                 doc.save(file.name.replace(/\.[^/.]+$/, "") + "_Converted.pdf");
                 document.getElementById('st').style.display = 'none';
-                showToast("✓ Excel converted to PDF successfully!", "success");
-            } catch (err) { showToast("Excel to PDF Conversion Error: " + err.message, "danger"); document.getElementById('st').style.display = 'none'; }
+                alert("✓ Excel converted to PDF successfully!");
+            } catch (err) { alert("Excel to PDF Conversion Error: " + err.message); document.getElementById('st').style.display = 'none'; }
         };
         reader.readAsArrayBuffer(file);
     }
@@ -846,8 +798,8 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
             appGLOptions = lines.map(l => l.split(',')[0].replace(/"/g, '').trim()).filter(v => v && v.toLowerCase() !== "account name" && v.toLowerCase() !== "account");
             const { error } = await db.from('client_metadata').update({ gl_list: appGLOptions.join(",") }).ilike('client_name', currentClient.trim());
             document.getElementById('st').style.display = 'none';
-            if (error) showToast("Error updating GL List: " + error.message, "danger");
-            else { showToast(`Successfully updated ${appGLOptions.length} GL Accounts.`, "success"); await loadDash(); }
+            if (error) alert("Error updating GL List: " + error.message);
+            else { alert(`Successfully updated ${appGLOptions.length} GL Accounts.`); await loadDash(); }
         };
         reader.readAsText(file);
     }
@@ -870,7 +822,7 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
 
     function addRuleRow() {
         const kw = document.getElementById('ruleKeyword').value.trim(); const acc = document.getElementById('ruleAccount').value;
-        if(!kw) return showToast("Enter a keyword", "danger");
+        if(!kw) return alert("Enter a keyword");
         activeRules.push({ client_name: currentClient, keyword: kw, target_account: acc });
         document.getElementById('ruleKeyword').value = ''; renderRulesUI();
     }
@@ -888,20 +840,20 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
             const rows = activeRules.map(r => ({ client_name: currentClient, keyword: r.keyword, target_account: r.target_account }));
             await db.from('category_rules').insert(rows);
         }
-        document.getElementById('st').style.display = 'none'; showToast("Rules matrix saved.", "success");
+        document.getElementById('st').style.display = 'none'; alert("Rules saved.");
     }
 
     function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
 
     async function handleFile(input, type) { 
         currentClient = document.getElementById('masterClient').value; 
-        if(!currentClient) return showToast("Select client account first", "danger");
+        if(!currentClient) return alert("Select client account first");
 
         document.getElementById('st').style.display = 'block'; 
         const reader = new FileReader(); reader.onload = async (e) => { 
             try {
                 const pdfData = e.target.result.split(',')[1]; const apiKey = localStorage.getItem('hca_gk');
-                if (!apiKey) { document.getElementById('st').style.display = 'none'; return showToast("Missing Gemini API Key. Please authenticate.", "danger"); }
+                if (!apiKey) { document.getElementById('st').style.display = 'none'; return alert("Missing Gemini API Key. Please authenticate."); }
 
                 initSupabase();
                 if (db) {
@@ -915,7 +867,6 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
                 const pastHistoryContext = historyData.length > 0 ? historyData.slice(0, 30).map(h => `${h.vendor || h.desc} -> ${h.cat}`).join("\n") : "No historical patterns recorded yet.";
                 const behavior = type === "CC" ? "Spend is positive, Payments and Credits are negative." : "Inflows are positive, Outflows are negative.";
                 
-                /* PROMPT WITH AI CONFIDENCE SCORING (0.0 to 1.0) */
                 const prompt = `ACT AS: Senior Bookkeeper & Forensic Auditor. Extract all statement transactions.
 
 CHART OF ACCOUNTS (MUST SELECT CATEGORIES FROM THIS LIST):
@@ -929,7 +880,6 @@ STRICT EXTRACTION RULES:
 2. 'desc': Store the exact raw statement line text.
 3. 'category': Categorize EVERY transaction using the CHART OF ACCOUNTS list above.
 4. 'date': STRICT REQUIREMENT: Format dates strictly as YYYY-MM-DD.
-5. 'confidence_score': Float between 0.0 and 1.0 rating your extraction and categorization certainty for each row.
 
 ${behavior}
 
@@ -943,8 +893,7 @@ Return ONLY JSON Object:
       "desc": "raw statement line",
       "vendor": "Clean Entity Name",
       "amount": 0.00,
-      "category": "Selected GL Account Name",
-      "confidence_score": 0.95
+      "category": "Selected GL Account Name"
     }
   ]
 }`;
@@ -961,14 +910,12 @@ Return ONLY JSON Object:
                 const rawText = jsonRes.candidates[0].content.parts[0].text;
                 const extracted = JSON.parse(rawText.replace(/```json|```/g, '').trim());
 
-                const extractedTransactions = extracted.transactions || [];
-                if (extractedTransactions.length === 0) { 
-                    document.getElementById('st').style.display = 'none'; 
-                    return showToast("No valid transactions found in statement.", "danger"); 
-                }
+                stmtStart = extracted.starting_balance || 0; stmtEnd = extracted.ending_balance || 0;
+                document.getElementById('inputStmtStart').value = stmtStart; document.getElementById('inputStmtEnd').value = stmtEnd;
 
-                // Construct mapped transaction rows with fingerprints
-                const rows = extractedTransactions.map(t => {
+                if (db) await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).ilike('client_name', currentClient.trim());
+
+                const rows = (extracted.transactions || []).map(t => {
                     let assignedCategory = t.category || "Uncategorized";
                     activeRules.forEach(rule => {
                         const targetText = ((t.vendor || "") + " " + (t.desc || "")).toLowerCase();
@@ -980,56 +927,21 @@ Return ONLY JSON Object:
                         client_name: currentClient, source: type === 'PDF' ? 'BANK' : 'CREDIT CARD',
                         txn_date: t.date, vendor: t.vendor || "", description: t.desc || "Statement Line",
                         amount: t.amount, category: assignedCategory, status: "PENDING", bank_category: "Uncategorized",
-                        class_name: "General", fingerprint: btoa((t.date || "") + (t.desc || "") + (t.amount || "")),
-                        confidence_score: t.confidence_score || 0.90
+                        class_name: "General", fingerprint: btoa((t.date || "") + (t.desc || "") + (t.amount || ""))
                     };
                 });
 
-                if (db) {
-                    // 1. Check for duplicates against permanent_ledger and review_staging
-                    const fingerprints = rows.map(r => r.fingerprint);
-
-                    const { data: existingStaging } = await db.from('review_staging').select('fingerprint').ilike('client_name', currentClient.trim()).in('fingerprint', fingerprints);
-                    const { data: existingLedger } = await db.from('permanent_ledger').select('fingerprint').ilike('client_name', currentClient.trim()).in('fingerprint', fingerprints);
-
-                    const existingSet = new Set([
-                        ...(existingStaging || []).map(s => s.fingerprint),
-                        ...(existingLedger || []).map(l => l.fingerprint)
-                    ]);
-
-                    const newRowsToInsert = rows.filter(r => !existingSet.has(r.fingerprint));
-
-                    // 2. Handle 100% duplicate uploads
-                    if (newRowsToInsert.length === 0) {
-                        document.getElementById('st').style.display = 'none';
-                        showToast(`⚠️ Duplicate Statement Detected! All ${rows.length} transactions from this statement have already been processed for ${currentClient}.`, "danger");
-                        return; // Stay on Launchpad, do not navigate to empty dashboard
-                    }
-
-                    // 3. Update statement target balances
-                    stmtStart = extracted.starting_balance || 0; stmtEnd = extracted.ending_balance || 0;
-                    document.getElementById('inputStmtStart').value = stmtStart; document.getElementById('inputStmtEnd').value = stmtEnd;
-                    await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).ilike('client_name', currentClient.trim());
-
-                    // 4. Insert only new transactions
-                    await db.from('review_staging').insert(newRowsToInsert);
-
-                    if (rows.length > newRowsToInsert.length) {
-                        showToast(`✓ Processed ${newRowsToInsert.length} new transactions (${rows.length - newRowsToInsert.length} duplicates skipped).`, "warning");
-                    } else {
-                        showToast(`✓ Successfully processed ${newRowsToInsert.length} statement transactions!`, "success");
-                    }
-                }
-
+                if (rows.length === 0) { document.getElementById('st').style.display = 'none'; return alert("No valid transactions found in statement."); }
+                if (db) await db.from('review_staging').upsert(rows, { onConflict: 'client_name,fingerprint', ignoreDuplicates: true });
                 await loadDash();
-            } catch(err) { showToast("Processing Error: " + err.message, "danger"); document.getElementById('st').style.display = 'none'; }
+            } catch(err) { alert("Processing Error: " + err.message); document.getElementById('st').style.display = 'none'; }
         }; 
         reader.readAsDataURL(input.files[0]); 
     }
 
     async function loadDash() { 
         currentClient = document.getElementById('masterClient').value; 
-        if(!currentClient) return showToast("Select client account first", "danger"); 
+        if(!currentClient) return alert("Select client account first"); 
 
         document.getElementById('st').style.display = 'block'; 
         initSupabase();
@@ -1048,8 +960,7 @@ Return ONLY JSON Object:
             return { 
                 row: s.id, src: s.source, date: s.txn_date, vendor: s.vendor || "", desc: s.description || "",
                 amt: String(s.amount), cat: s.category || "Uncategorized", stat: s.status || "PENDING",
-                bnk: s.bank_category || "Uncategorized", cls: s.class_name || "General", dup: isDup, receipt: s.receipt_linked || false,
-                confidence: s.confidence_score !== undefined ? s.confidence_score : 0.95
+                bnk: s.bank_category || "Uncategorized", cls: s.class_name || "General", dup: isDup, receipt: s.receipt_linked || false
             };
         });
 
@@ -1093,7 +1004,7 @@ Return ONLY JSON Object:
                     <div class="card p-3 bg-light border">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="fw-bold small text-primary">Formatted Client Email Message</span>
-                            <button class="btn btn-xs btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('emailTextToCopy').value); showToast('Message copied!', 'success');">Copy Text</button>
+                            <button class="btn btn-xs btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('emailTextToCopy').value); alert('Message copied to clipboard!');">Copy Text</button>
                         </div>
                         <textarea id="emailTextToCopy" class="form-control form-control-sm font-monospace" rows="8" readonly></textarea>
                     </div>
@@ -1284,6 +1195,7 @@ Return ONLY JSON Object:
 
         document.getElementById('mdaPeriodTitle').innerText = `${month}/${year}`;
 
+        // 1. Check if MD&A commentary already exists in Supabase
         const { data } = await db.from('mda_notes')
             .select('*')
             .ilike('client_name', currentClient.trim())
@@ -1299,6 +1211,7 @@ Return ONLY JSON Object:
             return;
         }
 
+        // 2. If no saved notes exist, trigger Gemini to generate them directly from fetched dataset
         const apiKey = localStorage.getItem('hca_gk');
         if (!apiKey) return;
 
@@ -1341,6 +1254,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
             document.getElementById('mda_exp').value = generated.expense_commentary || "";
             document.getElementById('mda_actions').value = generated.action_items || "";
 
+            // Auto-persist generated commentary to Supabase
             await db.from('mda_notes').upsert({
                 client_name: currentClient,
                 period_year: year,
@@ -1380,8 +1294,8 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         };
 
         const { error } = await db.from('mda_notes').upsert(payload, { onConflict: 'client_name,period_year,period_month' });
-        if (error) showToast("Error saving MD&A notes: " + error.message, "danger");
-        else showToast(`✓ MD&A Notes saved successfully for period ${month}/${year}!`, "success");
+        if (error) alert("Error saving MD&A notes: " + error.message);
+        else alert(`✓ MD&A Notes saved successfully for period ${month}/${year}!`);
     }
 
     async function updateStatementTargetBalances() {
@@ -1441,11 +1355,10 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         const { error } = await db.from('client_metadata').update({ nature: newNature, client_email: newEmail, gl_list: newGL }).ilike('client_name', currentClient.trim());
         document.getElementById('st').style.display = 'none';
 
-        if (error) showToast("Metadata Update Error: " + error.message, "danger");
-        else { showToast("✓ Client Metadata updated successfully in Supabase!", "success"); await loadDash(); }
+        if (error) alert("Metadata Update Error: " + error.message);
+        else { alert("✓ Client Metadata updated successfully in Supabase!"); await loadDash(); }
     }
 
-    /* RENDER STAGING TABLE WITH CHECKBOXES & AMBER CONFIDENCE HIGHLIGHTING */
     function renderStagingTable(dataRows) {
         const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
         dataRows.forEach(i => {
@@ -1454,20 +1367,13 @@ Generate executive MD&A notes. Return ONLY JSON Object:
             const popupId = `vpop_${i.row}`;
             const vendorHtml = (i.vendor && i.vendor.trim() !== "") ? `<span class="vendor-hover" onmouseenter="fetchVendorIntelligence('${i.vendor.replace(/'/g, "\\'")}', '${popupId}')">${i.vendor} ${dupBadge}</span><div class="vendor-card-popup" id="${popupId}">Fetching merchant insights...</div>` : `<span class="text-muted small">N/A</span> ${dupBadge}`;
 
-            const isLowConf = i.confidence !== undefined && parseFloat(i.confidence) < 0.8;
-            const rowClass = isLowConf ? "low-confidence-row" : "";
-            const confBadgeClass = isLowConf ? "badge-conf-low" : "badge-conf-high";
-            const confDisplay = i.confidence !== undefined ? `<span class="badge-confidence ${confBadgeClass}">${(parseFloat(i.confidence) * 100).toFixed(0)}%</span>` : `<span class="badge-confidence badge-conf-high">95%</span>`;
-
-            sBody.innerHTML += `<tr class="${rowClass}">
-                <td><input type="checkbox" class="form-check-input staging-row-select" data-row="${i.row}"></td>
+            sBody.innerHTML += `<tr>
                 <td>${i.src}</td><td>${i.date}</td><td class="vendor-cell">${vendorHtml}</td><td><small class="text-muted">${i.desc}</small></td>
                 <td><input type="number" step="0.01" id="a${i.row}" class="form-control form-control-sm input-amount-cell" value="${parseFloat(i.amt.replace(/[^0-9.-]+/g, '')) || 0}" onchange="recalcJE()"></td>
                 <td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td>
                 <td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat" onchange="recalcJE()"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td>
                 <td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td>
                 <td><select id="l${i.row}" class="form-select form-select-sm">${CLASS_OPTIONS.map(c => `<option value="${c}" ${i.cls==c?'selected':''}>${c}</option>`).join('')}</select></td>
-                <td>${confDisplay}</td>
                 <td>${receiptCell}</td>
             </tr>`;
         });
@@ -1476,58 +1382,6 @@ Generate executive MD&A notes. Return ONLY JSON Object:
             if(document.getElementById('c'+i.row)) document.getElementById('c'+i.row).value = i.cat || "Uncategorized"; 
             if(document.getElementById('b'+i.row)) document.getElementById('b'+i.row).value = i.bnk || "Uncategorized"; 
         });
-    }
-
-    /* MULTI-SELECT CHECKBOX & BULK ACTIONS CONTROLLER */
-    function toggleSelectAllStaging(masterBox) {
-        const checkboxes = document.querySelectorAll('.staging-row-select');
-        checkboxes.forEach(cb => cb.checked = masterBox.checked);
-    }
-
-    function getSelectedStagingRowIds() {
-        const selected = [];
-        document.querySelectorAll('.staging-row-select:checked').forEach(cb => {
-            const rId = cb.getAttribute('data-row');
-            if (rId) selected.push(parseInt(rId));
-        });
-        return selected;
-    }
-
-    function bulkApproveSelected() {
-        const ids = getSelectedStagingRowIds();
-        if (ids.length === 0) return showToast("Please select at least one row first.", "danger");
-        ids.forEach(id => {
-            const selectEl = document.getElementById('s' + id);
-            if (selectEl) selectEl.value = "APPROVED";
-        });
-        recalcJE();
-        showToast(`✓ Marked ${ids.length} rows as APPROVED`, "success");
-    }
-
-    function bulkPendingSelected() {
-        const ids = getSelectedStagingRowIds();
-        if (ids.length === 0) return showToast("Please select at least one row first.", "danger");
-        ids.forEach(id => {
-            const selectEl = document.getElementById('s' + id);
-            if (selectEl) selectEl.value = "PENDING";
-        });
-        recalcJE();
-        showToast(`✓ Marked ${ids.length} rows as PENDING`, "success");
-    }
-
-    async function bulkDeleteSelected() {
-        const ids = getSelectedStagingRowIds();
-        if (ids.length === 0) return showToast("Please select at least one row to delete.", "danger");
-        if (!confirm(`Are you sure you want to delete ${ids.length} selected row(s)?`)) return;
-
-        initSupabase();
-        if (db) {
-            document.getElementById('st').style.display = 'block';
-            await db.from('review_staging').delete().in('id', ids);
-            document.getElementById('st').style.display = 'none';
-            showToast(`✓ Deleted ${ids.length} selected row(s)`, "success");
-            await loadDash();
-        }
     }
 
     async function fetchVendorIntelligence(vendorName, targetElementId) {
@@ -1565,7 +1419,6 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         else if(filterType === 'UNCAT') renderStagingTable(filterBySelectedPeriod(localData.filter(r => r.cat === 'Uncategorized')));
         else if(filterType === 'DUP') renderStagingTable(filterBySelectedPeriod(localData.filter(r => r.dup)));
         else if(filterType === 'HIGH') renderStagingTable(filterBySelectedPeriod(localData.filter(r => Math.abs(parseFloat(r.amt)) > 1000)));
-        else if(filterType === 'LOWCONF') renderStagingTable(filterBySelectedPeriod(localData.filter(r => r.confidence !== undefined && parseFloat(r.confidence) < 0.8)));
     }
 
     async function handleReceiptUpload(input, rowId) {
@@ -1590,12 +1443,12 @@ Generate executive MD&A notes. Return ONLY JSON Object:
 
                 if(Math.abs(targetAmt - matchAmt) <= (targetAmt * 0.02)) {
                     initSupabase(); if (db) await db.from('review_staging').update({ receipt_linked: true }).eq('id', rowId);
-                    showToast("✓ Receipt Verified & Linked!", "success"); await loadDash();
+                    alert("✓ Receipt Verified & Linked!"); await loadDash();
                 } else {
-                    showToast(`Mismatch! Statement: $${targetAmt} vs Receipt: $${matchAmt}`, "danger");
+                    alert(`Mismatch! Statement: $${targetAmt} vs Receipt: $${matchAmt}`);
                     document.getElementById('st').style.display = 'none';
                 }
-            } catch(err) { showToast("Receipt OCR Error: " + err.message, "danger"); document.getElementById('st').style.display = 'none'; }
+            } catch(err) { alert("Receipt OCR Error: " + err.message); document.getElementById('st').style.display = 'none'; }
         };
         reader.readAsDataURL(input.files[0]);
     }
@@ -1603,7 +1456,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
     function applyBatch() {
         const query = document.getElementById('batchSearchInput').value.toLowerCase();
         const newCat = document.getElementById('batchCategorySelect').value;
-        if(!query) return showToast("Please enter a search filter query", "danger");
+        if(!query) return alert("Please enter a search filter query");
         localData.forEach(item => { if((item.vendor + " " + item.desc).toLowerCase().includes(query)) { const target = document.getElementById('c' + item.row); if(target) target.value = newCat; } });
         recalcJE();
     }
@@ -1776,7 +1629,6 @@ Generate executive MD&A notes. Return ONLY JSON Object:
             }).eq('id', item.row);
         }
         await loadDash();
-        showToast("✓ Saved all staging updates!", "success");
     }
 
     function showPane(p) { document.querySelectorAll('.view-pane, #view-launchpad').forEach(el => el.style.display = 'none'); document.getElementById('view-' + p).style.display = 'block'; }
