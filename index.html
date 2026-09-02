@@ -368,7 +368,7 @@
                 <button class="btn btn-outline-success btn-sm rounded-pill px-3 fw-semibold" onclick="bulkApproveSelected()">Approve Selected</button>
                 <button class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold" onclick="bulkPendingSelected()">Set Pending Selected</button>
                 <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold" onclick="bulkDeleteSelected()">Delete Selected</button>
-                <button class="btn btn-dark btn-sm rounded-pill px-4 fw-semibold sync-gate-btn" onclick="pushQBO()">Push Approved to QBO</button>
+                <button id="btnPushQBO" class="btn btn-dark btn-sm rounded-pill px-4 fw-semibold sync-gate-btn" onclick="pushQBO()">Push Approved to QBO</button>
             </div>
         </div>
 
@@ -857,7 +857,10 @@
         const { data: approved } = await db.from('review_staging').select('*').ilike('client_name', currentClient.trim()).eq('status', 'APPROVED');
         if(!approved || approved.length === 0) return showToast("No rows marked as APPROVED.", "danger");
 
+        const pushBtn = document.getElementById('btnPushQBO');
+        if (pushBtn) pushBtn.disabled = true;
         document.getElementById('st').style.display = 'block';
+
         try {
             const res = await fetch("https://oxhwhxnoysowuokdhmtr.supabase.co/functions/v1/qbo-sync", {
                 method: "POST",
@@ -872,6 +875,8 @@
         } catch (err) {
             document.getElementById('st').style.display = 'none';
             showToast(`⚠️ Sync Failed! Details: ${err.message}`, "danger");
+        } finally {
+            if (pushBtn) pushBtn.disabled = false;
         }
     }
 
@@ -1022,7 +1027,7 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
 
     function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
 
-    /* FULLY VERIFIED & SAFE DUAL STATEMENT OCR EXTRACTION */
+    /* FULLY VERIFIED & SAFE DUAL STATEMENT OCR EXTRACTION WITH UTF-8 FINGERPRINTING */
     async function handleFile(input, type) { 
         currentClient = document.getElementById('masterClient').value; 
         if(!currentClient) return showToast("Select client account first", "danger");
@@ -1110,6 +1115,10 @@ Return ONLY JSON Object:
                     });
                     if (assignedCategory && assignedCategory !== "Uncategorized" && !appGLOptions.includes(assignedCategory)) appGLOptions.push(assignedCategory);
 
+                    // SAFE UTF-8 CHARACTER ENCODING FOR FINGERPRINT
+                    const rawFingerprintString = (t.date || "") + (t.vendor || "") + (t.desc || "") + (t.amount || "");
+                    const safeFingerprint = btoa(unescape(encodeURIComponent(rawFingerprintString)));
+
                     return {
                         client_name: currentClient, 
                         source: type === 'PDF' ? 'BANK' : 'CREDIT CARD',
@@ -1121,7 +1130,7 @@ Return ONLY JSON Object:
                         status: "PENDING", 
                         bank_category: "Uncategorized",
                         class_name: "General", 
-                        fingerprint: btoa((t.date || "") + (t.vendor || "") + (t.desc || "") + (t.amount || ""))
+                        fingerprint: safeFingerprint
                     };
                 });
 
