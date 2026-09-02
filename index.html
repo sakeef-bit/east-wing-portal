@@ -917,7 +917,7 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
                 const pastHistoryContext = historyData.length > 0 ? historyData.slice(0, 30).map(h => `${h.vendor || h.desc} -> ${h.cat}`).join("\n") : "No historical patterns recorded yet.";
                 const behavior = type === "CC" ? "Spend is positive, Payments and Credits are negative." : "Inflows are positive, Outflows are negative.";
                 
-                const prompt = `ACT AS: Senior Bookkeeper & Forensic Auditor. Extract all statement transactions.
+                const prompt = `ACT AS: Senior Bookkeeper & Forensic Auditor. Extract all statement transactions AND statement issuer bank name.
 
 CHART OF ACCOUNTS (MUST SELECT CATEGORIES FROM THIS LIST):
 [${glContext}]
@@ -926,15 +926,17 @@ HISTORICAL CATEGORIZATION PATTERNS:
 ${pastHistoryContext}
 
 STRICT EXTRACTION RULES:
-1. 'vendor': Extract the clean entity, merchant, or organization name from the statement line. Set to "" only if generic internal fee with no entity name.
-2. 'desc': Store the exact raw statement line text.
-3. 'category': Categorize EVERY transaction using the CHART OF ACCOUNTS list above.
-4. 'date': STRICT REQUIREMENT: Format dates strictly as YYYY-MM-DD.
+1. 'bank_name': Extract the exact financial institution or card issuer legal header name printed at the top of the statement (e.g., 'Sierra Peak Bank', 'Chase', 'American Express', 'Capital One', 'Wells Fargo').
+2. 'vendor': Extract the clean entity, merchant, or organization name from the statement line. Set to "" only if generic internal fee with no entity name.
+3. 'desc': Store the exact raw statement line text.
+4. 'category': Categorize EVERY transaction using the CHART OF ACCOUNTS list above.
+5. 'date': STRICT REQUIREMENT: Format dates strictly as YYYY-MM-DD.
 
 ${behavior}
 
 Return ONLY JSON Object:
 {
+  "bank_name": "Sierra Peak Bank",
   "starting_balance": 0.0,
   "ending_balance": 0.0,
   "transactions": [
@@ -968,6 +970,8 @@ Return ONLY JSON Object:
                     document.getElementById('st').style.display = 'none'; 
                     return showToast("No valid transactions found in statement.", "danger"); 
                 }
+
+                const extractedBankName = extracted.bank_name || (type === 'PDF' ? 'Bank Account' : 'Credit Card');
 
                 // Construct mapped transaction rows matching strictly existing table columns
                 const rows = extractedTransactions.map(t => {
@@ -1004,6 +1008,9 @@ Return ONLY JSON Object:
 
                     showToast(`✓ Successfully processed ${rows.length} statement transactions!`, "success");
                 }
+
+                // In-memory cache for bank_name associated with this batch session
+                window.lastExtractedBankName = extractedBankName;
 
                 await loadDash();
 
@@ -1049,7 +1056,7 @@ Return ONLY JSON Object:
             return { 
                 row: s.id, 
                 src: s.source, 
-                bank_name: s.bank_name || (s.source === 'BANK' ? 'Bank Account' : 'Credit Card'),
+                bank_name: s.bank_name || window.lastExtractedBankName || (s.source === 'BANK' ? 'Bank Account' : 'Credit Card'),
                 date: s.txn_date, 
                 vendor: s.vendor || "", 
                 desc: s.description || "",
