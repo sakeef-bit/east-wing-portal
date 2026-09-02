@@ -991,6 +991,7 @@ Return ONLY JSON Object:
                     return {
                         client_name: currentClient, 
                         source: type === 'PDF' ? 'BANK' : 'CREDIT CARD',
+                        bank_name: extractedBankName,
                         txn_date: t.date, 
                         vendor: t.vendor || "", 
                         description: t.desc || "Statement Line",
@@ -1008,8 +1009,22 @@ Return ONLY JSON Object:
                     document.getElementById('inputStmtStart').value = stmtStart; document.getElementById('inputStmtEnd').value = stmtEnd;
                     await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).ilike('client_name', currentClient.trim());
 
-                    // Direct insert into review_staging with verified DB keys
-                    const { error: insErr } = await db.from('review_staging').insert(rows);
+                    // Strip unmapped keys prior to DB insert
+                    const dbPayload = rows.map(r => ({
+                        client_name: r.client_name,
+                        source: r.source,
+                        txn_date: r.txn_date,
+                        vendor: r.vendor,
+                        description: r.description,
+                        amount: r.amount,
+                        category: r.category,
+                        status: r.status,
+                        bank_category: r.bank_category,
+                        class_name: r.class_name,
+                        fingerprint: r.fingerprint
+                    }));
+
+                    const { error: insErr } = await db.from('review_staging').insert(dbPayload);
                     if (insErr) throw new Error("Supabase Database Insert Error: " + insErr.message);
 
                     showToast(`✓ Successfully processed ${rows.length} statement transactions!`, "success");
@@ -1595,7 +1610,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         }
     }
 
-    /* VERIFIED MERCHANT INTELLIGENCE FUNCTION WITH STRICT JSON FORMATTING */
+    /* VERIFIED MERCHANT INTELLIGENCE FUNCTION WITH STRICT JSON FORMATTING & GEMINI 3.6 FLASH */
     async function fetchVendorIntelligence(vendorName, targetElementId) {
         initSupabase(); if (!vendorName || !db) return;
         const popupEl = document.getElementById(targetElementId); if (!popupEl) return;
@@ -1607,29 +1622,50 @@ Generate executive MD&A notes. Return ONLY JSON Object:
             return;
         }
 
-        popupEl.innerHTML = `<em>Querying merchant intelligence...</em>`; const apiKey = localStorage.getItem('hca_gk');
+        popupEl.innerHTML = `<em>Querying merchant intelligence...</em>`; 
+        const apiKey = localStorage.getItem('hca_gk');
+        if (!apiKey) {
+            popupEl.innerHTML = `<strong>${vendorName}</strong><br><span class="text-muted">API Key missing.</span>`;
+            return;
+        }
+
         try {
-            const prompt = `ACT AS: Corporate Intelligence Agent. Provide details for vendor "${vendorName}".\nReturn ONLY JSON:\n{\n  "description": "1-2 sentence business summary of what they sell or provide.",\n  "website": "Official website URL (e.g. https://www.adobe.com)"\n}`;
+            const prompt = `ACT AS: Corporate Intelligence Agent. Provide business details for vendor "${vendorName}".
+Return ONLY a valid JSON object matching this structure:
+{
+  "description": "1-2 sentence overview of what the merchant sells or provides.",
+  "website": "Official website URL or empty string"
+}`;
+
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
                 method: "POST", 
                 headers: { "Content-Type": "application/json" }, 
                 body: JSON.stringify({ 
                     "contents": [{ "parts": [{ "text": prompt }] }], 
-                    "generationConfig": { "response_mime_type": "application/json" } 
+                    "generationConfig": { 
+                        "response_mime_type": "application/json" 
+                    } 
                 })
             });
 
             const jsonRes = await res.json(); 
-            if (!jsonRes.candidates?.[0]?.content?.parts?.[0]?.text) throw new Error("Invalid response");
-            
+            if (jsonRes.error) throw new Error(jsonRes.error.message);
+            if (!jsonRes.candidates?.[0]?.content?.parts?.[0]?.text) throw new Error("Invalid response from Gemini API");
+
             const rawText = jsonRes.candidates[0].content.parts[0].text;
             const info = JSON.parse(rawText.replace(/```json|```/g, '').trim());
-            
-            const linkHtml = info.website ? `<br><a href="${info.website}" target="_blank" class="small text-primary">${info.website}</a>` : '';
-            popupEl.innerHTML = `<span class="vendor-badge">AI MERCHANT SUMMARY</span><br><strong>${vendorName}</strong><br><span>${info.description}</span>${linkHtml}`;
 
-            await db.from('vendor_knowledge').insert([{ vendor_name: vendorName, description: info.description, website: info.website || "" }]);
-        } catch (e) { popupEl.innerHTML = `<strong>${vendorName}</strong><br><span class="text-muted">Merchant details unavailable.</span>`; }
+            const description = info.description || "Commercial vendor or merchant.";
+            const website = info.website || "";
+            const linkHtml = website ? `<br><a href="${website}" target="_blank" class="small text-primary">${website}</a>` : '';
+            
+            popupEl.innerHTML = `<span class="vendor-badge">AI MERCHANT SUMMARY</span><br><strong>${vendorName}</strong><br><span>${description}</span>${linkHtml}`;
+
+            await db.from('vendor_knowledge').insert([{ vendor_name: vendorName, description: description, website: website }]);
+        } catch (e) { 
+            console.error("Vendor Intelligence Fetch Error:", e);
+            popupEl.innerHTML = `<strong>${vendorName}</strong><br><span class="text-muted">Merchant details unavailable.</span>`; 
+        }
     }
 
     function filterStagingRows(filterType) {
