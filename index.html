@@ -102,6 +102,10 @@
         .badge-conf-high { background: #DCFCE7; color: #166534; }
         .badge-conf-low { background: #FEE2E2; color: #991B1B; }
 
+        /* Sortable Header Class */
+        .sortable-hdr { cursor: pointer; user-select: none; }
+        .sortable-hdr:hover { text-decoration: underline; }
+
         /* Bootstrap Toast Dock Position */
         .toast-dock { position: fixed; top: 25px; right: 25px; z-index: 9999; }
     </style>
@@ -355,7 +359,7 @@
         </div>
 
         <div class="batch-bar mb-4 row g-3">
-            <div class="col-md-5"><input type="text" id="batchSearchInput" class="form-control form-control-sm" placeholder="Filter Vendor (e.g., Uber)"></div>
+            <div class="col-md-5"><input type="text" id="batchSearchInput" class="form-control form-control-sm" placeholder="Filter Vendor or Description..." onkeyup="handleStagingSearch(this.value)"></div>
             <div class="col-md-4"><select id="batchCategorySelect" class="form-select form-select-sm"><option value="Uncategorized">-- Assign Target Account --</option></select></div>
             <div class="col-md-3"><button class="btn btn-app btn-sm w-100 fw-semibold" onclick="applyBatch()">Apply Category Match</button></div>
         </div>
@@ -364,17 +368,17 @@
             <thead class="table-light">
                 <tr>
                     <th style="width: 35px;"><input type="checkbox" id="selectAllStaging" class="form-check-input" onchange="toggleSelectAllStaging(this)"></th>
-                    <th>Src</th>
-                    <th>Bank / Issuer</th>
-                    <th>Date</th>
-                    <th>Vendor (Hover Details)</th>
+                    <th class="sortable-hdr" onclick="sortStagingTable('src')">Src ↕</th>
+                    <th class="sortable-hdr" onclick="sortStagingTable('bank_name')">Bank / Issuer ↕</th>
+                    <th class="sortable-hdr" onclick="sortStagingTable('date')">Date ↕</th>
+                    <th class="sortable-hdr" onclick="sortStagingTable('vendor')">Vendor (Hover Details) ↕</th>
                     <th>Statement Line Item</th>
-                    <th>Amount ($)</th>
+                    <th class="sortable-hdr" onclick="sortStagingTable('amt')">Amount ($) ↕</th>
                     <th>Expense Account</th>
                     <th>Stat</th>
                     <th>Bank Account</th>
                     <th>Class Allocation</th>
-                    <th>Conf. Score</th>
+                    <th class="sortable-hdr" onclick="sortStagingTable('confidence')">Conf. Score ↕</th>
                     <th>Receipt OCR</th>
                 </tr>
             </thead>
@@ -549,6 +553,8 @@
     let localData = [], historyData = [];
     let appGLOptions = [], rawQBOAccountDetails = [], activeRules = [];
     let stmtStart = 0, stmtEnd = 0, barChart = null;
+
+    let sortKey = 'date', sortAsc = true;
 
     const CLASS_OPTIONS = ["General", "Marketing", "Sales", "Operations", "NY-Office"];
 
@@ -973,7 +979,7 @@ Return ONLY JSON Object:
 
                 const extractedBankName = extracted.bank_name || (type === 'PDF' ? 'Bank Account' : 'Credit Card');
 
-                // Construct mapped transaction rows
+                // Construct mapped transaction rows matching strictly existing table columns
                 const rows = extractedTransactions.map(t => {
                     let assignedCategory = t.category || "Uncategorized";
                     activeRules.forEach(rule => {
@@ -985,6 +991,7 @@ Return ONLY JSON Object:
                     return {
                         client_name: currentClient, 
                         source: type === 'PDF' ? 'BANK' : 'CREDIT CARD',
+                        bank_name: extractedBankName,
                         txn_date: t.date, 
                         vendor: t.vendor || "", 
                         description: t.desc || "Statement Line",
@@ -1466,9 +1473,22 @@ Generate executive MD&A notes. Return ONLY JSON Object:
     /* RENDER STAGING TABLE WITH CHECKBOXES, BANK NAME, & DUP BADGE */
     function renderStagingTable(dataRows) {
         const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
+
+        // Client-side sorting logic
+        dataRows.sort((a, b) => {
+            let valA = a[sortKey] || '', valB = b[sortKey] || '';
+            if (sortKey === 'amt' || sortKey === 'confidence') {
+                valA = parseFloat(String(valA).replace(/[^0-9.-]+/g, '')) || 0;
+                valB = parseFloat(String(valB).replace(/[^0-9.-]+/g, '')) || 0;
+            }
+            if (valA < valB) return sortAsc ? -1 : 1;
+            if (valA > valB) return sortAsc ? 1 : -1;
+            return 0;
+        });
+
         dataRows.forEach(i => {
             const dupBadge = i.dup ? `<span class="badge-dup">DUP</span>` : '';
-            const receiptCell = i.receipt ? `✓ Verified` : `<button class="btn btn-xs btn-outline-secondary py-0" onclick="document.getElementById('rup${i.row}').click()">📁 Match</button><input type="file" id="rup${i.row}" style="display:none" onchange="handleReceiptUpload(this, ${i.row})">`;
+            const receiptCell = i.receipt ? `✓ Verified` : `<button class="btn btn-xs btn-outline-secondary py-0" onclick="document.getElementById('rup${i.row}').click()">📁 Match</button><input type="file" id="rup${i.row}" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleReceiptUpload(this, ${i.row})">`;
             const popupId = `vpop_${i.row}`;
             const vendorHtml = (i.vendor && i.vendor.trim() !== "") ? `<span class="vendor-hover" onmouseenter="fetchVendorIntelligence('${i.vendor.replace(/'/g, "\\'")}', '${popupId}')">${i.vendor} ${dupBadge}</span><div class="vendor-card-popup" id="${popupId}">Fetching merchant insights...</div>` : `<span class="text-muted small">N/A</span> ${dupBadge}`;
 
@@ -1498,6 +1518,30 @@ Generate executive MD&A notes. Return ONLY JSON Object:
             if(document.getElementById('c'+i.row)) document.getElementById('c'+i.row).value = i.cat || "Uncategorized"; 
             if(document.getElementById('b'+i.row)) document.getElementById('b'+i.row).value = i.bnk || "Uncategorized"; 
         });
+    }
+
+    /* INTERACTIVE COLUMN SORTING & SEARCH HANDLERS */
+    function sortStagingTable(key) {
+        if (sortKey === key) {
+            sortAsc = !sortAsc;
+        } else {
+            sortKey = key;
+            sortAsc = true;
+        }
+        applyGlobalDateFilter();
+    }
+
+    function handleStagingSearch(searchTerm) {
+        const query = searchTerm.trim().toLowerCase();
+        if (!query) return renderStagingTable(filterBySelectedPeriod(localData));
+
+        const filtered = filterBySelectedPeriod(localData).filter(item => {
+            return (item.vendor || '').toLowerCase().includes(query) || 
+                   (item.desc || '').toLowerCase().includes(query) || 
+                   (item.bank_name || '').toLowerCase().includes(query) ||
+                   (item.cat || '').toLowerCase().includes(query);
+        });
+        renderStagingTable(filtered);
     }
 
     /* MULTI-SELECT CHECKBOX & BULK ACTIONS CONTROLLER */
@@ -1590,21 +1634,28 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         else if(filterType === 'LOWCONF') renderStagingTable(filterBySelectedPeriod(localData.filter(r => r.confidence !== undefined && parseFloat(r.confidence) < 0.8)));
     }
 
+    /* MULTI-PAGE & PDF RECEIPT OCR MATCHING CONTROLLER */
     async function handleReceiptUpload(input, rowId) {
         const file = input.files[0]; if(!file) return;
         document.getElementById('st').style.display = 'block';
         const reader = new FileReader();
         reader.onload = async (e) => {
             try {
-                const imgData = e.target.result.split(',')[1]; const apiKey = localStorage.getItem('hca_gk');
-                const prompt = "Extract JSON: {'vendor':'', 'amount':0.00}";
+                const docData = e.target.result.split(',')[1]; const apiKey = localStorage.getItem('hca_gk');
+                const mimeType = file.type || (file.name.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
+                
+                const prompt = "ACT AS: Forensic Audit Specialist. Extract receipt total vendor and total amount. Return ONLY JSON Object: {'vendor':'Merchant Name', 'amount':0.00}";
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
                     method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ "contents": [{ "parts": [{ "text": prompt }, { "inline_data": { "mime_type": "image/jpeg", "data": imgData }}] }] })
+                    body: JSON.stringify({ 
+                        "contents": [{ "parts": [{ "text": prompt }, { "inline_data": { "mime_type": mimeType, "data": docData }}] }],
+                        "generationConfig": { "response_mime_type": "application/json" }
+                    })
                 });
 
                 const jsonRes = await res.json();
-                const extracted = JSON.parse(jsonRes.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim());
+                const rawText = jsonRes.candidates[0].content.parts[0].text;
+                const extracted = JSON.parse(rawText.replace(/```json|```/g, '').trim());
 
                 const rowItem = localData.find(r => r.row == rowId);
                 const targetAmt = Math.abs(parseFloat(rowItem.amt));
@@ -1619,7 +1670,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
                 }
             } catch(err) { showToast("Receipt OCR Error: " + err.message, "danger"); document.getElementById('st').style.display = 'none'; }
         };
-        reader.readAsDataURL(input.files[0]);
+        reader.readAsDataURL(file);
     }
 
     function applyBatch() {
