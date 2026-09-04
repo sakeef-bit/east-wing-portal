@@ -444,7 +444,7 @@
         </div>
     </div>
 
-    <!-- Predictive 90-Day Cash Flow Forecast Tab & Sandbox Table -->
+    <!-- Predictive 90-Day Cash Flow Forecast Tab & Universal Sensitivity Box Engine -->
     <div id="tab-forecast" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -457,6 +457,41 @@
             <div class="col-md-4"><div class="summary-card"><h6>Estimated Cash Runway</h6><h3 id="fc-runway-days" class="fw-bold text-primary mb-0">-- Days</h3></div></div>
             <div class="col-md-4"><div class="summary-card"><h6>Projected Net Burn Rate</h6><h3 id="fc-burn-rate" class="fw-bold text-danger mb-0">$0.00 / mo</h3></div></div>
             <div class="col-md-4"><div class="summary-card"><h6>Projected 90-Day Cash Floor</h6><h3 id="fc-lowest-point" class="fw-bold mb-0">$0.00</h3></div></div>
+        </div>
+
+        <!-- UNIVERSAL SENSITIVITY SIDE-BOX SIMULATOR -->
+        <div class="card p-4 border mb-4 rounded-xl bg-light">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold text-dark mb-0">🎛️ Universal Sensitivity & Scenario Modeling Side-Boxes</h6>
+                <button class="btn btn-xs btn-outline-secondary rounded-pill px-2" onclick="renderCashForecast()">Reset to Trial Balance Defaults</button>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="fw-bold small text-muted mb-1">1. Select Chart of Account</label>
+                    <select id="sens_acc_picker" class="form-select form-select-sm fw-semibold" onchange="updateUniversalSensitivity()">
+                        <option value="TOTAL_REVENUE">Total Revenue / Inflows</option>
+                        <option value="TOTAL_EXPENSE">Total Expenses / Outflows</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="fw-bold small text-muted mb-1">2. Sensitivity Modifier Type</label>
+                    <select id="sens_type_picker" class="form-select form-select-sm fw-semibold" onchange="updateUniversalSensitivity()">
+                        <option value="PERCENTAGE">Percentage Shift (%)</option>
+                        <option value="ABSOLUTE">Absolute Dollar Change ($)</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="fw-bold small text-muted mb-1">3. Adjustment Value (+/-)</label>
+                    <input type="number" id="sens_val_input" class="form-control form-control-sm text-end fw-bold" value="0" step="1" onchange="updateUniversalSensitivity()">
+                </div>
+                <div class="col-md-3">
+                    <label class="fw-bold small text-muted mb-1">4. Effective Duration</label>
+                    <select id="sens_duration_picker" class="form-select form-select-sm fw-semibold" onchange="updateUniversalSensitivity()">
+                        <option value="RECURRING">Recurring Monthly</option>
+                        <option value="ONETIME">One-Time Event</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
         <!-- EDITABLE CASH BURN SCENARIO SANDBOX TABLE -->
@@ -1385,7 +1420,14 @@ Return ONLY JSON Object:
         
         const dl = document.getElementById('glChoices'); dl.innerHTML = ""; 
         const batchSel = document.getElementById('batchCategorySelect'); batchSel.innerHTML = '<option value="Uncategorized">-- Assign Target Account --</option>';
-        appGLOptions.forEach(opt => { dl.innerHTML += `<option value="${opt}">`; batchSel.innerHTML += `<option value="${opt}">${opt}</option>`; });
+        const sensPicker = document.getElementById('sens_acc_picker'); 
+        if(sensPicker) sensPicker.innerHTML = '<option value="TOTAL_REVENUE">Total Revenue / Inflows</option><option value="TOTAL_EXPENSE">Total Expenses / Outflows</option>';
+
+        appGLOptions.forEach(opt => { 
+            dl.innerHTML += `<option value="${opt}">`; 
+            batchSel.innerHTML += `<option value="${opt}">${opt}</option>`; 
+            if(sensPicker) sensPicker.innerHTML += `<option value="${opt}">${opt}</option>`;
+        });
 
         const glBody = document.getElementById('tb-gl'); glBody.innerHTML = "";
         appGLOptions.forEach((acc, idx) => { glBody.innerHTML += `<tr><td>${idx + 1}</td><td class="fw-semibold">${acc}</td></tr>`; });
@@ -1417,6 +1459,32 @@ Return ONLY JSON Object:
             </div>`;
         
         recalcJE(); applyGlobalDateFilter();
+    }
+
+    /* PERIOD-SPECIFIC TRIAL BALANCE CORE DATA LAYER ENGINE */
+    function getPeriodTrialBalance() {
+        const filteredDataset = filterBySelectedPeriod([...historyData, ...localData]);
+        const trialBalance = {};
+
+        appGLOptions.forEach(opt => {
+            trialBalance[opt] = { debits: 0, credits: 0, net: 0 };
+        });
+
+        filteredDataset.forEach(item => {
+            let val = parseFloat(String(item.amt).replace(/[^0-9.-]+/g, "")) || 0;
+            let cat = item.cat || "Uncategorized";
+
+            if (!trialBalance[cat]) trialBalance[cat] = { debits: 0, credits: 0, net: 0 };
+
+            if (val > 0) {
+                trialBalance[cat].debits += val;
+            } else {
+                trialBalance[cat].credits += Math.abs(val);
+            }
+            trialBalance[cat].net += val;
+        });
+
+        return trialBalance;
     }
 
     /* ROBUST GLOBAL DATE FILTERING CONTROLLER */
@@ -1589,35 +1657,66 @@ Return ONLY JSON Object:
         }
     }
 
-    /* PREDICTIVE 90-DAY CASH FORECAST ENGINE WITH DYNAMIC PERIOD SYNC & EDITABLE SANDBOX */
+    /* PREDICTIVE 90-DAY CASH FORECAST ENGINE WITH TRIAL BALANCE FOUNDATION & EDITABLE SANDBOX */
     async function renderCashForecast() {
-        // Dynamic Filtering: Respect the active selected period
-        const filteredDataset = filterBySelectedPeriod([...historyData, ...localData]);
+        const tb = getPeriodTrialBalance();
         let currentCash = stmtEnd || 0;
 
         let totalIn = 0, totalOut = 0;
-        filteredDataset.forEach(i => {
-            let val = parseFloat(String(i.amt).replace(/[^0-9.-]+/g,"")) || 0;
-            if (val > 0) totalIn += val;
-            else totalOut += Math.abs(val);
-        });
+        for (let acc in tb) {
+            totalIn += tb[acc].debits;
+            totalOut += tb[acc].credits;
+        }
 
-        // Truly dynamic calculation (resets to 0.00 if no activity in selected period)
-        let avgMonthlyIn = filteredDataset.length ? totalIn : 0;
-        let avgMonthlyOut = filteredDataset.length ? totalOut : 0;
+        let avgMonthlyIn = totalIn;
+        let avgMonthlyOut = totalOut;
 
-        // Auto-populate sandbox editable inputs with real period ledger calculations
+        // Auto-populate sandbox editable inputs with real period Trial Balance calculations
         document.getElementById('sb_start_base').value = currentCash.toFixed(2);
         document.getElementById('sb_start_cons').value = currentCash.toFixed(2);
         
         document.getElementById('sb_rev_base').value = avgMonthlyIn.toFixed(2);
-        document.getElementById('sb_rev_cons').value = (avgMonthlyIn * 0.85).toFixed(2); // 15% delayed receivables lag
+        document.getElementById('sb_rev_cons').value = (avgMonthlyIn * 0.85).toFixed(2); 
 
         document.getElementById('sb_fixed_base').value = (avgMonthlyOut * 0.60).toFixed(2);
         document.getElementById('sb_fixed_cons').value = (avgMonthlyOut * 0.65).toFixed(2);
 
         document.getElementById('sb_var_base').value = (avgMonthlyOut * 0.40).toFixed(2);
-        document.getElementById('sb_var_cons').value = (avgMonthlyOut * 0.55).toFixed(2); // Higher variable inflation
+        document.getElementById('sb_var_cons').value = (avgMonthlyOut * 0.55).toFixed(2); 
+
+        updateForecastSandbox();
+    }
+
+    /* UNIVERSAL SENSITIVITY SIDE-BOX CONTROLLER WIRING */
+    function updateUniversalSensitivity() {
+        const accPicker = document.getElementById('sens_acc_picker').value;
+        const modType = document.getElementById('sens_type_picker').value;
+        const modVal = parseFloat(document.getElementById('sens_val_input').value) || 0;
+
+        let baseRev = parseFloat(document.getElementById('sb_rev_base').value) || 0;
+        let baseFixed = parseFloat(document.getElementById('sb_fixed_base').value) || 0;
+        let baseVar = parseFloat(document.getElementById('sb_var_base').value) || 0;
+
+        if (accPicker === "TOTAL_REVENUE") {
+            if (modType === "PERCENTAGE") {
+                document.getElementById('sb_rev_base').value = (baseRev * (1 + (modVal / 100))).toFixed(2);
+            } else {
+                document.getElementById('sb_rev_base').value = (baseRev + modVal).toFixed(2);
+            }
+        } else if (accPicker === "TOTAL_EXPENSE") {
+            if (modType === "PERCENTAGE") {
+                document.getElementById('sb_fixed_base').value = (baseFixed * (1 + (modVal / 100))).toFixed(2);
+            } else {
+                document.getElementById('sb_fixed_base').value = (baseFixed + modVal).toFixed(2);
+            }
+        } else {
+            // Specific GL Account line-item adjustment
+            if (modType === "PERCENTAGE") {
+                document.getElementById('sb_var_base').value = (baseVar * (1 + (modVal / 100))).toFixed(2);
+            } else {
+                document.getElementById('sb_var_base').value = (baseVar + modVal).toFixed(2);
+            }
+        }
 
         updateForecastSandbox();
     }
