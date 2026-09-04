@@ -410,20 +410,22 @@
         </table>
     </div>
 
+    <!-- TRIAL BALANCE-POWERED PROPOSED IMPACT TAB -->
     <div id="tab-impact" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold mb-0">Pre-Sync Balance Impact Analysis</h5>
-            <button class="btn btn-sm btn-outline-success fw-bold rounded-pill" onclick="syncQBOAccounts()">🔄 Refresh Live Balances</button>
+            <h5 class="fw-bold mb-0">Period Trial Balance Impact Analysis</h5>
+            <button class="btn btn-sm btn-outline-success fw-bold rounded-pill" onclick="loadDash()">🔄 Refresh Period Balances</button>
         </div>
         <div class="table-responsive">
             <table class="table table-bordered table-hover align-middle small bg-white">
                 <thead class="table-dark">
                     <tr>
                         <th>Account Name</th>
-                        <th>Account Type</th>
-                        <th>Live QBO Balance</th>
-                        <th>Pending Staging Change</th>
-                        <th>Proposed New Balance</th>
+                        <th>Period Debits ($)</th>
+                        <th>Period Credits ($)</th>
+                        <th>Period Net Movement ($)</th>
+                        <th>Pending Staging Adjustments</th>
+                        <th>Proposed Ending Balance ($)</th>
                     </tr>
                 </thead>
                 <tbody id="tb-impact"></tbody>
@@ -1915,12 +1917,15 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         recalcJE();
     }
 
+    /* PROPOSED IMPACT TAB RENDERED VIA TRIAL BALANCE ENGINE */
     function renderImpactTab(qboAccountsList) {
         const tbody = document.getElementById('tb-impact');
         if (!tbody) return;
         tbody.innerHTML = "";
 
+        const tb = getPeriodTrialBalance();
         let stagedActivityMap = {};
+
         document.querySelectorAll('.row-cat').forEach(inp => {
             let r = inp.getAttribute('data-row');
             let item = localData.find(x => x.row == r);
@@ -1929,25 +1934,25 @@ Generate executive MD&A notes. Return ONLY JSON Object:
             let amtInput = document.getElementById('a' + r);
             let amt = amtInput ? parseFloat(amtInput.value || 0) : parseFloat(String(item.amt).replace(/[^0-9.-]+/g, ""));
             let expAcc = inp.value;
-            let bnkAcc = document.getElementById('b' + r) ? document.getElementById('b' + r).value : "";
 
             if (expAcc && expAcc !== "Uncategorized") stagedActivityMap[expAcc] = (stagedActivityMap[expAcc] || 0) + amt;
-            if (bnkAcc && bnkAcc !== "Uncategorized") stagedActivityMap[bnkAcc] = (stagedActivityMap[bnkAcc] || 0) - amt;
         });
 
-        qboAccountsList.forEach(acc => {
-            let pendingChange = stagedActivityMap[acc.name] || 0;
-            let proposedBalance = acc.current_balance + pendingChange;
-            let changeClass = pendingChange > 0 ? "text-success fw-bold" : (pendingChange < 0 ? "text-danger fw-bold" : "text-muted");
+        for (let accName in tb) {
+            let item = tb[accName];
+            let pendingChange = stagedActivityMap[accName] || 0;
+            let proposedBalance = item.net + pendingChange;
+            let changeClass = pendingChange > 0 ? "text-danger fw-bold" : (pendingChange < 0 ? "text-success fw-bold" : "text-muted");
 
             tbody.innerHTML += `<tr>
-                <td class="fw-bold">${acc.name}</td>
-                <td><span class="badge bg-light text-dark border">${acc.type}</span></td>
-                <td>$${acc.current_balance.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-                <td class="${changeClass}">${pendingChange >= 0 ? '+' : ''}$${pendingChange.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-                <td class="fw-bold">$${proposedBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td class="fw-bold">${accName}</td>
+                <td class="text-end">$${item.debits.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td class="text-end">$${item.credits.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td class="text-end fw-semibold">$${item.net.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td class="text-end ${changeClass}">${pendingChange >= 0 ? '+' : ''}$${pendingChange.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td class="text-end fw-bold text-primary">$${proposedBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
             </tr>`;
-        });
+        }
     }
 
     async function updateClientMetadataFromTab() {
@@ -2280,7 +2285,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
             }
         }
 
-        if (rawQBOAccountDetails.length > 0) renderImpactTab(rawQBOAccountDetails);
+        renderImpactTab(rawQBOAccountDetails);
     }
 
     function toggleChat(windowId) {
@@ -2335,6 +2340,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         document.getElementById('nav-'+t).classList.add('active'); 
         if (t === 'mda') loadMDANotes();
         if (t === 'forecast') renderCashForecast();
+        if (t === 'impact') renderImpactTab();
     }
 
     function approveAll() { document.querySelectorAll('.row-stat').forEach(s => s.value = "APPROVED"); recalcJE(); }
