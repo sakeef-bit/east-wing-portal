@@ -1589,22 +1589,24 @@ Return ONLY JSON Object:
         }
     }
 
-    /* PREDICTIVE 90-DAY CASH FORECAST ENGINE WITH EDITABLE SANDBOX */
+    /* PREDICTIVE 90-DAY CASH FORECAST ENGINE WITH DYNAMIC PERIOD SYNC & EDITABLE SANDBOX */
     async function renderCashForecast() {
-        const dataset = [...historyData, ...localData];
-        let currentCash = stmtEnd || 8567.63;
+        // Dynamic Filtering: Respect the active selected period
+        const filteredDataset = filterBySelectedPeriod([...historyData, ...localData]);
+        let currentCash = stmtEnd || 0;
 
         let totalIn = 0, totalOut = 0;
-        dataset.forEach(i => {
+        filteredDataset.forEach(i => {
             let val = parseFloat(String(i.amt).replace(/[^0-9.-]+/g,"")) || 0;
             if (val > 0) totalIn += val;
             else totalOut += Math.abs(val);
         });
 
-        let avgMonthlyIn = dataset.length ? (totalIn / 3) : 11500;
-        let avgMonthlyOut = dataset.length ? (totalOut / 3) : 5675.76;
+        // Truly dynamic calculation (resets to 0.00 if no activity in selected period)
+        let avgMonthlyIn = filteredDataset.length ? totalIn : 0;
+        let avgMonthlyOut = filteredDataset.length ? totalOut : 0;
 
-        // Auto-populate sandbox editable inputs with ledger defaults
+        // Auto-populate sandbox editable inputs with real period ledger calculations
         document.getElementById('sb_start_base').value = currentCash.toFixed(2);
         document.getElementById('sb_start_cons').value = currentCash.toFixed(2);
         
@@ -1684,7 +1686,7 @@ Return ONLY JSON Object:
         }
     }
 
-    /* AUTOMATED DATA-FETCH MD&A GENERATOR CONTROLLER */
+    /* AUTOMATED DATA-FETCH MD&A GENERATOR CONTROLLER WITH EMPTY PERIOD RESET */
     async function loadMDANotes() {
         initSupabase();
         const selYear = document.getElementById('globalFilterYear').value;
@@ -1710,11 +1712,19 @@ Return ONLY JSON Object:
             return;
         }
 
+        const filteredDataset = filterBySelectedPeriod([...historyData, ...localData]);
+        
+        // Reset MD&A text boxes to blank when selected month has no transactions
+        if (filteredDataset.length === 0) {
+            document.getElementById('mda_exec').value = "";
+            document.getElementById('mda_rev').value = "";
+            document.getElementById('mda_exp').value = "";
+            document.getElementById('mda_actions').value = "";
+            return;
+        }
+
         const apiKey = localStorage.getItem('hca_gk');
         if (!apiKey) return;
-
-        const filteredDataset = filterBySelectedPeriod([...historyData, ...localData]);
-        if (filteredDataset.length === 0) return;
 
         document.getElementById('mda_exec').value = "Generating AI commentary from fetched dataset...";
         document.getElementById('mda_rev').value = "Analyzing revenue streams...";
