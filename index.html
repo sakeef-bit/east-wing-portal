@@ -1027,51 +1027,64 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
 
     function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
 
-    /* OPTION A: ENRICH NEW VENDORS IN BACKGROUND AFTER OCR EXTRACTION */
+    /* OPTION A: SINGLE BATCH GEMINI REQUEST FOR ALL MISSING VENDORS */
     async function processPostExtractionVendorEnrichment(uniqueVendorNames, apiKey) {
         initSupabase(); if (!db || !uniqueVendorNames || uniqueVendorNames.length === 0) return;
 
         try {
-            // 1. Query Supabase for vendors already stored in vendor_knowledge
+            // 1. Check which vendors are already stored in Supabase vendor_knowledge
             const { data: existing } = await db.from('vendor_knowledge').select('vendor_name').in('vendor_name', uniqueVendorNames);
             const existingSet = new Set((existing || []).map(v => v.vendor_name.trim().toLowerCase()));
 
-            // 2. Identify missing vendors
+            // 2. Filter out missing vendors
             const missingVendors = uniqueVendorNames.filter(v => !existingSet.has(v.trim().toLowerCase()));
             if (missingVendors.length === 0) return;
 
-            // 3. Batch query Gemini for missing vendors
-            for (const vendor of missingVendors) {
-                const prompt = `ACT AS: Corporate Intelligence Agent. Provide business details for vendor "${vendor}".
-Return ONLY a valid JSON object matching this structure:
-{
-  "description": "1-2 sentence overview of what the merchant sells or provides.",
-  "website": "Official website URL or empty string"
-}`;
+            // 3. Single Batch API Request to Gemini
+            const prompt = `ACT AS: Corporate Intelligence Agent. Provide business details for the following list of vendors:
+${JSON.stringify(missingVendors)}
 
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        "contents": [{ "parts": [{ "text": prompt }] }],
-                        "generationConfig": { "response_mime_type": "application/json" }
-                    })
-                });
+Return ONLY a valid JSON array of objects matching this exact structure:
+[
+  {
+    "vendor_name": "Exact Vendor Name From List",
+    "description": "1-2 sentence overview of what the merchant sells or provides.",
+    "website": "Official website URL or empty string"
+  }
+]`;
 
-                const jsonRes = await res.json();
-                if (jsonRes.candidates?.[0]?.content?.parts?.[0]?.text) {
-                    const rawText = jsonRes.candidates[0].content.parts[0].text;
-                    const info = JSON.parse(rawText.replace(/```json|```/g, '').trim());
-                    
-                    const desc = info.description || "Commercial vendor or merchant.";
-                    const web = info.website || "";
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    "contents": [{ "parts": [{ "text": prompt }] }],
+                    "generationConfig": { "response_mime_type": "application/json" }
+                })
+            });
 
-                    // Save to Supabase and browser memory
-                    await db.from('vendor_knowledge').upsert({ vendor_name: vendor, description: desc, website: web }, { onConflict: 'vendor_name' });
-                    localStorage.setItem("vendor_cache_" + vendor.toLowerCase().replace(/\s+/g, '_'), JSON.stringify({ description: desc, website: web }));
+            const jsonRes = await res.json();
+            if (jsonRes.candidates?.[0]?.content?.parts?.[0]?.text) {
+                const rawText = jsonRes.candidates[0].content.parts[0].text;
+                const batchResults = JSON.parse(rawText.replace(/```json|```/g, '').trim());
+
+                if (Array.isArray(batchResults) && batchResults.length > 0) {
+                    const upsertPayload = batchResults.map(item => ({
+                        vendor_name: item.vendor_name,
+                        description: item.description || "Commercial vendor or merchant.",
+                        website: item.website || ""
+                    }));
+
+                    // Batch insert into Supabase vendor_knowledge table
+                    await db.from('vendor_knowledge').upsert(upsertPayload, { onConflict: 'vendor_name' });
+
+                    // Batch save into browser local storage
+                    upsertPayload.forEach(item => {
+                        const cacheKey = "vendor_cache_" + item.vendor_name.toLowerCase().replace(/\s+/g, '_');
+                        localStorage.setItem(cacheKey, JSON.stringify({ description: item.description, website: item.website }));
+                    });
                 }
             }
         } catch (err) {
-            console.error("Option A Background Vendor Enrichment Error:", err);
+            console.error("Option A Batch Vendor Enrichment Error:", err);
         }
     }
 
@@ -1207,7 +1220,7 @@ Return ONLY JSON Object:
 
                     showToast(`✓ Successfully processed ${rows.length} statement transactions!`, "success");
 
-                    // OPTION A: Trigger Background Post-Extraction Vendor Enrichment
+                    // OPTION A: Single Batch Background Post-Extraction Vendor Enrichment
                     const uniqueVendors = Array.from(new Set(rows.map(r => r.vendor.trim()).filter(v => v !== "")));
                     processPostExtractionVendorEnrichment(uniqueVendors, apiKey);
                 }
