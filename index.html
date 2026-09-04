@@ -444,7 +444,7 @@
         </div>
     </div>
 
-    <!-- Predictive 90-Day Cash Flow Forecast Tab -->
+    <!-- Predictive 90-Day Cash Flow Forecast Tab & Sandbox Table -->
     <div id="tab-forecast" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -458,6 +458,59 @@
             <div class="col-md-4"><div class="summary-card"><h6>Projected Net Burn Rate</h6><h3 id="fc-burn-rate" class="fw-bold text-danger mb-0">$0.00 / mo</h3></div></div>
             <div class="col-md-4"><div class="summary-card"><h6>Projected 90-Day Cash Floor</h6><h3 id="fc-lowest-point" class="fw-bold mb-0">$0.00</h3></div></div>
         </div>
+
+        <!-- EDITABLE CASH BURN SCENARIO SANDBOX TABLE -->
+        <div class="card p-4 border mb-4 rounded-xl">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold text-dark mb-0">🛠️ Interactive Cash Burn & Scenario Sandbox (Editable Inputs)</h6>
+                <button class="btn btn-xs btn-outline-secondary rounded-pill px-2" onclick="renderCashForecast()">Reset to Ledger Defaults</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle small mb-0 bg-white">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Parameter Name</th>
+                            <th>Baseline / Expected ($)</th>
+                            <th>Conservative Case ($)</th>
+                            <th>Notes & Impact</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="fw-bold">Starting Liquid Cash ($)</td>
+                            <td><input type="number" id="sb_start_base" class="form-control form-control-sm text-end fw-bold" onchange="updateForecastSandbox()"></td>
+                            <td><input type="number" id="sb_start_cons" class="form-control form-control-sm text-end fw-bold" onchange="updateForecastSandbox()"></td>
+                            <td class="text-muted">Current cash available across checking, savings, and liquid accounts.</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Monthly Recurring Revenues ($)</td>
+                            <td><input type="number" id="sb_rev_base" class="form-control form-control-sm text-end text-success fw-bold" onchange="updateForecastSandbox()"></td>
+                            <td><input type="number" id="sb_rev_cons" class="form-control form-control-sm text-end text-success fw-bold" onchange="updateForecastSandbox()"></td>
+                            <td class="text-muted">Expected monthly billing, retainers, and customer cash deposits.</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Fixed Monthly Overhead ($)</td>
+                            <td><input type="number" id="sb_fixed_base" class="form-control form-control-sm text-end text-danger fw-bold" onchange="updateForecastSandbox()"></td>
+                            <td><input type="number" id="sb_fixed_cons" class="form-control form-control-sm text-end text-danger fw-bold" onchange="updateForecastSandbox()"></td>
+                            <td class="text-muted">Rent, payroll baseline, insurance, and active SaaS vendor subscriptions.</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Variable Monthly Costs ($)</td>
+                            <td><input type="number" id="sb_var_base" class="form-control form-control-sm text-end text-danger fw-bold" onchange="updateForecastSandbox()"></td>
+                            <td><input type="number" id="sb_var_cons" class="form-control form-control-sm text-end text-danger fw-bold" onchange="updateForecastSandbox()"></td>
+                            <td class="text-muted">Fluctuation in travel, materials, professional fees, and office supplies.</td>
+                        </tr>
+                        <tr class="table-light">
+                            <td class="fw-bold">Calculated Monthly Cash Burn ($)</td>
+                            <td id="sb_burn_base" class="text-end fw-bold fs-6">--</td>
+                            <td id="sb_burn_cons" class="text-end fw-bold fs-6">--</td>
+                            <td class="fw-bold text-dark" id="sb_burn_summary">Net monthly cash movement.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <div class="row g-4 mb-4">
             <div class="col-md-8">
                 <div class="card p-3 border">
@@ -1534,10 +1587,10 @@ Return ONLY JSON Object:
         }
     }
 
-    /* PREDICTIVE 90-DAY CASH FORECAST ENGINE */
+    /* PREDICTIVE 90-DAY CASH FORECAST ENGINE WITH EDITABLE SANDBOX */
     async function renderCashForecast() {
         const dataset = [...historyData, ...localData];
-        let currentCash = stmtEnd || 10000;
+        let currentCash = stmtEnd || 8567.63;
 
         let totalIn = 0, totalOut = 0;
         dataset.forEach(i => {
@@ -1546,28 +1599,67 @@ Return ONLY JSON Object:
             else totalOut += Math.abs(val);
         });
 
-        let avgMonthlyIn = dataset.length ? (totalIn / 3) : 5000;
-        let avgMonthlyOut = dataset.length ? (totalOut / 3) : 4000;
-        let monthlyBurn = avgMonthlyOut - avgMonthlyIn;
+        let avgMonthlyIn = dataset.length ? (totalIn / 3) : 11500;
+        let avgMonthlyOut = dataset.length ? (totalOut / 3) : 5675.76;
 
-        let runwayDays = monthlyBurn > 0 ? Math.round((currentCash / monthlyBurn) * 30) : 999;
+        // Auto-populate sandbox editable inputs with ledger defaults
+        document.getElementById('sb_start_base').value = currentCash.toFixed(2);
+        document.getElementById('sb_start_cons').value = currentCash.toFixed(2);
+        
+        document.getElementById('sb_rev_base').value = avgMonthlyIn.toFixed(2);
+        document.getElementById('sb_rev_cons').value = (avgMonthlyIn * 0.85).toFixed(2); // 15% delayed receivables lag
+
+        document.getElementById('sb_fixed_base').value = (avgMonthlyOut * 0.60).toFixed(2);
+        document.getElementById('sb_fixed_cons').value = (avgMonthlyOut * 0.65).toFixed(2);
+
+        document.getElementById('sb_var_base').value = (avgMonthlyOut * 0.40).toFixed(2);
+        document.getElementById('sb_var_cons').value = (avgMonthlyOut * 0.55).toFixed(2); // Higher variable inflation
+
+        updateForecastSandbox();
+    }
+
+    function updateForecastSandbox() {
+        let startBase = parseFloat(document.getElementById('sb_start_base').value) || 0;
+        let revBase = parseFloat(document.getElementById('sb_rev_base').value) || 0;
+        let fixedBase = parseFloat(document.getElementById('sb_fixed_base').value) || 0;
+        let varBase = parseFloat(document.getElementById('sb_var_base').value) || 0;
+
+        let startCons = parseFloat(document.getElementById('sb_start_cons').value) || 0;
+        let revCons = parseFloat(document.getElementById('sb_rev_cons').value) || 0;
+        let fixedCons = parseFloat(document.getElementById('sb_fixed_cons').value) || 0;
+        let varCons = parseFloat(document.getElementById('sb_var_cons').value) || 0;
+
+        let totalOutBase = fixedBase + varBase;
+        let netBurnBase = totalOutBase - revBase;
+
+        let totalOutCons = fixedCons + varCons;
+        let netBurnCons = totalOutCons - revCons;
+
+        // Render Sandbox Cell Values
+        document.getElementById('sb_burn_base').innerText = netBurnBase > 0 ? `-$${netBurnBase.toFixed(2)}` : `+$${Math.abs(netBurnBase).toFixed(2)}`;
+        document.getElementById('sb_burn_base').className = netBurnBase > 0 ? "text-end fw-bold fs-6 text-danger" : "text-end fw-bold fs-6 text-success";
+
+        document.getElementById('sb_burn_cons').innerText = netBurnCons > 0 ? `-$${netBurnCons.toFixed(2)}` : `+$${Math.abs(netBurnCons).toFixed(2)}`;
+        document.getElementById('sb_burn_cons').className = netBurnCons > 0 ? "text-end fw-bold fs-6 text-danger" : "text-end fw-bold fs-6 text-success";
+
+        let runwayDays = netBurnBase > 0 ? Math.round((startBase / netBurnBase) * 30) : 999;
         if (runwayDays < 0) runwayDays = 0;
 
         document.getElementById('fc-runway-days').innerText = runwayDays > 365 ? "365+ Days" : `${runwayDays} Days`;
-        document.getElementById('fc-burn-rate').innerText = monthlyBurn > 0 ? `-$${monthlyBurn.toFixed(2)} / mo` : `+$${Math.abs(monthlyBurn).toFixed(2)} / mo`;
+        document.getElementById('fc-burn-rate').innerText = netBurnBase > 0 ? `-$${netBurnBase.toFixed(2)} / mo` : `+$${Math.abs(netBurnBase).toFixed(2)} / mo`;
 
         let labels = ["Today", "+30 Days", "+60 Days", "+90 Days"];
         let baseline = [
-            currentCash,
-            currentCash - (monthlyBurn * 1),
-            currentCash - (monthlyBurn * 2),
-            currentCash - (monthlyBurn * 3)
+            startBase,
+            startBase - (netBurnBase * 1),
+            startBase - (netBurnBase * 2),
+            startBase - (netBurnBase * 3)
         ];
         let conservative = [
-            currentCash,
-            currentCash - (monthlyBurn * 1.25),
-            currentCash - (monthlyBurn * 2.5),
-            currentCash - (monthlyBurn * 3.75)
+            startCons,
+            startCons - (netBurnCons * 1),
+            startCons - (netBurnCons * 2),
+            startCons - (netBurnCons * 3)
         ];
 
         let lowestFloor = Math.min(...conservative);
@@ -1587,26 +1679,6 @@ Return ONLY JSON Object:
                 },
                 options: { responsive: true, maintainAspectRatio: false }
             });
-        }
-
-        const apiKey = localStorage.getItem('hca_gk');
-        if (apiKey) {
-            try {
-                const prompt = `ACT AS: Fractional CFO. Analyze this cash forecast:
-Current Cash: $${currentCash}, Monthly Inflows: $${avgMonthlyIn}, Monthly Outflows: $${avgMonthlyOut}, Net Burn: $${monthlyBurn}.
-Provide 3 short, actionable bullet points for the business owner to optimize cash runway over the next 90 days. Return HTML bullet items (<ul><li>...</li></ul>).`;
-
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ "contents": [{ "parts": [{ "text": prompt }] }] })
-                });
-
-                const jsonRes = await res.json();
-                const reply = jsonRes.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (reply) document.getElementById('fc-ai-advice').innerHTML = reply;
-            } catch (e) {
-                document.getElementById('fc-ai-advice').innerText = "Runway analysis complete. Keep liquid reserves above minimum burn threshold.";
-            }
         }
     }
 
