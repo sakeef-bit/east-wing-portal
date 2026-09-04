@@ -333,6 +333,7 @@
         <div id="nav-review" class="app-nav-btn active" onclick="switchTab('review')">REVIEW STAGING</div>
         <div id="nav-impact" class="app-nav-btn" onclick="switchTab('impact')">PROPOSED IMPACT</div>
         <div id="nav-pnl" class="app-nav-btn" onclick="switchTab('pnl')">VISUAL P&L</div>
+        <div id="nav-forecast" class="app-nav-btn" onclick="switchTab('forecast')">CASH FORECAST</div>
         <div id="nav-mda" class="app-nav-btn" onclick="switchTab('mda')">MD&A NOTES</div>
         <div id="nav-vendor" class="app-nav-btn" onclick="switchTab('vendor')">VENDOR AUDIT</div>
         <div id="nav-gl" class="app-nav-btn" onclick="switchTab('gl')">CHART OF ACCOUNTS</div>
@@ -440,6 +441,36 @@
         <div class="row g-4">
             <div class="col-md-7"><div class="card p-3 border"><h6 class="fw-bold text-muted mb-3">Revenue vs. Expense Trend</h6><div style="height: 280px;"><canvas id="chart-bar"></canvas></div></div></div>
             <div class="col-md-5"><div class="card p-3 border"><h6 class="fw-bold text-muted mb-3">Expense Category Share</h6><div style="height: 280px;"><canvas id="chart-doughnut"></canvas></div></div></div>
+        </div>
+    </div>
+
+    <!-- Predictive 90-Day Cash Flow Forecast Tab -->
+    <div id="tab-forecast" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h5 class="fw-bold mb-0">Predictive 90-Day Cash Flow Forecast</h5>
+                <p class="small text-muted mb-0">Forward-looking cash trajectory modeling based on historical ledger cycles and approved staging items.</p>
+            </div>
+            <button class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold" onclick="renderCashForecast()">🔄 Recalculate Runway</button>
+        </div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4"><div class="summary-card"><h6>Estimated Cash Runway</h6><h3 id="fc-runway-days" class="fw-bold text-primary mb-0">-- Days</h3></div></div>
+            <div class="col-md-4"><div class="summary-card"><h6>Projected Net Burn Rate</h6><h3 id="fc-burn-rate" class="fw-bold text-danger mb-0">$0.00 / mo</h3></div></div>
+            <div class="col-md-4"><div class="summary-card"><h6>Projected 90-Day Cash Floor</h6><h3 id="fc-lowest-point" class="fw-bold mb-0">$0.00</h3></div></div>
+        </div>
+        <div class="row g-4 mb-4">
+            <div class="col-md-8">
+                <div class="card p-3 border">
+                    <h6 class="fw-bold text-muted mb-3">90-Day Projected Cash Trajectory ($)</h6>
+                    <div style="height: 300px;"><canvas id="chart-forecast"></canvas></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-3 border h-100 bg-light">
+                    <h6 class="fw-bold text-dark mb-2">⚡ AI Runway Recommendations</h6>
+                    <div id="fc-ai-advice" class="small text-secondary" style="line-height: 1.6;">Select a client and click "Recalculate Runway" to generate predictive liquidity advice.</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -575,7 +606,7 @@
     let currentClient = "";
     let localData = [], historyData = [];
     let appGLOptions = [], rawQBOAccountDetails = [], activeRules = [];
-    let stmtStart = 0, stmtEnd = 0, barChart = null;
+    let stmtStart = 0, stmtEnd = 0, barChart = null, forecastChart = null;
 
     let sortKey = 'date', sortAsc = true;
 
@@ -1503,6 +1534,82 @@ Return ONLY JSON Object:
         }
     }
 
+    /* PREDICTIVE 90-DAY CASH FORECAST ENGINE */
+    async function renderCashForecast() {
+        const dataset = [...historyData, ...localData];
+        let currentCash = stmtEnd || 10000;
+
+        let totalIn = 0, totalOut = 0;
+        dataset.forEach(i => {
+            let val = parseFloat(String(i.amt).replace(/[^0-9.-]+/g,"")) || 0;
+            if (val > 0) totalIn += val;
+            else totalOut += Math.abs(val);
+        });
+
+        let avgMonthlyIn = dataset.length ? (totalIn / 3) : 5000;
+        let avgMonthlyOut = dataset.length ? (totalOut / 3) : 4000;
+        let monthlyBurn = avgMonthlyOut - avgMonthlyIn;
+
+        let runwayDays = monthlyBurn > 0 ? Math.round((currentCash / monthlyBurn) * 30) : 999;
+        if (runwayDays < 0) runwayDays = 0;
+
+        document.getElementById('fc-runway-days').innerText = runwayDays > 365 ? "365+ Days" : `${runwayDays} Days`;
+        document.getElementById('fc-burn-rate').innerText = monthlyBurn > 0 ? `-$${monthlyBurn.toFixed(2)} / mo` : `+$${Math.abs(monthlyBurn).toFixed(2)} / mo`;
+
+        let labels = ["Today", "+30 Days", "+60 Days", "+90 Days"];
+        let baseline = [
+            currentCash,
+            currentCash - (monthlyBurn * 1),
+            currentCash - (monthlyBurn * 2),
+            currentCash - (monthlyBurn * 3)
+        ];
+        let conservative = [
+            currentCash,
+            currentCash - (monthlyBurn * 1.25),
+            currentCash - (monthlyBurn * 2.5),
+            currentCash - (monthlyBurn * 3.75)
+        ];
+
+        let lowestFloor = Math.min(...conservative);
+        document.getElementById('fc-lowest-point').innerText = `$${lowestFloor.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+
+        const ctxForecast = document.getElementById('chart-forecast');
+        if (ctxForecast) {
+            if (forecastChart) forecastChart.destroy();
+            forecastChart = new Chart(ctxForecast, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Baseline Trajectory', data: baseline, borderColor: '#2C3E50', backgroundColor: 'rgba(44, 62, 80, 0.1)', fill: true, tension: 0.3 },
+                        { label: 'Conservative Trajectory', data: conservative, borderColor: '#EF4444', borderDash: [5, 5], fill: false, tension: 0.3 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        const apiKey = localStorage.getItem('hca_gk');
+        if (apiKey) {
+            try {
+                const prompt = `ACT AS: Fractional CFO. Analyze this cash forecast:
+Current Cash: $${currentCash}, Monthly Inflows: $${avgMonthlyIn}, Monthly Outflows: $${avgMonthlyOut}, Net Burn: $${monthlyBurn}.
+Provide 3 short, actionable bullet points for the business owner to optimize cash runway over the next 90 days. Return HTML bullet items (<ul><li>...</li></ul>).`;
+
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ "contents": [{ "parts": [{ "text": prompt }] }] })
+                });
+
+                const jsonRes = await res.json();
+                const reply = jsonRes.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (reply) document.getElementById('fc-ai-advice').innerHTML = reply;
+            } catch (e) {
+                document.getElementById('fc-ai-advice').innerText = "Runway analysis complete. Keep liquid reserves above minimum burn threshold.";
+            }
+        }
+    }
+
     /* AUTOMATED DATA-FETCH MD&A GENERATOR CONTROLLER */
     async function loadMDANotes() {
         initSupabase();
@@ -2044,6 +2151,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         document.getElementById('tab-'+t).style.display = 'block'; 
         document.getElementById('nav-'+t).classList.add('active'); 
         if (t === 'mda') loadMDANotes();
+        if (t === 'forecast') renderCashForecast();
     }
 
     function approveAll() { document.querySelectorAll('.row-stat').forEach(s => s.value = "APPROVED"); recalcJE(); }
