@@ -1172,7 +1172,7 @@ Return ONLY a valid JSON array of objects matching this exact structure:
         }
     }
 
-    /* FULLY VERIFIED DUAL STATEMENT OCR EXTRACTION */
+    /* FULLY VERIFIED DUAL STATEMENT OCR EXTRACTION WITH BANK NAME FIX */
     async function handleFile(input, type) { 
         currentClient = document.getElementById('masterClient').value; 
         if(!currentClient) return showToast("Select client account first", "danger");
@@ -1251,7 +1251,7 @@ Return ONLY JSON Object:
 
                 const extractedBankName = extracted.bank_name || (type === 'PDF' ? 'Bank Account' : 'Credit Card');
 
-                // Construct mapped transaction rows
+                // Construct mapped transaction rows (Ensuring bank_name is explicitly assigned)
                 const rows = extractedTransactions.map(t => {
                     let assignedCategory = t.category || "Uncategorized";
                     activeRules.forEach(rule => {
@@ -1267,6 +1267,7 @@ Return ONLY JSON Object:
                     return {
                         client_name: currentClient, 
                         source: type === 'PDF' ? 'BANK' : 'CREDIT CARD',
+                        bank_name: extractedBankName, // FIXED: Explicitly attach extracted bank name
                         txn_date: t.date, 
                         vendor: t.vendor || "", 
                         description: t.desc || "Statement Line",
@@ -1288,6 +1289,7 @@ Return ONLY JSON Object:
                     const dbPayload = rows.map(r => ({
                         client_name: r.client_name,
                         source: r.source,
+                        bank_name: r.bank_name,
                         txn_date: r.txn_date,
                         vendor: r.vendor,
                         description: r.description,
