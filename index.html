@@ -409,10 +409,26 @@
             <button class="btn btn-outline-warning filter-btn" onclick="filterStagingRows('LOWCONF')">Low Confidence Only</button>
         </div>
 
-        <div class="batch-bar mb-4 row g-3">
-            <div class="col-md-5"><input type="text" id="batchSearchInput" class="form-control form-control-sm" placeholder="Filter Vendor or Description..." onkeyup="handleStagingSearch(this.value)"></div>
-            <div class="col-md-4"><select id="batchCategorySelect" class="form-select form-select-sm"><option value="Uncategorized">-- Assign Target Account --</option></select></div>
-            <div class="col-md-3"><button class="btn btn-app btn-sm w-100 fw-semibold" onclick="applyBatch()">Apply Category Match</button></div>
+        <!-- DUAL BULK MATCHING CONTROL BAR (EXPENSE & BANK ACCOUNTS) -->
+        <div class="batch-bar mb-4 row g-3 align-items-center">
+            <div class="col-md-3">
+                <input type="text" id="batchSearchInput" class="form-control form-control-sm" placeholder="Filter Vendor or Description..." onkeyup="handleStagingSearch(this.value)">
+            </div>
+            <div class="col-md-3">
+                <div class="input-group input-group-sm">
+                    <select id="batchCategorySelect" class="form-select form-select-sm"><option value="Uncategorized">-- Assign Expense Account --</option></select>
+                    <button class="btn btn-app btn-sm fw-semibold" onclick="applyBatch()">Apply Category Match</button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="input-group input-group-sm">
+                    <select id="batchBankSelect" class="form-select form-select-sm"><option value="Uncategorized">-- Bulk Assign Bank / Offset Account --</option></select>
+                    <button class="btn btn-dark-app btn-sm fw-semibold" onclick="applyBankBatch()">Apply Bank Match to All</button>
+                </div>
+            </div>
+            <div class="col-md-2 text-end">
+                <small class="text-muted fw-bold" id="visibleRowCountBadge">Rows: 0</small>
+            </div>
         </div>
         
         <table class="table table-hover table-sm align-middle">
@@ -1785,13 +1801,15 @@ Return ONLY JSON Object:
         showPane('dash'); document.getElementById('activeTitle').innerText = currentClient;
         
         const dl = document.getElementById('glChoices'); dl.innerHTML = ""; 
-        const batchSel = document.getElementById('batchCategorySelect'); batchSel.innerHTML = '<option value="Uncategorized">-- Assign Target Account --</option>';
+        const batchSel = document.getElementById('batchCategorySelect'); batchSel.innerHTML = '<option value="Uncategorized">-- Assign Expense Account --</option>';
+        const batchBankSel = document.getElementById('batchBankSelect'); batchBankSel.innerHTML = '<option value="Uncategorized">-- Bulk Assign Bank / Offset Account --</option>';
         const sensPicker = document.getElementById('sens_acc_picker'); 
         if(sensPicker) sensPicker.innerHTML = '<option value="TOTAL_REVENUE">Total Revenue / Inflows</option><option value="TOTAL_EXPENSE">Total Expenses / Outflows</option>';
 
         appGLOptions.forEach(opt => { 
             dl.innerHTML += `<option value="${opt}">`; 
             batchSel.innerHTML += `<option value="${opt}">${opt}</option>`; 
+            batchBankSel.innerHTML += `<option value="${opt}">${opt}</option>`; 
             if(sensPicker) sensPicker.innerHTML += `<option value="${opt}">${opt}</option>`;
         });
 
@@ -2448,6 +2466,9 @@ Generate executive MD&A notes. Return ONLY JSON Object:
     function renderStagingTable(dataRows) {
         const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
 
+        const countBadge = document.getElementById('visibleRowCountBadge');
+        if (countBadge) countBadge.innerText = `Rows: ${dataRows.length}`;
+
         dataRows.sort((a, b) => {
             let valA = a[sortKey] || '', valB = b[sortKey] || '';
             if (sortKey === 'amt' || sortKey === 'confidence') {
@@ -2650,6 +2671,31 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         if(!query) return showToast("Please enter a search filter query", "danger");
         localData.forEach(item => { if((item.vendor + " " + item.desc).toLowerCase().includes(query)) { const target = document.getElementById('c' + item.row); if(target) target.value = newCat; } });
         recalcJE();
+    }
+
+    /* BULK ASSIGN BANK / OFFSET ACCOUNT TO ALL STAGING ROWS */
+    function applyBankBatch() {
+        const newBankAcc = document.getElementById('batchBankSelect').value;
+        if (!newBankAcc || newBankAcc === "Uncategorized") {
+            return showToast("Please select a valid Bank / Offset Account from the dropdown first.", "danger");
+        }
+
+        const bankSelects = document.querySelectorAll('.row-bnk');
+        if (bankSelects.length === 0) {
+            return showToast("No rows found in the Staging Queue.", "danger");
+        }
+
+        let updatedCount = 0;
+        bankSelects.forEach(sel => {
+            sel.value = newBankAcc;
+            const rId = sel.id.replace('b', '');
+            const item = localData.find(x => x.row == rId);
+            if (item) item.bnk = newBankAcc;
+            updatedCount++;
+        });
+
+        recalcJE();
+        showToast(`✓ Bulk assigned "${newBankAcc}" to all ${updatedCount} rows!`, "success");
     }
 
     /* FIXED DYNAMIC BANK & CREDIT CARD RECONCILIATION ENGINE */
