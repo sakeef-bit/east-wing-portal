@@ -137,6 +137,7 @@
     </header>
     <div class="container">
         
+        <!-- STEP 1: SUPABASE USER AUTHENTICATION GATE -->
         <div id="userAuthGate" class="row justify-content-center">
             <div class="col-md-5">
                 <div class="card card-custom p-4 text-center">
@@ -151,6 +152,48 @@
             </div>
         </div>
 
+        <!-- STEP 2: FALLBACK API KEY AUTHORIZATION GATE -->
+        <div id="keyGate" class="row justify-content-center my-5" style="display:none;">
+            <div class="col-md-6">
+                <div class="card card-custom p-4 text-center shadow-sm">
+                    <h5 class="mb-2 fw-bold">Workspace AI Provider Authorization</h5>
+                    <p class="small text-muted mb-3">No active API keys found in your vault. Please authorize a provider to continue.</p>
+                    
+                    <div class="mb-2 text-start">
+                        <label class="small fw-bold text-muted mb-1">1. Select AI Provider:</label>
+                        <select id="gate_provider" class="form-select form-select-sm rounded-pill font-semibold" onchange="handleProviderChange()">
+                            <option value="GEMINI" selected>Google Gemini (Recommended)</option>
+                            <option value="OPENAI">OpenAI (ChatGPT)</option>
+                            <option value="CLAUDE">Anthropic (Claude)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-2 text-start">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="small fw-bold text-muted">2. Select Target Model:</label>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="gate_toggleCustom" onchange="toggleCustomModelInput(this.checked)">
+                                <label class="form-check-label small text-muted" for="gate_toggleCustom">Custom ID</label>
+                            </div>
+                        </div>
+                        <select id="gate_model" class="form-select form-select-sm rounded-pill font-semibold"></select>
+                        <input type="text" id="gate_custom_model" class="form-control form-control-sm rounded-pill font-semibold mt-2" placeholder="e.g. gemini-3.6-flash" style="display:none;">
+                    </div>
+
+                    <div class="mb-3 text-start">
+                        <label class="small fw-bold text-muted mb-1" id="gate_key_label">3. Enter Gemini API Key:</label>
+                        <input type="password" id="gate_gk" class="form-control text-center rounded-pill" placeholder="Paste secret API key here...">
+                        <div class="form-text text-muted" style="font-size:0.75rem;">🔒 Saved securely to your Supabase account vault. Never exposed in browser storage.</div>
+                    </div>
+
+                    <button class="btn btn-dark-app w-100 rounded-pill" onclick="lockKey()">
+                        Authenticate Workspace Engine
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN PORTAL WITH LIVE API KEY CONTROL BAR -->
         <div id="mainPortal" style="display:none">
             
             <div class="api-switcher-card">
@@ -777,7 +820,6 @@
         );
     }
 
-    /* MODEL REGISTRY WITH OPENAI STATEMENT WARNING LABEL */
     const MODEL_REGISTRY = {
         GEMINI: [
             { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash (Workhorse - Default)", recommended: true },
@@ -1102,14 +1144,19 @@
         checkAuthFlowState(); 
     }
 
-    /* AUTH STATE & MODEL RESTORATION CONTROLLER */
+    /* AUTH STATE & ACCURATE AI STATUS LIGHT EVALUATION */
     async function checkAuthFlowState() {
         initSupabase();
         const { data: { session } } = await db.auth.getSession();
 
+        const keyGateEl = document.getElementById('keyGate');
+        const mainPortalEl = document.getElementById('mainPortal');
+        const aiDot = document.getElementById('dot-gemini');
+
         if (!session) {
             document.getElementById('userAuthGate').style.display = 'flex';
-            document.getElementById('mainPortal').style.display = 'none';
+            if (keyGateEl) keyGateEl.style.display = 'none';
+            mainPortalEl.style.display = 'none';
             document.getElementById('userLogoutBtn').style.display = 'none';
             currentUserId = null;
             isSuperAdmin = false;
@@ -1137,12 +1184,20 @@
 
         handleProviderChange();
 
-        // Restore vaulted key and specific model state
+        // Query vault records for logged in user
         const { data: vaultedKeys } = await db.from('user_api_keys')
-            .select('provider, model')
+            .select('provider, model, api_key')
             .eq('user_id', currentUserId);
 
-        if (vaultedKeys && vaultedKeys.length > 0) {
+        if (!vaultedKeys || vaultedKeys.length === 0) {
+            // NO KEY IN VAULT: Turn AI dot RED and open Key Gate if available
+            if (aiDot) aiDot.className = 'status-dot dot-red';
+            if (keyGateEl) keyGateEl.style.display = 'flex';
+            mainPortalEl.style.display = 'none';
+        } else {
+            // KEY CONNECTED: Turn AI dot GREEN and open Main Portal
+            if (aiDot) aiDot.className = 'status-dot dot-green';
+
             const matchedKey = vaultedKeys.find(k => k.provider === activeProvider) || vaultedKeys[0];
             const targetModel = activeModel || matchedKey.model || '';
 
@@ -1165,18 +1220,17 @@
                 }
                 localStorage.setItem('hca_model', targetModel);
             }
-        }
 
-        localStorage.setItem('hca_gk', 'VAULT_MANAGED');
-        document.getElementById('mainPortal').style.display = 'block';
-        document.getElementById('dot-gemini').classList.add('dot-green');
-        await getClientList();
+            localStorage.setItem('hca_gk', 'VAULT_MANAGED');
+            if (keyGateEl) keyGateEl.style.display = 'none';
+            mainPortalEl.style.display = 'block';
+            await getClientList();
+        }
         updateQuotaUI();
     }
 
     function onClientChange() { 
         pingStatus(); 
-        // Load cached QBO Account details if available
         const cachedDetails = localStorage.getItem(`qbo_account_details_${currentClient}`);
         if (cachedDetails) {
             try { rawQBOAccountDetails = JSON.parse(cachedDetails); } catch(e) {}
@@ -1526,7 +1580,6 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
 
     function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
 
-    /* USER_ID SCOPED VENDOR ENRICHMENT LOOKUPS */
     async function processPostExtractionVendorEnrichment(uniqueVendorNames) {
         initSupabase(); if (!db || !uniqueVendorNames || uniqueVendorNames.length === 0 || !currentUserId) return;
 
