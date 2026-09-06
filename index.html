@@ -1101,7 +1101,7 @@
         location.reload();
     }
 
-    /* SECURE BYOK VAULT SAVE HANDLER WITH DEFENSIVE FALLBACK */
+    /* SECURE BYOK VAULT SAVE HANDLER WITH DIRECT USER_ID UPSERT */
     async function lockKey() { 
         const keyVal = document.getElementById('master_gk').value.trim();
         if (!keyVal) return showToast("Please enter an API Key", "danger");
@@ -1119,29 +1119,14 @@
         currentUserId = user.id;
         document.getElementById('st').style.display = 'block';
 
-        const { data: existingKey } = await db.from('user_api_keys')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('provider', provider)
-            .maybeSingle();
-
-        let error = null;
-
-        if (existingKey) {
-            const { error: err } = await db.from('user_api_keys')
-                .update({ api_key: keyVal, updated_at: new Date() })
-                .eq('id', existingKey.id);
-            error = err;
-        } else {
-            const { error: err } = await db.from('user_api_keys')
-                .insert({
-                    user_id: user.id,
-                    provider: provider,
-                    api_key: keyVal,
-                    updated_at: new Date()
-                });
-            error = err;
-        }
+        // Upsert directly targeting user_id primary key constraint
+        const { error } = await db.from('user_api_keys').upsert({
+            user_id: user.id,
+            provider: provider,
+            model: model,
+            api_key: keyVal,
+            updated_at: new Date()
+        }, { onConflict: 'user_id' });
 
         document.getElementById('st').style.display = 'none';
 
