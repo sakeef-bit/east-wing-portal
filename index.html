@@ -29,7 +29,7 @@
         .brand-logo-text { font-weight: 800; letter-spacing: -0.5px; }
         .brand-badge { background: var(--app-sage); color: var(--app-dark); font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; margin-left: 8px; letter-spacing: 0.5px; }
 
-        .hero-section { background: var(--app-dark); color: white; padding: 50px 20px 60px; text-align: center; border-radius: 0 0 32px 35px; margin-bottom: 40px; }
+        .hero-section { background: var(--app-dark); color: white; padding: 40px 20px 50px; text-align: center; border-radius: 0 0 32px 35px; margin-bottom: 30px; }
 
         .card-custom { background: white; border: 1px solid var(--app-border); border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03); height: 100%; display: flex; flex-direction: column; transition: all 0.25s ease-in-out; }
         .card-custom:hover { transform: translateY(-6px); box-shadow: 0 16px 32px rgba(44,62,80,0.1); border-color: var(--app-sage); }
@@ -106,8 +106,10 @@
         .sortable-hdr { cursor: pointer; user-select: none; }
         .sortable-hdr:hover { text-decoration: underline; }
 
-        /* Bootstrap Toast Dock Position */
+        /* Toast Dock Position */
         .toast-dock { position: fixed; top: 25px; right: 25px; z-index: 9999; }
+
+        .api-switcher-card { background: white; border: 1px solid var(--app-border); border-radius: 20px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
     </style>
 </head>
 <body>
@@ -123,7 +125,7 @@
     <div class="d-flex align-items-center gap-4">
         <div class="small fw-bold d-flex gap-3 status-pill" title="Live System Connection Monitor">
             <div class="d-flex align-items-center" title="Supabase Database Status"><span class="status-dot" id="dot-ledger"></span> Supabase</div>
-            <div class="d-flex align-items-center" title="AI Engine API Connection Status"><span class="status-dot" id="dot-gemini"></span> AI</div>
+            <div class="d-flex align-items-center" title="AI Engine API Connection Status"><span class="status-dot" id="dot-gemini"></span> AI Engine</div>
             <div class="d-flex align-items-center" title="QuickBooks Online OAuth Connection Status"><span class="status-dot" id="dot-qbo"></span> QBO</div>
         </div>
         <button id="userLogoutBtn" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold" style="display:none;" onclick="handleUserLogout()" title="Sign out of your active accountant session">
@@ -157,48 +159,66 @@
             </div>
         </div>
 
-        <!-- STEP 2: MULTI-LLM WORKSPACE API AUTHORIZATION GATE (BYOK VAULT) -->
-        <div id="keyGate" class="row justify-content-center" style="display:none;">
-            <div class="col-md-6"><div class="card card-custom p-4 text-center">
-                <h5 class="mb-2 fw-bold">Workspace AI Provider Authorization</h5>
-                <p class="small text-muted mb-3">Select your AI Engine Provider and target model family for document extraction.</p>
-                
-                <div class="mb-2 text-start">
-                    <label class="small fw-bold text-muted mb-1" title="Choose the AI LLM provider">1. Select AI Provider:</label>
-                    <select id="master_provider" class="form-select form-select-sm rounded-pill font-semibold" onchange="handleProviderChange()" title="Switch between Google Gemini, OpenAI, and Anthropic Claude">
-                        <option value="GEMINI" selected>Google Gemini (Recommended)</option>
-                        <option value="OPENAI">OpenAI (ChatGPT)</option>
-                        <option value="CLAUDE">Anthropic (Claude)</option>
-                    </select>
-                </div>
-
-                <div class="mb-2 text-start">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <label class="small fw-bold text-muted" title="Select model identifier">2. Select Target Model:</label>
-                        <div class="form-check form-switch mb-0">
-                            <input class="form-check-input" type="checkbox" id="toggleCustomModel" onchange="toggleCustomModelInput(this.checked)" title="Enable custom unlisted model ID">
-                            <label class="form-check-label small text-muted" for="toggleCustomModel" title="Toggle manual text entry for model ID">Custom ID</label>
-                        </div>
-                    </div>
-                    <select id="master_model" class="form-select form-select-sm rounded-pill font-semibold" title="Select pre-configured LLM model version"></select>
-                    <input type="text" id="master_custom_model" class="form-control form-control-sm rounded-pill font-semibold mt-2" placeholder="e.g. gemini-3.6-flash or gpt-4o" style="display:none;" title="Type unlisted model string ID">
-                </div>
-
-                <div class="mb-3 text-start">
-                    <label class="small fw-bold text-muted mb-1" id="key_label_text" title="Enter provider API secret key">3. Enter Gemini API Key:</label>
-                    <input type="password" id="master_gk" class="form-control text-center rounded-pill" placeholder="Enter API Key" title="Enter workspace API key">
-                    <div class="form-text text-muted" style="font-size:0.75rem;">🔒 Saved securely to your Supabase account vault. Never exposed in browser storage.</div>
-                </div>
-
-                <button class="btn btn-dark-app w-100 rounded-pill" onclick="lockKey()" title="Save API credentials to vault and authenticate session">
-                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-                    Authenticate Workspace Engine
-                </button>
-            </div></div>
-        </div>
-
-        <!-- STEP 3: MAIN PORTAL -->
+        <!-- MAIN PORTAL WITH LIVE API KEY CONTROL BAR -->
         <div id="mainPortal" style="display:none">
+            
+            <!-- LIVE IN-APP WORKSPACE AI ENGINE & API SWITCHER -->
+            <div class="api-switcher-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0 d-flex align-items-center gap-2 text-dark">
+                        <svg class="icon-svg text-primary" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        Workspace AI Provider & API Key Control
+                    </h6>
+                    <button class="btn btn-xs btn-outline-primary rounded-pill px-3" type="button" data-bs-toggle="collapse" data-bs-target="#tokenGuidanceBox" aria-expanded="false">
+                        💡 Token Optimization Tips
+                    </button>
+                </div>
+
+                <!-- COLLAPSIBLE TOKEN SAVING GUIDANCE -->
+                <div class="collapse mb-3" id="tokenGuidanceBox">
+                    <div class="p-3 bg-light border rounded-xl small text-secondary">
+                        <h6 class="fw-bold text-dark mb-2">How to Save Token Costs & Avoid Rate Limits:</h6>
+                        <ul class="mb-0 ps-3" style="line-height:1.6;">
+                            <li><strong>Upgrade to Pay-As-You-Go:</strong> A paid Google AI Studio key removes daily request limits and increases throughput to 1,000 RPM for fractions of a cent.</li>
+                            <li><strong>Split Large PDF Batches:</strong> Uploading individual monthly PDFs keeps token density smooth and avoids 1-minute token-per-minute (TPM) ceilings.</li>
+                            <li><strong>Switch Models on Rate Limits:</strong> If one API provider hits a minute quota, use the switcher below to immediately toggle to an alternate provider (e.g., OpenAI or Claude).</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="small fw-bold text-muted mb-1">1. Active AI Provider</label>
+                        <select id="master_provider" class="form-select form-select-sm rounded-pill fw-semibold" onchange="handleProviderChange()">
+                            <option value="GEMINI" selected>Google Gemini</option>
+                            <option value="OPENAI">OpenAI (ChatGPT)</option>
+                            <option value="CLAUDE">Anthropic Claude</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="small fw-bold text-muted mb-0">2. Target Model</label>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="toggleCustomModel" onchange="toggleCustomModelInput(this.checked)">
+                                <label class="form-check-label small text-muted" for="toggleCustomModel">Custom ID</label>
+                            </div>
+                        </div>
+                        <select id="master_model" class="form-select form-select-sm rounded-pill fw-semibold"></select>
+                        <input type="text" id="master_custom_model" class="form-control form-control-sm rounded-pill fw-semibold" placeholder="e.g. gemini-3.6-flash" style="display:none;">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="small fw-bold text-muted mb-1" id="key_label_text">3. Enter Provider API Key</label>
+                        <input type="password" id="master_gk" class="form-control form-control-sm rounded-pill text-center" placeholder="Paste secret API key here...">
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-dark-app btn-sm w-100 rounded-pill" onclick="lockKey()">
+                            Save to Vault
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CLIENT SELECTION BAR -->
             <div class="card p-4 rounded-xl border-0 shadow-sm mb-4">
                 <div class="row align-items-center">
                     <div class="col-md-6">
@@ -217,6 +237,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="row g-4 mb-4" id="actionGrid" style="opacity:0.3; pointer-events:none;">
                 <div class="col-md-4"><div class="card card-custom">
                     <div class="card-img-container"><img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80" class="card-img-top" alt="Bank Statement Processing"></div>
@@ -923,13 +944,6 @@
         let secondsToRefresh = Math.max(0, Math.ceil((oldestInWindow + 60000 - now) / 1000));
         if (currentRPM === 0) secondsToRefresh = 0;
 
-        const nowPT = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
-        const midnightPT = new Date(nowPT);
-        midnightPT.setHours(24, 0, 0, 0);
-        const diffMs = midnightPT.getTime() - nowPT.getTime();
-        const hoursLeft = Math.floor(diffMs / (1000 * 60 * 60));
-        const minsLeft = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-
         const rpmText = document.getElementById('quota-rpm-text');
         const rpmBar = document.getElementById('quota-rpm-bar');
         const rpmRefresh = document.getElementById('quota-rpm-refresh');
@@ -959,6 +973,13 @@
             const rpdPct = Math.min(100, (currentRPD / limits.RPD) * 100);
             rpdBar.style.width = `${rpdPct}%`;
         }
+
+        const nowPT = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+        const midnightPT = new Date(nowPT);
+        midnightPT.setHours(24, 0, 0, 0);
+        const diffMs = midnightPT.getTime() - nowPT.getTime();
+        const hoursLeft = Math.floor(diffMs / (1000 * 60 * 60));
+        const minsLeft = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
         if (rpdClock) rpdClock.innerText = `Reset in ${hoursLeft}h ${minsLeft}m`;
 
         const pillText = document.getElementById('gemini-quota-text');
