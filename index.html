@@ -885,15 +885,16 @@
         }
     }
 
-    /* UNIVERSAL MULTI-LLM ROUTER ADAPTER ENGINE */
+    /* UNIVERSAL MULTI-LLM ROUTER ADAPTER ENGINE
+       FIX (quota): usage is now logged exactly ONCE per call, after the response.
+       The previous upfront trackGeminiUsage(10000) plus the per-route call made
+       every request count twice, so the RPM gauge read double. */
     async function callAIModel(promptText, pdfBase64Data = null, mimeType = "application/pdf") {
         const provider = localStorage.getItem('hca_provider') || "GEMINI";
         const model = localStorage.getItem('hca_model') || "gemini-3.6-flash";
         const apiKey = localStorage.getItem('hca_gk');
 
         if (!apiKey) throw new Error(`Missing ${provider} API Key. Please authenticate in Workspace Settings.`);
-
-        trackGeminiUsage(10000);
 
         // ROUTE 1: GOOGLE GEMINI NATIVE REST API
         if (provider === "GEMINI") {
@@ -911,7 +912,7 @@
 
             const jsonRes = await res.json();
             if (jsonRes.error) throw new Error("Gemini API Error: " + jsonRes.error.message);
-            if (jsonRes.usageMetadata?.totalTokenCount) trackGeminiUsage(jsonRes.usageMetadata.totalTokenCount);
+            trackGeminiUsage(jsonRes.usageMetadata?.totalTokenCount || 10000);
 
             const rawText = jsonRes.candidates[0].content.parts[0].text;
             return JSON.parse(rawText.replace(/```json|```/g, '').trim());
@@ -940,7 +941,7 @@
 
             const jsonRes = await res.json();
             if (jsonRes.error) throw new Error("OpenAI API Error: " + jsonRes.error.message);
-            if (jsonRes.usage?.total_tokens) trackGeminiUsage(jsonRes.usage.total_tokens);
+            trackGeminiUsage(jsonRes.usage?.total_tokens || 10000);
 
             const rawText = jsonRes.choices[0].message.content;
             return JSON.parse(rawText.replace(/```json|```/g, '').trim());
@@ -969,7 +970,7 @@
 
             const jsonRes = await res.json();
             if (jsonRes.error) throw new Error("Claude API Error: " + jsonRes.error.message);
-            if (jsonRes.usage?.input_tokens) trackGeminiUsage(jsonRes.usage.input_tokens + (jsonRes.usage.output_tokens || 0));
+            trackGeminiUsage((jsonRes.usage?.input_tokens || 0) + (jsonRes.usage?.output_tokens || 0) || 10000);
 
             const rawText = jsonRes.content[0].text;
             return JSON.parse(rawText.replace(/```json|```/g, '').trim());
@@ -1611,7 +1612,7 @@ Return ONLY a valid JSON array of objects matching this exact structure:
                     const { data: meta } = await db.from('client_metadata').select('gl_list').ilike('client_name', currentClient.trim()).maybeSingle();
                     if (meta && meta.gl_list) appGLOptions = meta.gl_list.split(',').filter(Boolean);
                     const { data: ledger } = await db.from('permanent_ledger').select('*').ilike('client_name', currentClient.trim()).limit(50);
-                    if (ledger) historyData = ledger.map(l => ({ date: l.txn_date, bank_name: l.bank_name || "", vendor: l.vendor || "", desc: l.description, amt: String(l.amount), cat: l.category, bnk: l.bank_category || "Uncategorized", qbo: l.qbo_id || "SYNCED" }));
+                    if (ledger) historyData = ledger.map(l => ({ date: l.txn_date, src: l.source, bank_name: l.bank_name || "", vendor: l.vendor || "", desc: l.description, amt: String(l.amount), cat: l.category, bnk: l.bank_category || "Uncategorized", qbo: l.qbo_id || "SYNCED" }));
                 }
 
                 const glContext = appGLOptions.length > 0 ? appGLOptions.join(", ") : "Payroll, Rent, Utilities, Office Supplies & Expenses, Bank Fees, Consulting Revenue, Travel & Lodging, Software & Subscriptions, Meals & Entertainment, Automobile & Fuel";
@@ -1781,9 +1782,13 @@ Return ONLY JSON Object:
             if (meta.gl_list) appGLOptions = meta.gl_list.split(',').filter(Boolean);
         }
 
+        /* FIX: carry `src` through from permanent_ledger. The trial balance and the
+           cash forecast need to know whether a historic row came from a bank or a
+           credit card statement, because the two use opposite sign conventions. */
         historyData = ledger.map(l => ({
             id: l.id,
             date: l.txn_date,
+            src: l.source,
             bank_name: l.bank_name || (l.source === 'BANK' ? 'Bank Account' : 'Credit Card'),
             vendor: l.vendor || "",
             desc: l.description,
@@ -1871,10 +1876,15 @@ Return ONLY JSON Object:
         recalcJE(); applyGlobalDateFilter();
     }
 
-    /* FULL BATCH JOURNAL ENTRY REVERSAL CONTROLLER */
+    /* FULL BATCH JOURNAL ENTRY REVERSAL CONTROLLER
+       FIX (ordering): the reversal is now posted to QuickBooks FIRST. Only if QBO
+       accepts it does anything land in permanent_ledger, and qbo-sync writes those
+       rows itself. Previously the rows were inserted locally before the sync call,
+       which (a) made the sync's duplicate pre-flight block its own batch and
+       (b) swallowed the failure, so the ledger and QBO silently diverged. */
     async function reverseFullBatch(syncRef) {
         if (!syncRef) return showToast("Invalid Sync Reference for reversal.", "danger");
-        if (!confirm(`Are you sure you want to reverse the ENTIRE Batch #${syncRef}? This will post offsetting entries for all associated line items.`)) return;
+        if (!confirm(`Are you sure you want to reverse the ENTIRE Batch #${syncRef}? This will post offsetting entries to QuickBooks for all associated line items.`)) return;
 
         initSupabase(); if (!db) return;
         document.getElementById('st').style.display = 'block';
@@ -1883,8 +1893,8 @@ Return ONLY JSON Object:
             const { data: batchRows, error: fetchErr } = await db.from('permanent_ledger').select('*').ilike('client_name', currentClient.trim()).eq('qbo_id', syncRef);
             if (fetchErr || !batchRows || batchRows.length === 0) throw new Error("Could not retrieve batch rows for reversal: " + (fetchErr?.message || "No matching rows found."));
 
-            const reversalRef = `${syncRef}-REV`;
-
+            // Build the offsetting entries. No local insert here — qbo-sync writes
+            // them to permanent_ledger only after QuickBooks accepts the post.
             const reversalPayload = batchRows.map(r => ({
                 client_name: r.client_name,
                 source: r.source,
@@ -1895,28 +1905,22 @@ Return ONLY JSON Object:
                 amount: (parseFloat(r.amount) * -1),
                 category: r.category,
                 bank_category: r.bank_category,
-                class_name: r.class_name,
-                qbo_id: reversalRef,
-                fingerprint: btoa(unescape(encodeURIComponent(`REV_${r.fingerprint || Date.now()}`)))
+                class_name: r.class_name
             }));
 
-            const { error: insErr } = await db.from('permanent_ledger').insert(reversalPayload);
-            if (insErr) throw new Error("Failed to insert reversal batch into Permanent Ledger: " + insErr.message);
+            const res = await fetch("https://oxhwhxnoysowuokdhmtr.supabase.co/functions/v1/qbo-sync", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` },
+                body: JSON.stringify({ client_name: currentClient, transactions: reversalPayload })
+            });
+            const qboRes = await res.json();
 
-            try {
-                const res = await fetch("https://oxhwhxnoysowuokdhmtr.supabase.co/functions/v1/qbo-sync", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` },
-                    body: JSON.stringify({ client_name: currentClient, transactions: reversalPayload })
-                });
-                const qboRes = await res.json();
-                if (qboRes.success) showToast(`✓ Reversal Batch #${reversalRef} posted live to QBO!`, "success");
-            } catch (qErr) {
-                console.warn("QBO Reversal Sync Warning:", qErr);
+            if (!res.ok || !qboRes.success) {
+                throw new Error("QuickBooks refused the reversal, so nothing was recorded: " + (qboRes.error || "unknown error"));
             }
 
             document.getElementById('st').style.display = 'none';
-            showToast(`✓ Successfully reversed entire Batch #${syncRef}!`, "success");
+            showToast(`✓ Batch #${syncRef} reversed. Offsetting Journal Entry #${qboRes.journalEntryId} posted to QBO.`, "success");
             await loadDash();
         } catch (err) {
             document.getElementById('st').style.display = 'none';
@@ -1924,7 +1928,9 @@ Return ONLY JSON Object:
         }
     }
 
-    /* BATCH RE-STAGE CONTROLLER FOR USER-DRIVEN ACCOUNT MAPPING FIXES */
+    /* BATCH RE-STAGE CONTROLLER FOR USER-DRIVEN ACCOUNT MAPPING FIXES
+       FIX (sign): the amount is no longer passed through Math.abs(). Stripping the
+       sign turned every re-staged payment into a deposit. */
     async function restageFullBatch(syncRef) {
         if (!syncRef) return showToast("Invalid Sync Reference.", "danger");
         if (!confirm(`Do you want to copy Batch #${syncRef} back into the Review Staging queue for account editing?`)) return;
@@ -1950,7 +1956,7 @@ Return ONLY JSON Object:
                 txn_date: r.txn_date,
                 vendor: r.vendor,
                 description: r.description.replace(/^\[REVERSAL OF BATCH #.*?\]\s*/, ''),
-                amount: Math.abs(parseFloat(r.amount)),
+                amount: parseFloat(r.amount),
                 category: r.category || "Uncategorized",
                 status: "PENDING",
                 bank_category: r.bank_category || "Uncategorized",
@@ -1973,7 +1979,12 @@ Return ONLY JSON Object:
         }
     }
 
-    /* PERIOD-SPECIFIC TRIAL BALANCE CORE DATA LAYER ENGINE */
+    /* PERIOD-SPECIFIC TRIAL BALANCE CORE DATA LAYER ENGINE
+       FIX (sign): debits and credits were inverted. On a BANK statement a negative
+       amount is an outflow, which DEBITS the expense account; a positive amount is
+       an inflow, which CREDITS income. On a CREDIT CARD statement the convention is
+       reversed: positive spend DEBITS the expense. The old code keyed purely off
+       `val > 0`, so the Impact tab showed expenses as credits and revenue as debits. */
     function getPeriodTrialBalance() {
         const filteredDataset = filterBySelectedPeriod([...historyData, ...localData]);
         const trialBalance = {};
@@ -1988,8 +1999,11 @@ Return ONLY JSON Object:
 
             if (!trialBalance[cat]) trialBalance[cat] = { debits: 0, credits: 0, net: 0 };
 
-            if (val > 0) {
-                trialBalance[cat].debits += val;
+            const isCreditCardRow = String(item.src || "").toUpperCase() === "CREDIT CARD";
+            const isDebit = isCreditCardRow ? (val > 0) : (val < 0);
+
+            if (isDebit) {
+                trialBalance[cat].debits += Math.abs(val);
             } else {
                 trialBalance[cat].credits += Math.abs(val);
             }
@@ -2169,19 +2183,35 @@ Return ONLY JSON Object:
         }
     }
 
-    /* PREDICTIVE 90-DAY CASH FORECAST ENGINE WITH TRIAL BALANCE FOUNDATION & EDITABLE SANDBOX */
+    /* PREDICTIVE 90-DAY CASH FORECAST ENGINE
+       FIX (averaging): monthly figures are now divided by the number of distinct
+       months actually present in the filtered period. Previously the whole filtered
+       range was treated as a single month, so with the year filter on and the month
+       filter set to All, twelve months of activity became "monthly" revenue and the
+       runway was out by roughly 12x.
+       FIX (starting cash): cash is drawn only from BANK-source rows. stmtEnd holds
+       whatever the last processed statement closed at — if that was a credit card,
+       the old code put a LIABILITY balance into "Starting Liquid Cash". */
     async function renderCashForecast() {
-        const tb = getPeriodTrialBalance();
-        let currentCash = stmtEnd || 0;
+        const filtered = filterBySelectedPeriod([...historyData, ...localData]);
+        const bankRows = filtered.filter(i => String(i.src || "").toUpperCase() !== "CREDIT CARD");
 
+        const monthKeys = new Set();
         let totalIn = 0, totalOut = 0;
-        for (let acc in tb) {
-            totalIn += tb[acc].debits;
-            totalOut += tb[acc].credits;
-        }
 
-        let avgMonthlyIn = totalIn;
-        let avgMonthlyOut = totalOut;
+        bankRows.forEach(i => {
+            const v = parseFloat(String(i.amt).replace(/[^0-9.-]+/g, "")) || 0;
+            if (i.date) monthKeys.add(String(i.date).substring(0, 7));
+            if (v > 0) totalIn += v; else totalOut += Math.abs(v);
+        });
+
+        const monthsInView = Math.max(1, monthKeys.size);
+        const avgMonthlyIn = totalIn / monthsInView;
+        const avgMonthlyOut = totalOut / monthsInView;
+
+        // Only trust stmtEnd as a cash balance when the period actually contains
+        // bank activity. Otherwise start from zero and let the accountant key it in.
+        const currentCash = bankRows.length > 0 ? (parseFloat(stmtEnd) || 0) : 0;
 
         document.getElementById('sb_start_base').value = currentCash.toFixed(2);
         document.getElementById('sb_start_cons').value = currentCash.toFixed(2);
