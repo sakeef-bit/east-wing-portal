@@ -24,12 +24,11 @@
         body { background: var(--app-bg); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--app-dark); padding-bottom: 70px; }
         .rounded-xl { border-radius: 16px !important; }
         
-        /* Navbar & Branding */
         .navbar { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); border-bottom: 2px solid var(--app-sage); padding: 0.8rem 2rem; }
         .brand-logo-text { font-weight: 800; letter-spacing: -0.5px; }
         .brand-badge { background: var(--app-sage); color: var(--app-dark); font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; margin-left: 8px; letter-spacing: 0.5px; }
 
-        .hero-section { background: var(--app-dark); color: white; padding: 40px 20px 50px; text-align: center; border-radius: 0 0 32px 35px; margin-bottom: 30px; }
+        .hero-section { background: var(--app-dark); color: white; padding: 50px 20px 60px; text-align: center; border-radius: 0 0 32px 35px; margin-bottom: 40px; }
 
         .card-custom { background: white; border: 1px solid var(--app-border); border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03); height: 100%; display: flex; flex-direction: column; transition: all 0.25s ease-in-out; }
         .card-custom:hover { transform: translateY(-6px); box-shadow: 0 16px 32px rgba(44,62,80,0.1); border-color: var(--app-sage); }
@@ -53,7 +52,6 @@
         .dot-red { background: #EF4444; box-shadow: 0 0 8px #EF4444; }
         @keyframes signalPulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
-        /* Floating Widgets Container */
         .widgets-dock { position: fixed; bottom: 25px; left: 25px; display: flex; gap: 12px; z-index: 3000; }
         .chat-trigger-btn { background: var(--app-dark); color: white; border-radius: 30px; padding: 8px 18px 8px 12px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 10px 25px rgba(44,62,80,0.25); transition: all 0.25s ease; border: 1px solid rgba(255,255,255,0.1); }
         .chat-trigger-btn:hover { background: #1a252f; border-color: var(--app-sage); transform: translateY(-2px); }
@@ -96,25 +94,20 @@
         .status-success { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
         .status-error { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
 
-        /* Confidence & Toast Styles */
         .low-confidence-row { background-color: #FEF3C7 !important; }
         .badge-confidence { font-size: 0.65rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
         .badge-conf-high { background: #DCFCE7; color: #166534; }
         .badge-conf-low { background: #FEE2E2; color: #991B1B; }
 
-        /* Sortable Header Class */
         .sortable-hdr { cursor: pointer; user-select: none; }
         .sortable-hdr:hover { text-decoration: underline; }
 
-        /* Toast Dock Position */
         .toast-dock { position: fixed; top: 25px; right: 25px; z-index: 9999; }
-
         .api-switcher-card { background: white; border: 1px solid var(--app-border); border-radius: 20px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
     </style>
 </head>
 <body>
 
-<!-- Bootstrap Toast Dock -->
 <div class="toast-dock" id="toastContainer"></div>
 
 <nav class="navbar d-flex justify-content-between align-items-center" title="StatementIQ Navigation Bar">
@@ -162,19 +155,17 @@
         <!-- MAIN PORTAL WITH LIVE API KEY CONTROL BAR -->
         <div id="mainPortal" style="display:none">
             
-            <!-- LIVE IN-APP WORKSPACE AI ENGINE & API SWITCHER -->
             <div class="api-switcher-card">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h6 class="fw-bold mb-0 d-flex align-items-center gap-2 text-dark">
                         <svg class="icon-svg text-primary" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-                        Workspace AI Provider & API Key Control
+                        Workspace AI Provider & API Key Control Bar
                     </h6>
                     <button class="btn btn-xs btn-outline-primary rounded-pill px-3" type="button" data-bs-toggle="collapse" data-bs-target="#tokenGuidanceBox" aria-expanded="false">
                         💡 Token Optimization Tips
                     </button>
                 </div>
 
-                <!-- COLLAPSIBLE TOKEN SAVING GUIDANCE -->
                 <div class="collapse mb-3" id="tokenGuidanceBox">
                     <div class="p-3 bg-light border rounded-xl small text-secondary">
                         <h6 class="fw-bold text-dark mb-2">How to Save Token Costs & Avoid Rate Limits:</h6>
@@ -199,8 +190,8 @@
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <label class="small fw-bold text-muted mb-0">2. Target Model</label>
                             <div class="form-check form-switch mb-0">
-                                <input class="form-check-input" type="checkbox" id="toggleCustomModel" onchange="toggleCustomModelInput(this.checked)">
-                                <label class="form-check-label small text-muted" for="toggleCustomModel">Custom ID</label>
+                                <input class="form-check-input" type="checkbox" id="master_toggleCustom" onchange="toggleCustomModelInput(this.checked)">
+                                <label class="form-check-label small text-muted" for="master_toggleCustom">Custom ID</label>
                             </div>
                         </div>
                         <select id="master_model" class="form-select form-select-sm rounded-pill fw-semibold"></select>
@@ -218,7 +209,6 @@
                 </div>
             </div>
 
-            <!-- CLIENT SELECTION BAR -->
             <div class="card p-4 rounded-xl border-0 shadow-sm mb-4">
                 <div class="row align-items-center">
                     <div class="col-md-6">
@@ -426,7 +416,6 @@
             <button class="btn btn-outline-warning filter-btn" onclick="filterStagingRows('LOWCONF')" title="Filter to show low confidence OCR extractions (< 80%)">Low Confidence Only</button>
         </div>
 
-        <!-- DUAL BULK MATCHING CONTROL BAR (EXPENSE & BANK ACCOUNTS) -->
         <div class="batch-bar mb-4 row g-3 align-items-center">
             <div class="col-md-3">
                 <input type="text" id="batchSearchInput" class="form-control form-control-sm" placeholder="Filter Vendor or Description..." onkeyup="handleStagingSearch(this.value)" title="Filter staging rows by vendor or description string">
@@ -511,12 +500,17 @@
 
     <!-- 100% DETERMINISTIC SCHEDULE C TAX READINESS TAB -->
     <div id="tab-tax" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
             <div>
                 <h5 class="fw-bold mb-0">IRS Form 1040 Schedule C Tax Readiness Summary</h5>
                 <p class="small text-muted mb-0">Deterministic summation mapping GL accounts directly into IRS Schedule C tax lines.</p>
             </div>
             <button class="btn btn-sm btn-outline-dark fw-bold rounded-pill px-3" onclick="exportTaxScheduleC()" title="Download CSV summary formatted for tax preparation">📥 Export Schedule C Summary</button>
+        </div>
+
+        <!-- CPA TAX PREPARATION AID DISCLAIMER -->
+        <div class="alert alert-warning py-2 small mb-3">
+            ⚠️ <strong>Tax Preparation Notice:</strong> This Schedule C summary is a preliminary categorization aid derived from statement extractions. It requires review by a licensed CPA or tax preparer before filing.
         </div>
 
         <div class="row g-3 mb-4">
@@ -569,7 +563,6 @@
         <div class="table-responsive"><table class="table table-sm table-striped align-middle"><tbody id="tb-gl"></tbody></table></div>
     </div>
 
-    <!-- ENHANCED PERMANENT LEDGER HISTORY WITH BANK NAME, OFFSET ACCOUNT, AND BATCH REVERSAL/RE-STAGE -->
     <div id="tab-history" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <h5 class="fw-bold mb-3">Permanent Ledger History</h5>
         <div class="table-responsive">
@@ -622,7 +615,6 @@
         <span class="fw-semibold small">ZORO</span>
         <span class="chat-bar-badge">Dashboard</span>
     </div>
-    <!-- GEMINI QUOTA STATUS FLOATING PILL -->
     <div class="chat-trigger-btn" id="gemini-quota-pill" onclick="toggleChat('gemini-quota-window')" title="Click to view AI API Rate Limit Monitor">
         <span id="gemini-quota-dot" class="status-dot dot-green" style="margin-right:0;"></span>
         <span class="fw-semibold small" id="gemini-quota-text">Quota: 15/15 RPM</span>
@@ -648,7 +640,6 @@
     <div class="p-2 border-top"><input id="zoro-chat-input" class="form-control form-control-sm rounded-pill" placeholder="Ask about dashboard data..." onkeydown="if(event.key==='Enter') sendZoroChat()" title="Type question for ZORO dashboard assistant"></div>
 </div>
 
-<!-- GEMINI QUOTA STATUS POPUP WINDOW -->
 <div id="gemini-quota-window" class="chat-window-popup">
     <div class="chat-header-bar d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center gap-2">
@@ -716,8 +707,8 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94aHdoeG5veXNvd3Vva2RobXRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NDU1MTEsImV4cCI6MjEwMzIyMTUxMX0.hQm9RsFit-TVz1pH0Y1Q3VITdbfwLUKA42uq2frZkyc";
     
     let db = null;
-    let currentUserId = null; // Cache session user_id for explicit defensive scoping
-    let isSuperAdmin = false;  // Track SUPER_ADMIN role bypass state
+    let currentUserId = null;
+    let isSuperAdmin = false;
 
     function initSupabase() {
         if (!db && window.supabase) db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -764,29 +755,30 @@
         "Dues & Subscriptions": "Line 27b: Other expenses"
     };
 
+    /* TIGHTENED SCHEDULE C HEURISTIC LOOKUP USING WORD BOUNDARIES */
     function getScheduleCLine(glAccount) {
-        if (!glAccount || glAccount === "Uncategorized") return "Line 27b: Other expenses (Uncategorized)";
+        if (!glAccount || glAccount === "Uncategorized") return "Unmapped GL Account — Review Required";
         if (SCHEDULE_C_MAPPING[glAccount]) return SCHEDULE_C_MAPPING[glAccount];
         
-        const lower = glAccount.toLowerCase();
-        if (lower.includes("ad") || lower.includes("market")) return "Line 8: Advertising";
-        if (lower.includes("car") || lower.includes("auto") || lower.includes("fuel")) return "Line 9: Car and truck expenses";
-        if (lower.includes("contract") || lower.includes("sub")) return "Line 11: Contract labor";
-        if (lower.includes("insur")) return "Line 15: Insurance (other than health)";
-        if (lower.includes("legal") || lower.includes("cpa") || lower.includes("prof")) return "Line 17: Legal and professional services";
-        if (lower.includes("soft") || lower.includes("office")) return "Line 18: Office expense";
-        if (lower.includes("rent")) return "Line 20b: Rent - Other business property";
-        if (lower.includes("repair") || lower.includes("maint")) return "Line 21: Repairs and maintenance";
-        if (lower.includes("tax") || lower.includes("license")) return "Line 23: Taxes and licenses";
-        if (lower.includes("travel")) return "Line 24a: Travel";
-        if (lower.includes("meal") || lower.includes("food")) return "Line 24b: Deductible meals (50% rule)";
-        if (lower.includes("util") || lower.includes("internet") || lower.includes("phone")) return "Line 25: Utilities";
-        if (lower.includes("wage") || lower.includes("pay")) return "Line 26: Wages (less employment credits)";
+        const str = glAccount.trim();
         
-        return "Line 27b: Other expenses";
+        if (/\b(advertising|marketing|ads|promo)\b/i.test(str)) return "Line 8: Advertising";
+        if (/\b(car|truck|vehicle|fuel|gas|mileage)\b/i.test(str)) return "Line 9: Car and truck expenses";
+        if (/\b(contractor|subcontractor|freelance)\b/i.test(str)) return "Line 11: Contract labor";
+        if (/\b(insurance|insur)\b/i.test(str)) return "Line 15: Insurance (other than health)";
+        if (/\b(legal|attorney|cpa|accounting|professional)\b/i.test(str)) return "Line 17: Legal and professional services";
+        if (/\b(software|office|paper|stationery)\b/i.test(str)) return "Line 18: Office expense";
+        if (/\b(rent|lease|building|equipment)\b/i.test(str)) return "Line 20b: Rent - Other business property";
+        if (/\b(repair|maintenance|maint)\b/i.test(str)) return "Line 21: Repairs and maintenance";
+        if (/\b(tax|taxes|license|licenses|permit)\b/i.test(str)) return "Line 23: Taxes and licenses";
+        if (/\b(travel|lodging|flight|hotel)\b/i.test(str)) return "Line 24a: Travel";
+        if (/\b(meal|meals|dining|food)\b/i.test(str)) return "Line 24b: Deductible meals (50% rule)";
+        if (/\b(utility|utilities|electric|water|internet|phone)\b/i.test(str)) return "Line 25: Utilities";
+        if (/\b(payroll|wages|salary|salaries)\b/i.test(str)) return "Line 26: Wages (less employment credits)";
+        
+        return "Unmapped GL Account — Review Required";
     }
 
-    /* TEXT SANITIZATION UTILITY FOR SAFE DOM INSERTION (XSS PROTECTION) */
     function escapeHTML(str) {
         if (typeof str !== 'string') return str;
         return str.replace(/[&<>'"]/g, 
@@ -794,7 +786,6 @@
         );
     }
 
-    /* MULTI-LLM MODEL REGISTRY & CONFIGURATION MATRIX */
     const MODEL_REGISTRY = {
         GEMINI: [
             { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash (Workhorse - Default)", recommended: true },
@@ -818,24 +809,26 @@
     };
 
     function handleProviderChange() {
-        const provider = document.getElementById('master_provider').value;
+        const providerEl = document.getElementById('master_provider');
+        if (!providerEl) return;
+        const provider = providerEl.value;
         const modelSel = document.getElementById('master_model');
         const keyLabel = document.getElementById('key_label_text');
 
-        modelSel.innerHTML = "";
-        const models = MODEL_REGISTRY[provider] || MODEL_REGISTRY.GEMINI;
+        if (modelSel) {
+            modelSel.innerHTML = "";
+            const models = MODEL_REGISTRY[provider] || MODEL_REGISTRY.GEMINI;
 
-        models.forEach(m => {
-            const isSel = m.recommended ? 'selected' : '';
-            modelSel.innerHTML += `<option value="${m.id}" ${isSel}>${escapeHTML(m.name)}</option>`;
-        });
+            models.forEach(m => {
+                const isSel = m.recommended ? 'selected' : '';
+                modelSel.innerHTML += `<option value="${m.id}" ${isSel}>${escapeHTML(m.name)}</option>`;
+            });
+        }
 
-        if (provider === "GEMINI") {
-            keyLabel.innerText = "3. Enter Gemini API Key:";
-        } else if (provider === "OPENAI") {
-            keyLabel.innerText = "3. Enter OpenAI API Key:";
-        } else if (provider === "CLAUDE") {
-            keyLabel.innerText = "3. Enter Anthropic Claude API Key:";
+        if (keyLabel) {
+            if (provider === "GEMINI") keyLabel.innerText = "3. Enter Gemini API Key:";
+            else if (provider === "OPENAI") keyLabel.innerText = "3. Enter OpenAI API Key:";
+            else if (provider === "CLAUDE") keyLabel.innerText = "3. Enter Anthropic Claude API Key:";
         }
 
         updateQuotaUI();
@@ -844,16 +837,17 @@
     function toggleCustomModelInput(isCustom) {
         const selectEl = document.getElementById('master_model');
         const customEl = document.getElementById('master_custom_model');
-        if (isCustom) {
-            selectEl.style.display = 'none';
-            customEl.style.display = 'block';
-        } else {
-            selectEl.style.display = 'block';
-            customEl.style.display = 'none';
+        if (selectEl && customEl) {
+            if (isCustom) {
+                selectEl.style.display = 'none';
+                customEl.style.display = 'block';
+            } else {
+                selectEl.style.display = 'block';
+                customEl.style.display = 'none';
+            }
         }
     }
 
-    /* REFACTORED callAIModel TO DELEGATE TO SUPABASE EDGE FUNCTION AI-ROUTER */
     async function callAIModel(promptText, pdfBase64Data = null, mimeType = "application/pdf") {
         const provider = localStorage.getItem('hca_provider') || "GEMINI";
         const model = localStorage.getItem('hca_model') || "gemini-3.6-flash";
@@ -885,14 +879,10 @@
             throw new Error(result.error || "AI Edge Function Router failed to process request.");
         }
 
-        if (result.tokens) {
-            trackGeminiUsage(result.tokens);
-        }
-
+        if (result.tokens) trackGeminiUsage(result.tokens);
         return result.data;
     }
 
-    /* GEMINI & MULTI-PROVIDER RATE LIMIT & TOKEN TRACKER ENGINE */
     const PROVIDER_LIMITS = {
         GEMINI: { RPM: 15, TPM: 1000000, RPD: 1500 },
         OPENAI: { RPM: 60, TPM: 2000000, RPD: 10000 },
@@ -900,11 +890,8 @@
     };
 
     function getQuotaLogs() {
-        try {
-            return JSON.parse(localStorage.getItem('gemini_quota_logs') || '[]');
-        } catch(e) {
-            return [];
-        }
+        try { return JSON.parse(localStorage.getItem('gemini_quota_logs') || '[]'); } 
+        catch(e) { return []; }
     }
 
     function saveQuotaLogs(logs) {
@@ -936,9 +923,7 @@
         const currentTPM = recentLogs.reduce((acc, curr) => acc + (curr.tokens || 0), 0);
         const currentRPD = dayLogs.length;
 
-        if (logs.length > recentLogs.length + dayLogs.length + 50) {
-            saveQuotaLogs(dayLogs);
-        }
+        if (logs.length > recentLogs.length + dayLogs.length + 50) saveQuotaLogs(dayLogs);
 
         let oldestInWindow = recentLogs.length > 0 ? Math.min(...recentLogs.map(l => l.timestamp)) : now;
         let secondsToRefresh = Math.max(0, Math.ceil((oldestInWindow + 60000 - now) / 1000));
@@ -957,30 +942,19 @@
 
         const tpmText = document.getElementById('quota-tpm-text');
         const tpmBar = document.getElementById('quota-tpm-bar');
-        const tpmRefresh = document.getElementById('quota-tpm-refresh');
         if (tpmText) tpmText.innerText = `${(currentTPM / 1000).toFixed(0)}k / ${(limits.TPM / 1000000).toFixed(1)}M`;
         if (tpmBar) {
             const tpmPct = Math.min(100, (currentTPM / limits.TPM) * 100);
             tpmBar.style.width = `${tpmPct}%`;
         }
-        if (tpmRefresh) tpmRefresh.innerText = secondsToRefresh > 0 ? `Refreshes in ${secondsToRefresh}s` : "Full Capacity";
 
         const rpdText = document.getElementById('quota-rpd-text');
         const rpdBar = document.getElementById('quota-rpd-bar');
-        const rpdClock = document.getElementById('quota-rpd-clock');
         if (rpdText) rpdText.innerText = `${currentRPD} / ${limits.RPD.toLocaleString()}`;
         if (rpdBar) {
             const rpdPct = Math.min(100, (currentRPD / limits.RPD) * 100);
             rpdBar.style.width = `${rpdPct}%`;
         }
-
-        const nowPT = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
-        const midnightPT = new Date(nowPT);
-        midnightPT.setHours(24, 0, 0, 0);
-        const diffMs = midnightPT.getTime() - nowPT.getTime();
-        const hoursLeft = Math.floor(diffMs / (1000 * 60 * 60));
-        const minsLeft = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-        if (rpdClock) rpdClock.innerText = `Reset in ${hoursLeft}h ${minsLeft}m`;
 
         const pillText = document.getElementById('gemini-quota-text');
         const pillDot = document.getElementById('gemini-quota-dot');
@@ -993,26 +967,18 @@
         const availableRPM = Math.max(0, limits.RPM - currentRPM);
 
         if (pillText) {
-            if (currentRPM >= limits.RPM) {
-                pillText.innerText = `Quota: Wait ${secondsToRefresh}s`;
-            } else {
-                pillText.innerText = `Quota: ${availableRPM}/${limits.RPM} RPM`;
-            }
+            if (currentRPM >= limits.RPM) pillText.innerText = `Quota: Wait ${secondsToRefresh}s`;
+            else pillText.innerText = `Quota: ${availableRPM}/${limits.RPM} RPM`;
         }
         if (pillDot) {
-            if (currentRPM >= limits.RPM || currentRPD >= limits.RPD) {
-                pillDot.className = "status-dot dot-red";
-            } else if (currentRPM >= (limits.RPM * 0.7)) {
-                pillDot.className = "status-dot dot-amber";
-            } else {
-                pillDot.className = "status-dot dot-green";
-            }
+            if (currentRPM >= limits.RPM || currentRPD >= limits.RPD) pillDot.className = "status-dot dot-red";
+            else if (currentRPM >= (limits.RPM * 0.7)) pillDot.className = "status-dot dot-amber";
+            else pillDot.className = "status-dot dot-green";
         }
     }
 
     setInterval(updateQuotaUI, 1000);
 
-    /* BOOTSTRAP TOAST NOTIFICATION HELPER */
     function showToast(message, type = "success") {
         const container = document.getElementById("toastContainer");
         if (!container) return;
@@ -1023,9 +989,7 @@
         const toastHtml = `
             <div id="${toastId}" class="toast align-items-center ${bgClass} border-0 mb-2 shadow" role="alert" aria-live="assertive" aria-atomic="true">
                 <div class="d-flex">
-                    <div class="toast-body font-semibold small">
-                        ${escapeHTML(message)}
-                    </div>
+                    <div class="toast-body font-semibold small">${escapeHTML(message)}</div>
                     <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                 </div>
             </div>
@@ -1039,7 +1003,7 @@
         toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove());
     }
 
-    /* STEP 1: SUPABASE AUTH HANDLERS */
+    /* AUTHENTICATION HANDLERS (REMOVED CLIENT-SIDE ROLE INSERTIONS) */
     async function handleUserSignIn() {
         initSupabase();
         const email = document.getElementById('auth_email').value.trim();
@@ -1048,22 +1012,6 @@
 
         document.getElementById('st').style.display = 'block';
         const { data, error } = await db.auth.signInWithPassword({ email, password });
-        
-        if (!error && data?.user) {
-            currentUserId = data.user.id;
-            const { data: existingRole } = await db
-                .from('user_roles')
-                .select('role')
-                .eq('user_id', data.user.id)
-                .maybeSingle();
-
-            if (!existingRole) {
-                await db
-                    .from('user_roles')
-                    .insert([{ user_id: data.user.id, role: 'ACCOUNTANT' }]);
-            }
-        }
-
         document.getElementById('st').style.display = 'none';
 
         if (error) {
@@ -1082,22 +1030,6 @@
 
         document.getElementById('st').style.display = 'block';
         const { data, error } = await db.auth.signUp({ email, password });
-
-        if (!error && data?.user) {
-            currentUserId = data.user.id;
-            const { data: existingRole } = await db
-                .from('user_roles')
-                .select('role')
-                .eq('user_id', data.user.id)
-                .maybeSingle();
-
-            if (!existingRole) {
-                await db
-                    .from('user_roles')
-                    .insert([{ user_id: data.user.id, role: 'ACCOUNTANT' }]);
-            }
-        }
-
         document.getElementById('st').style.display = 'none';
 
         if (error) {
@@ -1118,13 +1050,13 @@
         location.reload();
     }
 
-    /* SECURE BYOK VAULT SAVE HANDLER WITH DIRECT USER_ID UPSERT */
+    /* MULTI-PROVIDER KEY VAULT SAVE (COMPOSITE ON-CONFLICT: USER_ID, PROVIDER) */
     async function lockKey() { 
         const keyVal = document.getElementById('master_gk').value.trim();
         if (!keyVal) return showToast("Please enter an API Key", "danger");
 
         const provider = document.getElementById('master_provider').value;
-        const isCustom = document.getElementById('toggleCustomModel').checked;
+        const isCustom = document.getElementById('master_toggleCustom').checked;
         const model = isCustom ? document.getElementById('master_custom_model').value.trim() : document.getElementById('master_model').value;
 
         if (!model) return showToast("Please select or enter a valid Model ID", "danger");
@@ -1142,7 +1074,7 @@
             model: model,
             api_key: keyVal,
             updated_at: new Date()
-        }, { onConflict: 'user_id' });
+        }, { onConflict: 'user_id,provider' });
 
         document.getElementById('st').style.display = 'none';
 
@@ -1154,18 +1086,17 @@
         localStorage.setItem('hca_model', model);
         localStorage.setItem('hca_gk', 'VAULT_MANAGED');
 
-        showToast("✓ Key saved securely to user vault!", "success");
+        showToast(`✓ ${provider} Key saved securely to user vault!`, "success");
         checkAuthFlowState(); 
     }
 
-    /* AUTHENTICATION STATE & ROLE CONTROLLER */
+    /* AUTHENTICATION STATE & ROLE CONTROLLER (FIXED KEYGATE CRASH) */
     async function checkAuthFlowState() {
         initSupabase();
         const { data: { session } } = await db.auth.getSession();
 
         if (!session) {
             document.getElementById('userAuthGate').style.display = 'flex';
-            document.getElementById('keyGate').style.display = 'none';
             document.getElementById('mainPortal').style.display = 'none';
             document.getElementById('userLogoutBtn').style.display = 'none';
             currentUserId = null;
@@ -1189,28 +1120,28 @@
         handleProviderChange();
 
         const provider = localStorage.getItem('hca_provider') || 'GEMINI';
-        const { data: vaultedKey } = await db.from('user_api_keys')
-            .select('id')
-            .eq('user_id', currentUserId)
-            .eq('provider', provider)
-            .maybeSingle();
+        const { data: vaultedKeys } = await db.from('user_api_keys')
+            .select('provider, model')
+            .eq('user_id', currentUserId);
 
-        if (!vaultedKey && !localStorage.getItem('hca_gk')) {
-            document.getElementById('keyGate').style.display = 'flex';
-            document.getElementById('mainPortal').style.display = 'none';
-        } else {
-            localStorage.setItem('hca_gk', 'VAULT_MANAGED');
-            document.getElementById('keyGate').style.display = 'none';
-            document.getElementById('mainPortal').style.display = 'block';
-            document.getElementById('dot-gemini').classList.add('dot-green');
-            await getClientList();
+        if (vaultedKeys && vaultedKeys.length > 0) {
+            const activeKey = vaultedKeys.find(k => k.provider === provider) || vaultedKeys[0];
+            localStorage.setItem('hca_provider', activeKey.provider);
+            if (activeKey.model) localStorage.setItem('hca_model', activeKey.model);
+            
+            const masterProv = document.getElementById('master_provider');
+            if (masterProv) masterProv.value = activeKey.provider;
+            handleProviderChange();
         }
+
+        localStorage.setItem('hca_gk', 'VAULT_MANAGED');
+        document.getElementById('mainPortal').style.display = 'block';
+        document.getElementById('dot-gemini').classList.add('dot-green');
+        await getClientList();
         updateQuotaUI();
     }
 
-    function onClientChange() {
-        pingStatus();
-    }
+    function onClientChange() { pingStatus(); }
 
     function connectToQuickBooks() {
         const selected = document.getElementById('masterClient').value;
@@ -1254,9 +1185,7 @@
             .update({ qbo_id: null, qbo_refresh_token: null })
             .ilike('client_name', currentClient.trim());
 
-        if (!isSuperAdmin) {
-            query = query.eq('user_id', currentUserId);
-        }
+        if (!isSuperAdmin) query = query.eq('user_id', currentUserId);
 
         const { error } = await query;
         document.getElementById('st').style.display = 'none';
@@ -1297,16 +1226,12 @@
         await checkAuthFlowState();
     };
 
-    /* SUPER_ADMIN AWARE CLIENT LIST FETCH */
     async function getClientList() {
         initSupabase();
         if (!db || !currentUserId) return;
         
         let query = db.from('client_metadata').select('client_name');
-
-        if (!isSuperAdmin) {
-            query = query.eq('user_id', currentUserId);
-        }
+        if (!isSuperAdmin) query = query.eq('user_id', currentUserId);
 
         const { data, error } = await query;
         if (error) console.error("Database fetch error:", error);
@@ -1316,7 +1241,6 @@
         if (data) data.forEach(v => sel.innerHTML += `<option value="${escapeHTML(v.client_name)}">${escapeHTML(v.client_name)}</option>`);
     }
 
-    /* EXPLICIT USER_ID SCOPED CLIENT SAVE & PROVISIONING */
     async function save() { 
         initSupabase();
         if(!db || !currentUserId) return showToast("Database session uninitialized", "danger");
@@ -1338,7 +1262,6 @@
         else { showToast("✓ Client profile saved successfully!", "success"); showPane('launchpad'); await getClientList(); document.getElementById('masterClient').value = cName; pingStatus(); }
     }
 
-    /* SUPER_ADMIN AWARE STATUS CHECK */
     async function pingStatus() {
         currentClient = document.getElementById('masterClient').value;
         if(!currentClient || !currentUserId) return;
@@ -1348,9 +1271,7 @@
         initSupabase();
         if (db) {
             let query = db.from('client_metadata').select('*').ilike('client_name', currentClient.trim());
-            if (!isSuperAdmin) {
-                query = query.eq('user_id', currentUserId);
-            }
+            if (!isSuperAdmin) query = query.eq('user_id', currentUserId);
 
             const { data } = await query.maybeSingle();
 
@@ -1373,12 +1294,9 @@
         initSupabase();
         if(!db || !currentUserId) return;
         let query = db.from('review_staging').select('*').ilike('client_name', currentClient.trim()).eq('status', 'APPROVED');
-        if (!isSuperAdmin) {
-            query = query.eq('user_id', currentUserId);
-        }
+        if (!isSuperAdmin) query = query.eq('user_id', currentUserId);
 
         const { data: approved } = await query;
-
         if(!approved || approved.length === 0) return showToast("No rows marked as APPROVED.", "danger");
 
         const pushBtn = document.getElementById('btnPushQBO');
@@ -1404,7 +1322,6 @@
         }
     }
 
-    /* EXCEL FORMULA INJECTION SANITIZATION (.xlsx EXPORT) */
     async function convertPDFToExcel(input) {
         const file = input.files[0];
         if (!file) return;
@@ -1502,26 +1419,21 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
             appGLOptions = lines.map(l => l.split(',')[0].replace(/"/g, '').trim()).filter(v => v && v.toLowerCase() !== "account name" && v.toLowerCase() !== "account");
             
             let query = db.from('client_metadata').update({ gl_list: appGLOptions.join(",") }).ilike('client_name', currentClient.trim());
-            if (!isSuperAdmin) {
-                query = query.eq('user_id', currentUserId);
-            }
+            if (!isSuperAdmin) query = query.eq('user_id', currentUserId);
 
             const { error } = await query;
-
             document.getElementById('st').style.display = 'none';
+
             if (error) showToast("Error updating GL List: " + error.message, "danger");
             else { showToast(`Successfully updated ${appGLOptions.length} GL Accounts.`, "success"); await loadDash(); }
         };
         reader.readAsText(file);
     }
 
-    /* SUPER_ADMIN AWARE CATEGORY RULES FETCH */
     async function loadRules() {
         initSupabase(); if (!db || !currentClient || !currentUserId) return;
         let query = db.from('category_rules').select('*').ilike('client_name', currentClient.trim());
-        if (!isSuperAdmin) {
-            query = query.eq('user_id', currentUserId);
-        }
+        if (!isSuperAdmin) query = query.eq('user_id', currentUserId);
 
         const { data } = await query;
         activeRules = data || []; renderRulesUI();
@@ -1554,7 +1466,6 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
         activeRules.splice(idx, 1); renderRulesUI();
     }
 
-    /* SUPER_ADMIN AWARE RULES SAVE */
     async function saveRules() {
         initSupabase(); if(!db || !currentClient || !currentUserId) return;
         document.getElementById('st').style.display = 'block';
@@ -1572,7 +1483,6 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
 
     function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
 
-    /* OPTION A: SINGLE BATCH MULTI-LLM REQUEST FOR ALL MISSING VENDORS */
     async function processPostExtractionVendorEnrichment(uniqueVendorNames) {
         initSupabase(); if (!db || !uniqueVendorNames || uniqueVendorNames.length === 0 || !currentUserId) return;
 
@@ -1605,7 +1515,7 @@ Return ONLY a valid JSON array of objects matching this exact structure:
                     website: item.website || ""
                 }));
 
-                await db.from('vendor_knowledge').upsert(upsertPayload, { onConflict: 'vendor_name' });
+                await db.from('vendor_knowledge').upsert(upsertPayload, { onConflict: 'user_id,vendor_name' });
 
                 upsertPayload.forEach(item => {
                     const cacheKey = "vendor_cache_" + item.vendor_name.toLowerCase().replace(/\s+/g, '_');
@@ -1617,7 +1527,6 @@ Return ONLY a valid JSON array of objects matching this exact structure:
         }
     }
 
-    /* FULLY VERIFIED DUAL STATEMENT MULTI-LLM OCR EXTRACTION WITH EXPLICIT USER_ID INSERTS */
     async function handleFile(input, type) { 
         currentClient = document.getElementById('masterClient').value; 
         if(!currentClient || !currentUserId) return showToast("Select client account first", "danger");
@@ -1768,7 +1677,6 @@ Return ONLY JSON Object:
         reader.readAsDataURL(input.files[0]); 
     }
 
-    /* SUPER_ADMIN AWARE DASHBOARD DATA LOAD */
     async function loadDash() { 
         currentClient = document.getElementById('masterClient').value; 
         if(!currentClient || !currentUserId) return showToast("Select client account first", "danger"); 
@@ -1916,7 +1824,6 @@ Return ONLY JSON Object:
         recalcJE(); applyGlobalDateFilter();
     }
 
-    /* FULL BATCH JOURNAL ENTRY REVERSAL CONTROLLER WITH SUPER_ADMIN AWARE SCOPING */
     async function reverseFullBatch(syncRef) {
         if (!syncRef) return showToast("Invalid Sync Reference for reversal.", "danger");
         if (!confirm(`Are you sure you want to reverse the ENTIRE Batch #${syncRef}? This will post offsetting entries to QuickBooks for all associated line items.`)) return;
@@ -1926,12 +1833,9 @@ Return ONLY JSON Object:
 
         try {
             let query = db.from('permanent_ledger').select('*').ilike('client_name', currentClient.trim()).eq('qbo_id', syncRef);
-            if (!isSuperAdmin) {
-                query = query.eq('user_id', currentUserId);
-            }
+            if (!isSuperAdmin) query = query.eq('user_id', currentUserId);
 
             const { data: batchRows, error: fetchErr } = await query;
-
             if (fetchErr || !batchRows || batchRows.length === 0) throw new Error("Could not retrieve batch rows for reversal: " + (fetchErr?.message || "No matching rows found."));
 
             const reversalPayload = batchRows.map(r => ({
@@ -1968,7 +1872,6 @@ Return ONLY JSON Object:
         }
     }
 
-    /* BATCH RE-STAGE CONTROLLER FOR USER-DRIVEN ACCOUNT MAPPING FIXES WITH SUPER_ADMIN AWARE SCOPING */
     async function restageFullBatch(syncRef) {
         if (!syncRef) return showToast("Invalid Sync Reference.", "danger");
         if (!confirm(`Do you want to copy Batch #${syncRef} back into the Review Staging queue for account editing?`)) return;
@@ -1982,12 +1885,9 @@ Return ONLY JSON Object:
                 .ilike('client_name', currentClient.trim())
                 .eq('qbo_id', syncRef);
 
-            if (!isSuperAdmin) {
-                query = query.eq('user_id', currentUserId);
-            }
+            if (!isSuperAdmin) query = query.eq('user_id', currentUserId);
 
             const { data: batchRows, error: fetchErr } = await query;
-
             if (fetchErr || !batchRows || batchRows.length === 0) {
                 throw new Error("Could not find batch rows: " + (fetchErr?.message || "No matching rows."));
             }
@@ -2023,7 +1923,6 @@ Return ONLY JSON Object:
         }
     }
 
-    /* PERIOD-SPECIFIC TRIAL BALANCE CORE DATA LAYER ENGINE */
     function getPeriodTrialBalance() {
         const filteredDataset = filterBySelectedPeriod([...historyData, ...localData]);
         const trialBalance = {};
@@ -2041,18 +1940,15 @@ Return ONLY JSON Object:
             const isCreditCardRow = String(item.src || "").toUpperCase() === "CREDIT CARD";
             const isDebit = isCreditCardRow ? (val > 0) : (val < 0);
 
-            if (isDebit) {
-                trialBalance[cat].debits += Math.abs(val);
-            } else {
-                trialBalance[cat].credits += Math.abs(val);
-            }
+            if (isDebit) trialBalance[cat].debits += Math.abs(val);
+            else trialBalance[cat].credits += Math.abs(val);
+            
             trialBalance[cat].net += val;
         });
 
         return trialBalance;
     }
 
-    /* ROBUST GLOBAL DATE FILTERING CONTROLLER */
     function filterBySelectedPeriod(arr) {
         const selYear = document.getElementById('globalFilterYear').value;
         const selMonth = document.getElementById('globalFilterMonth').value;
@@ -2111,7 +2007,6 @@ Return ONLY JSON Object:
         applyGlobalDateFilter();
     }
 
-    /* VENDOR MONTHLY AUDIT MATRIX RENDERER */
     function renderVendorMatrix() {
         const th = document.getElementById('th-vendor-matrix');
         const tb = document.getElementById('tb-vendor-matrix');
@@ -2222,7 +2117,7 @@ Return ONLY JSON Object:
         }
     }
 
-    /* 100% DETERMINISTIC SCHEDULE C SUMMARY RENDERER */
+    /* SOURCE-AWARE & TRANSFER-FILTERED TAX READINESS SUMMARY */
     function renderTaxReadinessTab() {
         const tbody = document.getElementById('tb-tax-summary');
         if (!tbody) return;
@@ -2236,11 +2131,25 @@ Return ONLY JSON Object:
         filteredDataset.forEach(item => {
             let val = parseFloat(String(item.amt).replace(/[^0-9.-]+/g, "")) || 0;
             let cat = item.cat || "Uncategorized";
+            let lowerCat = cat.toLowerCase();
+            let srcType = String(item.src || "").toUpperCase();
 
-            if (val > 0) {
-                totalGrossInflows += val;
+            // Exclude non-deductible inter-account transfers & owner equity moves
+            if (lowerCat.includes("transfer") || lowerCat.includes("owner draw") || lowerCat.includes("equity") || lowerCat.includes("credit card payment")) {
+                return;
+            }
+
+            let isExpense = false;
+            let absVal = Math.abs(val);
+
+            if (srcType === "CREDIT CARD") {
+                if (val > 0) isExpense = true; // Credit Card purchase = Expense
             } else {
-                let absVal = Math.abs(val);
+                if (val < 0) isExpense = true; // Bank outflow = Expense
+                else totalGrossInflows += val;  // Bank inflow = Revenue
+            }
+
+            if (isExpense) {
                 let taxLine = getScheduleCLine(cat);
 
                 if (!taxBuckets[taxLine]) {
@@ -2275,17 +2184,36 @@ Return ONLY JSON Object:
         });
     }
 
+    /* SANITIZED SCHEDULE C CSV EXPORT WITH FORMULA INJECTION PROTECTION */
     function exportTaxScheduleC() {
         const filteredDataset = filterBySelectedPeriod([...historyData, ...localData]);
         let csvContent = "data:text/csv;charset=utf-8,IRS Schedule C Line,GL Category,Transaction Date,Vendor,Description,Amount,Deductible Amount\n";
 
         filteredDataset.forEach(i => {
             let val = parseFloat(String(i.amt).replace(/[^0-9.-]+/g, "")) || 0;
-            if (val < 0) {
+            let cat = i.cat || "Uncategorized";
+            let lowerCat = cat.toLowerCase();
+            let srcType = String(i.src || "").toUpperCase();
+
+            if (lowerCat.includes("transfer") || lowerCat.includes("owner draw") || lowerCat.includes("equity") || lowerCat.includes("credit card payment")) {
+                return;
+            }
+
+            let isExpense = (srcType === "CREDIT CARD") ? (val > 0) : (val < 0);
+
+            if (isExpense) {
                 let absVal = Math.abs(val);
-                let taxLine = getScheduleCLine(i.cat);
+                let taxLine = getScheduleCLine(cat);
                 let dedVal = taxLine.includes("Line 24b") ? (absVal * 0.50) : absVal;
-                csvContent += `"${taxLine}","${i.cat}","${i.date}","${i.vendor}","${i.desc}",${absVal},${dedVal}\n`;
+
+                // Sanitize formula triggers (=, +, -, @) and escape quotes
+                const sanitize = (str) => {
+                    let clean = String(str || '').replace(/"/g, '""');
+                    if (/^[=+\-@]/.test(clean.trim())) clean = "'" + clean;
+                    return `"${clean}"`;
+                };
+
+                csvContent += `${sanitize(taxLine)},${sanitize(cat)},${sanitize(i.date)},${sanitize(i.vendor)},${sanitize(i.desc)},${absVal},${dedVal}\n`;
             }
         });
 
@@ -2309,16 +2237,12 @@ Return ONLY JSON Object:
                 .update({ stmt_start: stmtStart, stmt_end: stmtEnd })
                 .ilike('client_name', currentClient.trim());
 
-            if (!isSuperAdmin) {
-                query = query.eq('user_id', currentUserId);
-            }
-
+            if (!isSuperAdmin) query = query.eq('user_id', currentUserId);
             await query;
         }
         recalcJE();
     }
 
-    /* PROPOSED IMPACT TAB RENDERED VIA TRIAL BALANCE ENGINE */
     function renderImpactTab(qboAccountsList) {
         const tbody = document.getElementById('tb-impact');
         if (!tbody) return;
@@ -2368,19 +2292,15 @@ Return ONLY JSON Object:
             .update({ nature: newNature, client_email: newEmail, gl_list: newGL })
             .ilike('client_name', currentClient.trim());
 
-        if (!isSuperAdmin) {
-            query = query.eq('user_id', currentUserId);
-        }
+        if (!isSuperAdmin) query = query.eq('user_id', currentUserId);
 
         const { error } = await query;
-
         document.getElementById('st').style.display = 'none';
 
         if (error) showToast("Metadata Update Error: " + error.message, "danger");
         else { showToast("✓ Client Metadata updated successfully in Supabase!", "success"); await loadDash(); }
     }
 
-    /* RENDER STAGING TABLE WITH CHECKBOXES, BANK NAME, & DUP BADGE */
     function renderStagingTable(dataRows) {
         const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
 
@@ -2436,19 +2356,12 @@ Return ONLY JSON Object:
     function fetchVendorIntelligenceFromData(el) {
         const vName = el.getAttribute('data-vendor');
         const popId = el.getAttribute('data-popup');
-        if (vName && popId) {
-            fetchVendorIntelligence(vName, popId);
-        }
+        if (vName && popId) fetchVendorIntelligence(vName, popId);
     }
 
-    /* INTERACTIVE COLUMN SORTING & SEARCH HANDLERS */
     function sortStagingTable(key) {
-        if (sortKey === key) {
-            sortAsc = !sortAsc;
-        } else {
-            sortKey = key;
-            sortAsc = true;
-        }
+        if (sortKey === key) sortAsc = !sortAsc;
+        else { sortKey = key; sortAsc = true; }
         applyGlobalDateFilter();
     }
 
@@ -2465,7 +2378,6 @@ Return ONLY JSON Object:
         renderStagingTable(filtered);
     }
 
-    /* MULTI-SELECT CHECKBOX & BULK ACTIONS CONTROLLER */
     function toggleSelectAllStaging(masterBox) {
         const checkboxes = document.querySelectorAll('.staging-row-select');
         checkboxes.forEach(cb => cb.checked = masterBox.checked);
@@ -2511,9 +2423,7 @@ Return ONLY JSON Object:
         if (db && currentUserId) {
             document.getElementById('st').style.display = 'block';
             let query = db.from('review_staging').delete().in('id', ids);
-            if (!isSuperAdmin) {
-                query = query.eq('user_id', currentUserId);
-            }
+            if (!isSuperAdmin) query = query.eq('user_id', currentUserId);
 
             await query;
             document.getElementById('st').style.display = 'none';
@@ -2522,7 +2432,6 @@ Return ONLY JSON Object:
         }
     }
 
-    /* INSTANT HOVER READ FROM PRE-ENRICHED VENDOR_KNOWLEDGE TABLE OR LOCAL CACHE */
     async function fetchVendorIntelligence(vendorName, targetElementId) {
         if (!vendorName || vendorName.trim() === "") return;
         const popupEl = document.getElementById(targetElementId); if (!popupEl) return;
@@ -2576,7 +2485,6 @@ Return ONLY JSON Object:
         else if(filterType === 'LOWCONF') renderStagingTable(filterBySelectedPeriod(localData.filter(r => r.confidence !== undefined && parseFloat(r.confidence) < 0.8)));
     }
 
-    /* MULTI-PAGE & PDF RECEIPT OCR MATCHING CONTROLLER WITH EXPLICIT USER_ID SCOPING */
     async function handleReceiptUpload(input, rowId) {
         const file = input.files[0]; if(!file || !currentUserId) return;
         document.getElementById('st').style.display = 'block';
@@ -2585,7 +2493,6 @@ Return ONLY JSON Object:
             try {
                 const docData = e.target.result.split(',')[1];
                 const mimeType = file.type || (file.name.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
-                
                 const prompt = "ACT AS: Forensic Audit Specialist. Extract receipt total vendor and total amount. Return ONLY JSON Object: {'vendor':'Merchant Name', 'amount':0.00}";
                 
                 const extracted = await callAIModel(prompt, docData, mimeType);
@@ -2619,17 +2526,12 @@ Return ONLY JSON Object:
         recalcJE();
     }
 
-    /* BULK ASSIGN BANK / OFFSET ACCOUNT TO ALL STAGING ROWS */
     function applyBankBatch() {
         const newBankAcc = document.getElementById('batchBankSelect').value;
-        if (!newBankAcc || newBankAcc === "Uncategorized") {
-            return showToast("Please select a valid Bank / Offset Account from the dropdown first.", "danger");
-        }
+        if (!newBankAcc || newBankAcc === "Uncategorized") return showToast("Please select a valid Bank / Offset Account from the dropdown first.", "danger");
 
         const bankSelects = document.querySelectorAll('.row-bnk');
-        if (bankSelects.length === 0) {
-            return showToast("No rows found in the Staging Queue.", "danger");
-        }
+        if (bankSelects.length === 0) return showToast("No rows found in the Staging Queue.", "danger");
 
         let updatedCount = 0;
         bankSelects.forEach(sel => {
@@ -2644,7 +2546,6 @@ Return ONLY JSON Object:
         showToast(`✓ Bulk assigned "${newBankAcc}" to all ${updatedCount} rows!`, "success");
     }
 
-    /* FIXED DYNAMIC BANK & CREDIT CARD RECONCILIATION ENGINE */
     function recalcJE() {
         let jeBank = {}, jeCC = {};
         let tDrBank = 0, tCrBank = 0, netActBank = 0;
@@ -2680,11 +2581,9 @@ Return ONLY JSON Object:
             }
         });
 
-        // 1. BANK STATEMENT EVALUATION
         const calcEndBank = stmtStart + netActBank;
         const diffBank = Math.abs(calcEndBank - stmtEnd);
 
-        // 2. CREDIT CARD STATEMENT EVALUATION
         const calcEndCC = stmtStart + netActCC;
         const diffCC = Math.abs(calcEndCC - stmtEnd);
 
@@ -2705,7 +2604,6 @@ Return ONLY JSON Object:
         const syncBtns = document.querySelectorAll('.sync-gate-btn');
         syncBtns.forEach(b => b.disabled = activeDiff >= 0.01);
 
-        // 3. RENDER BANK JE LINES
         const divBank = document.getElementById('jeListBank');
         if (divBank) {
             divBank.innerHTML = `<div class="je-item fw-bold border-bottom"><span>Account Identifier | Class</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
@@ -2722,7 +2620,6 @@ Return ONLY JSON Object:
             }
         }
 
-        // 4. RENDER CREDIT CARD JE LINES
         const divCC = document.getElementById('jeListCC');
         if (divCC) {
             divCC.innerHTML = `<div class="je-item fw-bold border-bottom"><span>Account Identifier | Class</span><span class="dr">DR</span><span class="cr">CR</span></div>`;
@@ -2798,7 +2695,6 @@ Return ONLY JSON Object:
 
     function approveAll() { document.querySelectorAll('.row-stat').forEach(s => s.value = "APPROVED"); recalcJE(); }
     
-    /* EXPLICIT USER_ID SCOPED STAGING SAVES */
     async function saveAll() {
         initSupabase(); if(!db || !currentUserId) return;
         document.getElementById('st').style.display = 'block'; 
@@ -2813,10 +2709,7 @@ Return ONLY JSON Object:
                 amount: amtVal, category: catVal, status: statVal, bank_category: bnkVal, class_name: clsVal
             }).eq('id', item.row);
 
-            if (!isSuperAdmin) {
-                query = query.eq('user_id', currentUserId);
-            }
-
+            if (!isSuperAdmin) query = query.eq('user_id', currentUserId);
             await query;
         }
         await loadDash();
