@@ -920,6 +920,11 @@
             });
 
             const jsonRes = await res.json();
+            if (res.status === 429 || jsonRes.error?.code === 429) {
+                const retryMatch = jsonRes.error?.message?.match(/retry in ([0-9.]+)s/i);
+                const retrySecs = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) : 30;
+                throw new Error(`Google Gemini Rate Limit Reached. Cooldown active — please retry in ${retrySecs} seconds.`);
+            }
             if (jsonRes.error) throw new Error("Gemini API Error: " + jsonRes.error.message);
             trackGeminiUsage(jsonRes.usageMetadata?.totalTokenCount || 10000);
 
@@ -949,6 +954,9 @@
             });
 
             const jsonRes = await res.json();
+            if (res.status === 429 || jsonRes.error?.code === 429) {
+                throw new Error("OpenAI API Rate Limit Reached. Please wait a minute before retrying.");
+            }
             if (jsonRes.error) throw new Error("OpenAI API Error: " + jsonRes.error.message);
             trackGeminiUsage(jsonRes.usage?.total_tokens || 10000);
 
@@ -983,6 +991,9 @@
             });
 
             const jsonRes = await res.json();
+            if (res.status === 429 || jsonRes.error?.type === "rate_limit_error") {
+                throw new Error("Anthropic Claude Rate Limit Reached. Please wait a minute before retrying.");
+            }
             if (jsonRes.error) throw new Error("Claude API Error: " + jsonRes.error.message);
             trackGeminiUsage((jsonRes.usage?.input_tokens || 0) + (jsonRes.usage?.output_tokens || 0) || 10000);
 
