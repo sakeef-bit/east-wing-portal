@@ -815,6 +815,7 @@
     
     let db = null;
     let currentUserId = null; // Cache session user_id for explicit defensive scoping
+    let isSuperAdmin = false;  // Track SUPER_ADMIN role bypass state
 
     function initSupabase() {
         if (!db && window.supabase) db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -1160,11 +1161,12 @@
         localStorage.removeItem('hca_provider');
         localStorage.removeItem('hca_model');
         currentUserId = null;
+        isSuperAdmin = false;
         forecastBaselines = null;
         location.reload();
     }
 
-    /* STEP B: SECURE BYOK VAULT SAVE HANDLER WITH DEFENSIVE USER_ID PAYLOAD BINDING */
+    /* STEP B: SECURE BYOK VAULT SAVE HANDLER WITH DEFENSIVE FALLBACK TO PREVENT CONSTRAINT ERRORS */
     async function lockKey() { 
         const keyVal = document.getElementById('master_gk').value.trim();
         if (!keyVal) return showToast("Please enter an API Key", "danger");
@@ -1182,13 +1184,30 @@
         currentUserId = user.id;
         document.getElementById('st').style.display = 'block';
 
-        // Explicit user_id payload binding for multi-tenant vault security
-        const { error } = await db.from('user_api_keys').upsert({
-            user_id: user.id,
-            provider: provider,
-            api_key: keyVal,
-            updated_at: new Date()
-        }, { onConflict: 'user_id,provider' });
+        // Check for existing record to avoid ON CONFLICT constraint mismatch
+        const { data: existingKey } = await db.from('user_api_keys')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('provider', provider)
+            .maybeSingle();
+
+        let error = null;
+
+        if (existingKey) {
+            const { error: err } = await db.from('user_api_keys')
+                .update({ api_key: keyVal, updated_at: new Date() })
+                .eq('id', existingKey.id);
+            error = err;
+        } else {
+            const { error: err } = await db.from('user_api_keys')
+                .insert({
+                    user_id: user.id,
+                    provider: provider,
+                    api_key: keyVal,
+                    updated_at: new Date()
+                });
+            error = err;
+        }
 
         document.getElementById('st').style.display = 'none';
 
@@ -1204,7 +1223,7 @@
         checkAuthFlowState(); 
     }
 
-    /* AUTHENTICATION STATE & SCREEN NAVIGATION CONTROLLER */
+    /* AUTHENTICATION STATE & SUPER_ADMIN ROLE CHECK CONTROLLER */
     async function checkAuthFlowState() {
         initSupabase();
         const { data: { session } } = await db.auth.getSession();
@@ -1215,10 +1234,20 @@
             document.getElementById('mainPortal').style.display = 'none';
             document.getElementById('userLogoutBtn').style.display = 'none';
             currentUserId = null;
+            isSuperAdmin = false;
             return;
         }
 
         currentUserId = session.user.id;
+
+        // Fetch user role to evaluate SUPER_ADMIN access rights
+        const { data: roleData } = await db.from('user_roles')
+            .select('role')
+            .eq('user_id', currentUserId)
+            .maybeSingle();
+
+        isSuperAdmin = (roleData && roleData.role === 'SUPER_ADMIN');
+
         document.getElementById('userAuthGate').style.display = 'none';
         document.getElementById('userLogoutBtn').style.display = 'inline-block';
         document.getElementById('dot-ledger').classList.add('dot-green');
@@ -1281,11 +1310,15 @@
         if (!confirm(`Are you sure you want to disconnect QuickBooks for ${currentClient}?`)) return;
 
         document.getElementById('st').style.display = 'block';
-        const { error } = await db.from('client_metadata')
+        let query = db.from('client_metadata')
             .update({ qbo_id: null, qbo_refresh_token: null })
-            .eq('user_id', currentUserId)
             .ilike('client_name', currentClient.trim());
-            
+
+        if (!isSuperAdmin) {
+            query = query.eq('user_id', currentUserId);
+        }
+
+        const { error } = await query;
         document.getElementById('st').style.display = 'none';
 
         if (error) showToast("Disconnection Error: " + error.message, "danger");
@@ -1324,15 +1357,18 @@
         await checkAuthFlowState();
     };
 
-    /* EXPLICIT USER_ID SCOPED CLIENT LIST FETCH */
+    /* SUPER_ADMIN AWARE CLIENT LIST FETCH */
     async function getClientList() {
         initSupabase();
         if (!db || !currentUserId) return;
         
-        const { data, error } = await db.from('client_metadata')
-            .select('client_name')
-            .eq('user_id', currentUserId);
+        let query = db.from('client_metadata').select('client_name');
 
+        if (!isSuperAdmin) {
+            query = query.eq('user_id', currentUserId);
+        }
+
+        const { data, error } = await query;
         if (error) console.error("Database fetch error:", error);
 
         const sel = document.getElementById('masterClient');
@@ -1362,7 +1398,7 @@
         else { showToast("✓ Client profile saved successfully!", "success"); showPane('launchpad'); await getClientList(); document.getElementById('masterClient').value = cName; pingStatus(); }
     }
 
-    /* EXPLICIT USER_ID SCOPED STATUS CHECK */
+    /* SUPER_ADMIN AWARE STATUS CHECK */
     async function pingStatus() {
         currentClient = document.getElementById('masterClient').value;
         if(!currentClient || !currentUserId) return;
@@ -1371,11 +1407,12 @@
         
         initSupabase();
         if (db) {
-            const { data } = await db.from('client_metadata')
-                .select('*')
-                .eq('user_id', currentUserId)
-                .ilike('client_name', currentClient.trim())
-                .maybeSingle();
+            let query = db.from('client_metadata').select('*').ilike('client_name', currentClient.trim());
+            if (!isSuperAdmin) {
+                query = query.eq('user_id', currentUserId);
+            }
+
+            const { data } = await query.maybeSingle();
 
             document.getElementById('dot-ledger').className = 'status-dot dot-green';
             const connBtn = document.getElementById('btnConnectQBO');
@@ -1395,11 +1432,12 @@
     async function pushQBO() {
         initSupabase();
         if(!db || !currentUserId) return;
-        const { data: approved } = await db.from('review_staging')
-            .select('*')
-            .eq('user_id', currentUserId)
-            .ilike('client_name', currentClient.trim())
-            .eq('status', 'APPROVED');
+        let query = db.from('review_staging').select('*').ilike('client_name', currentClient.trim()).eq('status', 'APPROVED');
+        if (!isSuperAdmin) {
+            query = query.eq('user_id', currentUserId);
+        }
+
+        const { data: approved } = await query;
 
         if(!approved || approved.length === 0) return showToast("No rows marked as APPROVED.", "danger");
 
@@ -1512,10 +1550,13 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
             document.getElementById('st').style.display = 'block';
             const lines = e.target.result.split(/\r?\n/);
             appGLOptions = lines.map(l => l.split(',')[0].replace(/"/g, '').trim()).filter(v => v && v.toLowerCase() !== "account name" && v.toLowerCase() !== "account");
-            const { error } = await db.from('client_metadata')
-                .update({ gl_list: appGLOptions.join(",") })
-                .eq('user_id', currentUserId)
-                .ilike('client_name', currentClient.trim());
+            
+            let query = db.from('client_metadata').update({ gl_list: appGLOptions.join(",") }).ilike('client_name', currentClient.trim());
+            if (!isSuperAdmin) {
+                query = query.eq('user_id', currentUserId);
+            }
+
+            const { error } = await query;
 
             document.getElementById('st').style.display = 'none';
             if (error) showToast("Error updating GL List: " + error.message, "danger");
@@ -1524,14 +1565,15 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
         reader.readAsText(file);
     }
 
-    /* EXPLICIT USER_ID SCOPED CATEGORY RULES FETCH */
+    /* SUPER_ADMIN AWARE CATEGORY RULES FETCH */
     async function loadRules() {
         initSupabase(); if (!db || !currentClient || !currentUserId) return;
-        const { data } = await db.from('category_rules')
-            .select('*')
-            .eq('user_id', currentUserId)
-            .ilike('client_name', currentClient.trim());
+        let query = db.from('category_rules').select('*').ilike('client_name', currentClient.trim());
+        if (!isSuperAdmin) {
+            query = query.eq('user_id', currentUserId);
+        }
 
+        const { data } = await query;
         activeRules = data || []; renderRulesUI();
     }
 
@@ -1555,16 +1597,22 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
     async function removeRule(idx) {
         initSupabase(); 
         if(activeRules[idx].id && db && currentUserId) {
-            await db.from('category_rules').delete().eq('id', activeRules[idx].id).eq('user_id', currentUserId);
+            let query = db.from('category_rules').delete().eq('id', activeRules[idx].id);
+            if (!isSuperAdmin) query = query.eq('user_id', currentUserId);
+            await query;
         }
         activeRules.splice(idx, 1); renderRulesUI();
     }
 
-    /* EXPLICIT USER_ID SCOPED RULES SAVE */
+    /* SUPER_ADMIN AWARE RULES SAVE */
     async function saveRules() {
         initSupabase(); if(!db || !currentClient || !currentUserId) return;
         document.getElementById('st').style.display = 'block';
-        await db.from('category_rules').delete().eq('user_id', currentUserId).ilike('client_name', currentClient.trim());
+        
+        let delQuery = db.from('category_rules').delete().ilike('client_name', currentClient.trim());
+        if (!isSuperAdmin) delQuery = delQuery.eq('user_id', currentUserId);
+        await delQuery;
+
         if(activeRules.length > 0) {
             const rows = activeRules.map(r => ({ user_id: currentUserId, client_name: currentClient, keyword: r.keyword, target_account: r.target_account }));
             await db.from('category_rules').insert(rows);
@@ -1631,9 +1679,17 @@ Return ONLY a valid JSON array of objects matching this exact structure:
 
                 initSupabase();
                 if (db) {
-                    const { data: meta } = await db.from('client_metadata').select('gl_list').eq('user_id', currentUserId).ilike('client_name', currentClient.trim()).maybeSingle();
+                    let mQuery = db.from('client_metadata').select('gl_list').ilike('client_name', currentClient.trim());
+                    let lQuery = db.from('permanent_ledger').select('*').ilike('client_name', currentClient.trim()).limit(50);
+                    if (!isSuperAdmin) {
+                        mQuery = mQuery.eq('user_id', currentUserId);
+                        lQuery = lQuery.eq('user_id', currentUserId);
+                    }
+
+                    const { data: meta } = await mQuery.maybeSingle();
                     if (meta && meta.gl_list) appGLOptions = meta.gl_list.split(',').filter(Boolean);
-                    const { data: ledger } = await db.from('permanent_ledger').select('*').eq('user_id', currentUserId).ilike('client_name', currentClient.trim()).limit(50);
+                    
+                    const { data: ledger } = await lQuery;
                     if (ledger) historyData = ledger.map(l => ({ date: l.txn_date, src: l.source, bank_name: l.bank_name || "", vendor: l.vendor || "", desc: l.description, amt: String(l.amount), cat: l.category, bnk: l.bank_category || "Uncategorized", qbo: l.qbo_id || "SYNCED" }));
                 }
 
@@ -1715,7 +1771,10 @@ Return ONLY JSON Object:
                 if (db) {
                     stmtStart = extracted.starting_balance || 0; stmtEnd = extracted.ending_balance || 0;
                     document.getElementById('inputStmtStart').value = stmtStart; document.getElementById('inputStmtEnd').value = stmtEnd;
-                    await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).eq('user_id', currentUserId).ilike('client_name', currentClient.trim());
+                    
+                    let metaUpdateQuery = db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).ilike('client_name', currentClient.trim());
+                    if (!isSuperAdmin) metaUpdateQuery = metaUpdateQuery.eq('user_id', currentUserId);
+                    await metaUpdateQuery;
 
                     const dbPayload = rows.map(r => ({
                         user_id: r.user_id,
@@ -1760,7 +1819,7 @@ Return ONLY JSON Object:
         reader.readAsDataURL(input.files[0]); 
     }
 
-    /* EXPLICIT USER_ID SCOPED DASHBOARD DATA LOAD */
+    /* SUPER_ADMIN AWARE DASHBOARD DATA LOAD */
     async function loadDash() { 
         currentClient = document.getElementById('masterClient').value; 
         if(!currentClient || !currentUserId) return showToast("Select client account first", "danger"); 
@@ -1769,9 +1828,20 @@ Return ONLY JSON Object:
         initSupabase();
         let staging = [], ledger = [], meta = null;
         if (db) {
-            const { data: sData } = await db.from('review_staging').select('*').eq('user_id', currentUserId).ilike('client_name', currentClient.trim());
-            const { data: lData } = await db.from('permanent_ledger').select('*').eq('user_id', currentUserId).ilike('client_name', currentClient.trim());
-            const { data: mData } = await db.from('client_metadata').select('*').eq('user_id', currentUserId).ilike('client_name', currentClient.trim()).maybeSingle();
+            let sQuery = db.from('review_staging').select('*').ilike('client_name', currentClient.trim());
+            let lQuery = db.from('permanent_ledger').select('*').ilike('client_name', currentClient.trim());
+            let mQuery = db.from('client_metadata').select('*').ilike('client_name', currentClient.trim());
+
+            if (!isSuperAdmin) {
+                sQuery = sQuery.eq('user_id', currentUserId);
+                lQuery = lQuery.eq('user_id', currentUserId);
+                mQuery = mQuery.eq('user_id', currentUserId);
+            }
+
+            const { data: sData } = await sQuery;
+            const { data: lData } = await lQuery;
+            const { data: mData } = await mQuery.maybeSingle();
+
             staging = sData || []; ledger = lData || []; meta = mData;
         }
 
@@ -1901,7 +1971,7 @@ Return ONLY JSON Object:
         recalcJE(); applyGlobalDateFilter();
     }
 
-    /* FULL BATCH JOURNAL ENTRY REVERSAL CONTROLLER WITH EXPLICIT USER_ID SCOPING */
+    /* FULL BATCH JOURNAL ENTRY REVERSAL CONTROLLER WITH SUPER_ADMIN AWARE SCOPING */
     async function reverseFullBatch(syncRef) {
         if (!syncRef) return showToast("Invalid Sync Reference for reversal.", "danger");
         if (!confirm(`Are you sure you want to reverse the ENTIRE Batch #${syncRef}? This will post offsetting entries to QuickBooks for all associated line items.`)) return;
@@ -1910,11 +1980,12 @@ Return ONLY JSON Object:
         document.getElementById('st').style.display = 'block';
 
         try {
-            const { data: batchRows, error: fetchErr } = await db.from('permanent_ledger')
-                .select('*')
-                .eq('user_id', currentUserId)
-                .ilike('client_name', currentClient.trim())
-                .eq('qbo_id', syncRef);
+            let query = db.from('permanent_ledger').select('*').ilike('client_name', currentClient.trim()).eq('qbo_id', syncRef);
+            if (!isSuperAdmin) {
+                query = query.eq('user_id', currentUserId);
+            }
+
+            const { data: batchRows, error: fetchErr } = await query;
 
             if (fetchErr || !batchRows || batchRows.length === 0) throw new Error("Could not retrieve batch rows for reversal: " + (fetchErr?.message || "No matching rows found."));
 
@@ -1952,7 +2023,7 @@ Return ONLY JSON Object:
         }
     }
 
-    /* BATCH RE-STAGE CONTROLLER FOR USER-DRIVEN ACCOUNT MAPPING FIXES WITH EXPLICIT USER_ID BINDING */
+    /* BATCH RE-STAGE CONTROLLER FOR USER-DRIVEN ACCOUNT MAPPING FIXES WITH SUPER_ADMIN AWARE SCOPING */
     async function restageFullBatch(syncRef) {
         if (!syncRef) return showToast("Invalid Sync Reference.", "danger");
         if (!confirm(`Do you want to copy Batch #${syncRef} back into the Review Staging queue for account editing?`)) return;
@@ -1961,12 +2032,16 @@ Return ONLY JSON Object:
         document.getElementById('st').style.display = 'block';
 
         try {
-            const { data: batchRows, error: fetchErr } = await db
-                .from('permanent_ledger')
+            let query = db.from('permanent_ledger')
                 .select('*')
-                .eq('user_id', currentUserId)
                 .ilike('client_name', currentClient.trim())
                 .eq('qbo_id', syncRef);
+
+            if (!isSuperAdmin) {
+                query = query.eq('user_id', currentUserId);
+            }
+
+            const { data: batchRows, error: fetchErr } = await query;
 
             if (fetchErr || !batchRows || batchRows.length === 0) {
                 throw new Error("Could not find batch rows: " + (fetchErr?.message || "No matching rows."));
@@ -2457,7 +2532,7 @@ Provide 3 concise bullet points advising management on runway optimization, cash
         }
     }
 
-    /* AUTOMATED DATA-FETCH MD&A GENERATOR CONTROLLER WITH EMPTY PERIOD RESET AND USER_ID SCOPING */
+    /* AUTOMATED DATA-FETCH MD&A GENERATOR CONTROLLER WITH EMPTY PERIOD RESET AND SUPER_ADMIN AWARE SCOPING */
     async function loadMDANotes() {
         initSupabase();
         if (!currentUserId) return;
@@ -2469,13 +2544,17 @@ Provide 3 concise bullet points advising management on runway optimization, cash
 
         document.getElementById('mdaPeriodTitle').innerText = `${month}/${year}`;
 
-        const { data } = await db.from('mda_notes')
+        let query = db.from('mda_notes')
             .select('*')
-            .eq('user_id', currentUserId)
             .ilike('client_name', currentClient.trim())
             .eq('period_year', year)
-            .eq('period_month', month)
-            .maybeSingle();
+            .eq('period_month', month);
+
+        if (!isSuperAdmin) {
+            query = query.eq('user_id', currentUserId);
+        }
+
+        const { data } = await query.maybeSingle();
 
         if (data && (data.executive_summary || data.revenue_commentary)) {
             document.getElementById('mda_exec').value = data.executive_summary || "";
@@ -2572,10 +2651,15 @@ Generate executive MD&A notes. Return ONLY JSON Object:
 
         initSupabase();
         if (db && currentClient && currentUserId) {
-            await db.from('client_metadata')
+            let query = db.from('client_metadata')
                 .update({ stmt_start: stmtStart, stmt_end: stmtEnd })
-                .eq('user_id', currentUserId)
                 .ilike('client_name', currentClient.trim());
+
+            if (!isSuperAdmin) {
+                query = query.eq('user_id', currentUserId);
+            }
+
+            await query;
         }
         recalcJE();
     }
@@ -2626,10 +2710,15 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         const rawGL = document.getElementById('edit_m_gl').value;
         const newGL = rawGL.split(',').map(x => x.trim()).filter(Boolean).join(',');
 
-        const { error } = await db.from('client_metadata')
+        let query = db.from('client_metadata')
             .update({ nature: newNature, client_email: newEmail, gl_list: newGL })
-            .eq('user_id', currentUserId)
             .ilike('client_name', currentClient.trim());
+
+        if (!isSuperAdmin) {
+            query = query.eq('user_id', currentUserId);
+        }
+
+        const { error } = await query;
 
         document.getElementById('st').style.display = 'none';
 
@@ -2768,7 +2857,12 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         initSupabase();
         if (db && currentUserId) {
             document.getElementById('st').style.display = 'block';
-            await db.from('review_staging').delete().in('id', ids).eq('user_id', currentUserId);
+            let query = db.from('review_staging').delete().in('id', ids);
+            if (!isSuperAdmin) {
+                query = query.eq('user_id', currentUserId);
+            }
+
+            await query;
             document.getElementById('st').style.display = 'none';
             showToast(`✓ Deleted ${ids.length} selected row(s)`, "success");
             await loadDash();
@@ -2850,7 +2944,11 @@ Generate executive MD&A notes. Return ONLY JSON Object:
 
                 if(Math.abs(targetAmt - matchAmt) <= (targetAmt * 0.02)) {
                     initSupabase(); 
-                    if (db) await db.from('review_staging').update({ receipt_linked: true }).eq('id', rowId).eq('user_id', currentUserId);
+                    if (db) {
+                        let query = db.from('review_staging').update({ receipt_linked: true }).eq('id', rowId);
+                        if (!isSuperAdmin) query = query.eq('user_id', currentUserId);
+                        await query;
+                    }
                     showToast("✓ Receipt Verified & Linked!", "success"); await loadDash();
                 } else {
                     showToast(`Mismatch! Statement: $${targetAmt} vs Receipt: $${matchAmt}`, "danger");
@@ -3060,9 +3158,15 @@ Generate executive MD&A notes. Return ONLY JSON Object:
             const bnkVal = document.getElementById('b' + item.row) ? document.getElementById('b' + item.row).value : item.bnk;
             const clsVal = document.getElementById('l' + item.row) ? document.getElementById('l' + item.row).value : item.cls;
 
-            await db.from('review_staging').update({
+            let query = db.from('review_staging').update({
                 amount: amtVal, category: catVal, status: statVal, bank_category: bnkVal, class_name: clsVal
-            }).eq('id', item.row).eq('user_id', currentUserId);
+            }).eq('id', item.row);
+
+            if (!isSuperAdmin) {
+                query = query.eq('user_id', currentUserId);
+            }
+
+            await query;
         }
         await loadDash();
         showToast("✓ Saved all staging updates!", "success");
