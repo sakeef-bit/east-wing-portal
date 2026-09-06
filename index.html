@@ -842,31 +842,36 @@
         ]
     };
 
+    /* DUAL-GATE HANDLE PROVIDER CHANGE (GATE + MASTER) */
     function handleProviderChange() {
-        const providerEl = document.getElementById('master_provider');
-        if (!providerEl) return;
-        const provider = providerEl.value;
-        const modelSel = document.getElementById('master_model');
-        const keyLabel = document.getElementById('key_label_text');
+        const masterProvEl = document.getElementById('master_provider');
+        const gateProvEl = document.getElementById('gate_provider');
+        const provider = masterProvEl ? masterProvEl.value : (gateProvEl ? gateProvEl.value : "GEMINI");
 
-        if (modelSel) {
-            modelSel.innerHTML = "";
-            const models = MODEL_REGISTRY[provider] || MODEL_REGISTRY.GEMINI;
+        const keyLabelText = provider === "GEMINI" ? "3. Enter Gemini API Key:" :
+                             provider === "OPENAI" ? "3. Enter OpenAI API Key:" :
+                             "3. Enter Anthropic Claude API Key:";
 
-            models.forEach(m => {
-                const isSel = m.recommended ? 'selected' : '';
-                modelSel.innerHTML += `<option value="${m.id}" ${isSel}>${escapeHTML(m.name)}</option>`;
-            });
-        }
+        const populateSelect = (selectId, labelId) => {
+            const modelSel = document.getElementById(selectId);
+            const labelEl = document.getElementById(labelId);
+            if (labelEl) labelEl.innerText = keyLabelText;
 
-        if (keyLabel) {
-            if (provider === "GEMINI") keyLabel.innerText = "3. Enter Gemini API Key:";
-            else if (provider === "OPENAI") keyLabel.innerText = "3. Enter OpenAI API Key:";
-            else if (provider === "CLAUDE") keyLabel.innerText = "3. Enter Anthropic Claude API Key:";
-        }
+            if (modelSel) {
+                modelSel.innerHTML = "";
+                const models = MODEL_REGISTRY[provider] || MODEL_REGISTRY.GEMINI;
+                models.forEach(m => {
+                    const isSel = m.recommended ? 'selected' : '';
+                    modelSel.innerHTML += `<option value="${m.id}" ${isSel}>${escapeHTML(m.name)}</option>`;
+                });
+            }
+        };
+
+        populateSelect('master_model', 'key_label_text');
+        populateSelect('gate_model', 'gate_key_label');
 
         localStorage.setItem('hca_provider', provider);
-        const activeModel = modelSel ? modelSel.value : 'gemini-3.6-flash';
+        const activeModel = document.getElementById('master_model') ? document.getElementById('master_model').value : 'gemini-3.6-flash';
         localStorage.setItem('hca_model', activeModel);
 
         updateQuotaUI();
@@ -884,18 +889,19 @@
         updateQuotaUI();
     }
 
+    /* DUAL-GATE TOGGLE CUSTOM MODEL INPUT */
     function toggleCustomModelInput(isCustom) {
-        const selectEl = document.getElementById('master_model');
-        const customEl = document.getElementById('master_custom_model');
-        if (selectEl && customEl) {
-            if (isCustom) {
-                selectEl.style.display = 'none';
-                customEl.style.display = 'block';
-            } else {
-                selectEl.style.display = 'block';
-                customEl.style.display = 'none';
+        const togglePair = (p) => {
+            const selectEl = document.getElementById(`${p}_model`);
+            const customEl = document.getElementById(`${p}_custom_model`);
+            if (selectEl && customEl) {
+                selectEl.style.display = isCustom ? 'none' : 'block';
+                customEl.style.display = isCustom ? 'block' : 'none';
             }
-        }
+        };
+
+        togglePair('master');
+        togglePair('gate');
     }
 
     async function callAIModel(promptText, pdfBase64Data = null, mimeType = "application/pdf") {
@@ -1099,19 +1105,29 @@
         location.reload();
     }
 
+    /* DUAL-GATE VAULT SAVE HANDLER (GATE + MASTER) */
     async function lockKey() { 
-        const keyInput = document.getElementById('master_gk');
-        const providerInput = document.getElementById('master_provider');
-        const toggleCustomInput = document.getElementById('master_toggleCustom');
-        const modelSelect = document.getElementById('master_model');
-        const customModelInput = document.getElementById('master_custom_model');
+        const gateKey = document.getElementById('gate_gk') ? document.getElementById('gate_gk').value.trim() : "";
+        const masterKey = document.getElementById('master_gk') ? document.getElementById('master_gk').value.trim() : "";
+        const keyVal = masterKey || gateKey;
 
-        const keyVal = keyInput ? keyInput.value.trim() : "";
         if (!keyVal) return showToast("Please enter an API Key", "danger");
 
-        const provider = providerInput ? providerInput.value : "GEMINI";
-        const isCustom = toggleCustomInput ? toggleCustomInput.checked : false;
-        const model = isCustom ? (customModelInput ? customModelInput.value.trim() : "") : (modelSelect ? modelSelect.value : "");
+        const gateProv = document.getElementById('gate_provider') ? document.getElementById('gate_provider').value : null;
+        const masterProv = document.getElementById('master_provider') ? document.getElementById('master_provider').value : null;
+        const provider = masterProv || gateProv || "GEMINI";
+
+        const isCustom = (document.getElementById('master_toggleCustom') && document.getElementById('master_toggleCustom').checked) ||
+                         (document.getElementById('gate_toggleCustom') && document.getElementById('gate_toggleCustom').checked);
+
+        let model = "";
+        if (isCustom) {
+            model = (document.getElementById('master_custom_model') && document.getElementById('master_custom_model').value.trim()) ||
+                    (document.getElementById('gate_custom_model') && document.getElementById('gate_custom_model').value.trim());
+        } else {
+            model = (document.getElementById('master_model') && document.getElementById('master_model').value) ||
+                    (document.getElementById('gate_model') && document.getElementById('gate_model').value);
+        }
 
         if (!model) return showToast("Please select or enter a valid Model ID", "danger");
 
@@ -1190,7 +1206,7 @@
             .eq('user_id', currentUserId);
 
         if (!vaultedKeys || vaultedKeys.length === 0) {
-            // NO KEY IN VAULT: Turn AI dot RED and open Key Gate if available
+            // NO KEY IN VAULT: Turn AI dot RED and open Key Gate
             if (aiDot) aiDot.className = 'status-dot dot-red';
             if (keyGateEl) keyGateEl.style.display = 'flex';
             mainPortalEl.style.display = 'none';
@@ -1580,6 +1596,7 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
 
     function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
 
+    /* USER_ID SCOPED VENDOR ENRICHMENT LOOKUPS */
     async function processPostExtractionVendorEnrichment(uniqueVendorNames) {
         initSupabase(); if (!db || !uniqueVendorNames || uniqueVendorNames.length === 0 || !currentUserId) return;
 
