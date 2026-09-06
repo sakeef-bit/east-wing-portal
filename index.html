@@ -622,9 +622,27 @@
         <div class="table-responsive"><table class="table table-sm table-striped align-middle"><tbody id="tb-gl"></tbody></table></div>
     </div>
 
+    <!-- ENHANCED PERMANENT LEDGER HISTORY WITH BANK NAME, OFFSET ACCOUNT, AND BATCH REVERSAL -->
     <div id="tab-history" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <h5 class="fw-bold mb-3">Permanent Ledger History</h5>
-        <table class="table table-sm"><thead class="table-light"><tr><th>Date</th><th>Vendor</th><th>Description</th><th>Amount</th><th>Category</th><th>Sync Reference</th></tr></thead><tbody id="tb-history"></tbody></table>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle small">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Bank / Card Issuer</th>
+                        <th>Vendor</th>
+                        <th>Description</th>
+                        <th>Amount ($)</th>
+                        <th>Expense Category (Leg 1)</th>
+                        <th>Offset Account (Leg 2)</th>
+                        <th>Sync Ref</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="tb-history"></tbody>
+            </table>
+        </div>
     </div>
     
     <div id="tab-je-bank" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
@@ -1225,7 +1243,7 @@ Return ONLY a valid JSON array of objects matching this exact structure:
                     const { data: meta } = await db.from('client_metadata').select('gl_list').ilike('client_name', currentClient.trim()).maybeSingle();
                     if (meta && meta.gl_list) appGLOptions = meta.gl_list.split(',').filter(Boolean);
                     const { data: ledger } = await db.from('permanent_ledger').select('*').ilike('client_name', currentClient.trim()).limit(50);
-                    if (ledger) historyData = ledger.map(l => ({ date: l.txn_date, vendor: l.vendor || "", desc: l.description, amt: String(l.amount), cat: l.category }));
+                    if (ledger) historyData = ledger.map(l => ({ date: l.txn_date, bank_name: l.bank_name || "", vendor: l.vendor || "", desc: l.description, amt: String(l.amount), cat: l.category, bnk: l.bank_category || "Uncategorized", qbo: l.qbo_id || "SYNCED" }));
                 }
 
                 const glContext = appGLOptions.length > 0 ? appGLOptions.join(", ") : "Payroll, Rent, Utilities, Office Supplies & Expenses, Bank Fees, Consulting Revenue, Travel & Lodging, Software & Subscriptions, Meals & Entertainment, Automobile & Fuel";
@@ -1304,7 +1322,7 @@ Return ONLY JSON Object:
                     return {
                         client_name: currentClient, 
                         source: type === 'PDF' ? 'BANK' : 'CREDIT CARD',
-                        bank_name: extractedBankName, // FIXED: Explicitly attach extracted bank name
+                        bank_name: extractedBankName, 
                         txn_date: t.date, 
                         vendor: t.vendor || "", 
                         description: t.desc || "Statement Line",
@@ -1412,7 +1430,18 @@ Return ONLY JSON Object:
             if (meta.gl_list) appGLOptions = meta.gl_list.split(',').filter(Boolean);
         }
 
-        historyData = ledger.map(l => ({ date: l.txn_date, vendor: l.vendor || "", desc: l.description, amt: String(l.amount), cat: l.category, qbo: l.qbo_id || "SYNCED" }));
+        historyData = ledger.map(l => ({
+            id: l.id,
+            date: l.txn_date,
+            bank_name: l.bank_name || (l.source === 'BANK' ? 'Bank Account' : 'Credit Card'),
+            vendor: l.vendor || "",
+            desc: l.description,
+            amt: String(l.amount),
+            cat: l.category || "Uncategorized",
+            bnk: l.bank_category || "Uncategorized Asset",
+            qbo: l.qbo_id || "SYNCED"
+        }));
+
         renderDashboard({ staging: localData, history: historyData, metadata: meta }); 
     }
 
@@ -1434,8 +1463,31 @@ Return ONLY JSON Object:
         const glBody = document.getElementById('tb-gl'); glBody.innerHTML = "";
         appGLOptions.forEach((acc, idx) => { glBody.innerHTML += `<tr><td>${idx + 1}</td><td class="fw-semibold">${acc}</td></tr>`; });
 
-        document.getElementById('tb-history').innerHTML = ""; 
-        res.history.forEach(i => { document.getElementById('tb-history').innerHTML += `<tr><td>${i.date}</td><td class="fw-bold">${i.vendor || 'N/A'}</td><td>${i.desc}</td><td>$${i.amt}</td><td>${i.cat}</td><td>${i.qbo}</td></tr>`; });
+        // RENDER ENHANCED PERMANENT LEDGER TABLE WITH BANK NAME, OFFSET ACCOUNT, AND BATCH REVERSAL
+        const tbHist = document.getElementById('tb-history');
+        tbHist.innerHTML = ""; 
+        
+        // Group rows by sync reference for batch actions
+        const seenRefs = new Set();
+
+        res.history.forEach(i => {
+            const showRevBtn = !seenRefs.has(i.qbo);
+            seenRefs.add(i.qbo);
+
+            const revActionHtml = showRevBtn ? `<button class="btn btn-xs btn-outline-danger py-0 fw-bold rounded-pill" onclick="reverseFullBatch('${i.qbo}')">↩️ Reverse Batch</button>` : `<span class="text-muted small">Batch #${i.qbo}</span>`;
+
+            tbHist.innerHTML += `<tr>
+                <td>${i.date}</td>
+                <td><span class="badge bg-light text-dark border small fw-bold">${i.bank_name}</span></td>
+                <td class="fw-bold">${i.vendor || 'N/A'}</td>
+                <td><small class="text-muted">${i.desc}</small></td>
+                <td class="fw-bold ${parseFloat(i.amt) < 0 ? 'text-danger' : 'text-success'}">$${i.amt}</td>
+                <td><span class="badge bg-secondary">${i.cat}</span></td>
+                <td><span class="badge bg-light text-dark border">${i.bnk}</span></td>
+                <td class="fw-bold">${i.qbo}</td>
+                <td class="text-center">${revActionHtml}</td>
+            </tr>`; 
+        });
         
         const meta = res.metadata || {};
         document.getElementById('metaList').innerHTML = `
@@ -1461,6 +1513,62 @@ Return ONLY JSON Object:
             </div>`;
         
         recalcJE(); applyGlobalDateFilter();
+    }
+
+    /* FULL BATCH JOURNAL ENTRY REVERSAL CONTROLLER */
+    async function reverseFullBatch(syncRef) {
+        if (!syncRef) return showToast("Invalid Sync Reference for reversal.", "danger");
+        if (!confirm(`Are you sure you want to reverse the ENTIRE Batch #${syncRef}? This will post offsetting entries for all associated line items.`)) return;
+
+        initSupabase(); if (!db) return;
+        document.getElementById('st').style.display = 'block';
+
+        try {
+            // 1. Fetch all rows matching the target batch sync reference
+            const { data: batchRows, error: fetchErr } = await db.from('permanent_ledger').select('*').ilike('client_name', currentClient.trim()).eq('qbo_id', syncRef);
+            if (fetchErr || !batchRows || batchRows.length === 0) throw new Error("Could not retrieve batch rows for reversal: " + (fetchErr?.message || "No matching rows found."));
+
+            const reversalRef = `${syncRef}-REV`;
+
+            // 2. Generate counter-rows in permanent_ledger (inverting amounts & swapping leg duties)
+            const reversalPayload = batchRows.map(r => ({
+                client_name: r.client_name,
+                source: r.source,
+                bank_name: r.bank_name,
+                txn_date: r.txn_date,
+                vendor: r.vendor,
+                description: `[REVERSAL OF BATCH #${syncRef}] ${r.description}`,
+                amount: (parseFloat(r.amount) * -1),
+                category: r.category,
+                bank_category: r.bank_category,
+                class_name: r.class_name,
+                qbo_id: reversalRef,
+                fingerprint: btoa(unescape(encodeURIComponent(`REV_${r.fingerprint || Date.now()}`)))
+            }));
+
+            const { error: insErr } = await db.from('permanent_ledger').insert(reversalPayload);
+            if (insErr) throw new Error("Failed to insert reversal batch into Permanent Ledger: " + insErr.message);
+
+            // 3. Optional: Sync reversal payload to QuickBooks Online
+            try {
+                const res = await fetch("https://oxhwhxnoysowuokdhmtr.supabase.co/functions/v1/qbo-sync", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` },
+                    body: JSON.stringify({ client_name: currentClient, transactions: reversalPayload })
+                });
+                const qboRes = await res.json();
+                if (qboRes.success) showToast(`✓ Reversal Batch #${reversalRef} posted live to QBO!`, "success");
+            } catch (qErr) {
+                console.warn("QBO Reversal Sync Warning:", qErr);
+            }
+
+            document.getElementById('st').style.display = 'none';
+            showToast(`✓ Successfully reversed entire Batch #${syncRef}!`, "success");
+            await loadDash();
+        } catch (err) {
+            document.getElementById('st').style.display = 'none';
+            showToast("Reversal Error: " + err.message, "danger");
+        }
     }
 
     /* PERIOD-SPECIFIC TRIAL BALANCE CORE DATA LAYER ENGINE */
