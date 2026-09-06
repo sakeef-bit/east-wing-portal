@@ -86,7 +86,7 @@
 
         .vendor-cell { position: relative; }
         .vendor-hover { cursor: pointer; font-weight: 700; color: var(--app-dark); text-decoration: underline dotted var(--app-sage); }
-        .vendor-card-popup { display: none; position: absolute; bottom: 125%; left: 0; width: 290px; background: white; border: 1px solid var(--app-sage); border-radius: 14px; padding: 14px; shadow: 0 12px 32px rgba(0,0,0,0.15); z-index: 1000; font-size: 0.82rem; color: var(--app-dark); }
+        .vendor-card-popup { display: none; position: absolute; bottom: 125%; left: 0; width: 290px; background: white; border: 1px solid var(--app-sage); border-radius: 14px; padding: 14px; box-shadow: 0 12px 32px rgba(0,0,0,0.15); z-index: 1000; font-size: 0.82rem; color: var(--app-dark); }
         .vendor-cell:hover .vendor-card-popup { display: block; }
         .vendor-badge { font-size: 0.65rem; font-weight: bold; background: var(--app-dark); color: white; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; display: inline-block; }
         
@@ -139,7 +139,7 @@
 <div id="view-launchpad">
     <header class="hero-section">
         <div class="privacy-disclaimer-box">
-            ⚡ Powered by Google Gemini AI. Your financial documents and chat interactions are processed securely and are never used to train or improve AI models.
+            ⚡ Powered by Advanced AI Intelligence. Your financial documents and chat interactions are processed securely and are never used to train or improve AI models.
         </div>
         <h1 class="display-5 fw-bold mb-2">Financial Automation Portal</h1>
         <p class="lead opacity-75 mb-0 fs-6">Professional Forensic Ledger Processing & Sync System</p>
@@ -161,15 +161,41 @@
             </div>
         </div>
 
-        <!-- STEP 2: PERSONAL GEMINI API KEY GATE -->
+        <!-- STEP 2: MULTI-LLM WORKSPACE API AUTHORIZATION GATE -->
         <div id="keyGate" class="row justify-content-center" style="display:none;">
-            <div class="col-md-5"><div class="card card-custom p-4 text-center">
-                <h5 class="mb-2 fw-bold">Workspace API Authorization</h5>
-                <p class="small text-muted mb-3">Please enter your individual Gemini API Key for OCR statement extraction.</p>
-                <input type="password" id="master_gk" class="form-control mb-3 text-center rounded-pill" placeholder="Enter Gemini API Key">
+            <div class="col-md-6"><div class="card card-custom p-4 text-center">
+                <h5 class="mb-2 fw-bold">Workspace AI Provider Authorization</h5>
+                <p class="small text-muted mb-3">Select your AI Engine Provider and target model family for document extraction.</p>
+                
+                <div class="mb-2 text-start">
+                    <label class="small fw-bold text-muted mb-1">1. Select AI Provider:</label>
+                    <select id="master_provider" class="form-select form-select-sm rounded-pill font-semibold" onchange="handleProviderChange()">
+                        <option value="GEMINI" selected>Google Gemini (Recommended)</option>
+                        <option value="OPENAI">OpenAI (ChatGPT)</option>
+                        <option value="CLAUDE">Anthropic (Claude)</option>
+                    </select>
+                </div>
+
+                <div class="mb-2 text-start">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label class="small fw-bold text-muted">2. Select Target Model:</label>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="toggleCustomModel" onchange="toggleCustomModelInput(this.checked)">
+                            <label class="form-check-label small text-muted" for="toggleCustomModel">Custom ID</label>
+                        </div>
+                    </div>
+                    <select id="master_model" class="form-select form-select-sm rounded-pill font-semibold"></select>
+                    <input type="text" id="master_custom_model" class="form-control form-control-sm rounded-pill font-semibold mt-2" placeholder="e.g. gemini-3.7-flash or gpt-5.5" style="display:none;">
+                </div>
+
+                <div class="mb-3 text-start">
+                    <label class="small fw-bold text-muted mb-1" id="key_label_text">3. Enter Gemini API Key:</label>
+                    <input type="password" id="master_gk" class="form-control text-center rounded-pill" placeholder="Enter API Key">
+                </div>
+
                 <button class="btn btn-dark-app w-100 rounded-pill" onclick="lockKey()">
                     <svg class="icon-svg" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-                    Authenticate Workspace
+                    Authenticate Workspace Engine
                 </button>
             </div></div>
         </div>
@@ -680,7 +706,7 @@
     <div class="chat-trigger-btn" id="gemini-quota-pill" onclick="toggleChat('gemini-quota-window')">
         <span id="gemini-quota-dot" class="status-dot dot-green" style="margin-right:0;"></span>
         <span class="fw-semibold small" id="gemini-quota-text">Quota: 15/15 RPM</span>
-        <span class="chat-bar-badge" style="background:#E2E8F0; color:#2C3E50;">Free Tier</span>
+        <span class="chat-bar-badge" id="gemini-quota-tier-badge" style="background:#E2E8F0; color:#2C3E50;">Gemini</span>
     </div>
 </div>
 
@@ -706,7 +732,7 @@
 <div id="gemini-quota-window" class="chat-window-popup">
     <div class="chat-header-bar d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center gap-2">
-            <span>⚡ Gemini API Rate Monitor</span>
+            <span>⚡ AI Engine Rate Monitor</span>
         </div>
         <button class="btn-close btn-close-white btn-sm" onclick="toggleChat('gemini-quota-window')"></button>
     </div>
@@ -754,7 +780,7 @@
         </div>
 
         <div class="p-2 bg-light border rounded text-muted small" style="font-size:0.75rem; line-height:1.4;">
-            ℹ️ <strong>Status Warning System:</strong> This non-blocking gauge tracks Free Tier capacity. If a limit is hit, wait for the countdown before sending further OCR requests to prevent rate limit errors.
+            ℹ️ <strong>Status Warning System:</strong> Active Provider: <strong id="active_quota_provider_text">Google Gemini</strong>. This non-blocking gauge tracks API capacity.
         </div>
     </div>
 </div>
@@ -783,6 +809,158 @@
     let sortKey = 'date', sortAsc = true;
 
     const CLASS_OPTIONS = ["General", "Marketing", "Sales", "Operations", "NY-Office"];
+
+    /* MULTI-LLM MODEL REGISTRY & CONFIGURATION MATRIX */
+    const MODEL_REGISTRY = {
+        GEMINI: [
+            { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash (Workhorse - Default)", recommended: true },
+            { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash" },
+            { id: "gemini-3.1-pro", name: "Gemini 3.1 Pro" },
+            { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash" },
+            { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro" }
+        ],
+        OPENAI: [
+            { id: "gpt-5.4", name: "GPT-5.4 (Flagship)", recommended: true },
+            { id: "gpt-5.5", name: "GPT-5.5 (Next-Gen)" },
+            { id: "gpt-5.4-mini", name: "GPT-5.4 Mini (Lightweight)" },
+            { id: "o3", name: "OpenAI o3 Reasoning" },
+            { id: "o4-mini", name: "OpenAI o4-mini" }
+        ],
+        CLAUDE: [
+            { id: "claude-sonnet-5", name: "Claude Sonnet 5 (Recommended)", recommended: true },
+            { id: "claude-opus-4.8", name: "Claude Opus 4.8" },
+            { id: "claude-haiku-4.5", name: "Claude Haiku 4.5" }
+        ]
+    };
+
+    function handleProviderChange() {
+        const provider = document.getElementById('master_provider').value;
+        const modelSel = document.getElementById('master_model');
+        const keyLabel = document.getElementById('key_label_text');
+
+        modelSel.innerHTML = "";
+        const models = MODEL_REGISTRY[provider] || MODEL_REGISTRY.GEMINI;
+
+        models.forEach(m => {
+            const isSel = m.recommended ? 'selected' : '';
+            modelSel.innerHTML += `<option value="${m.id}" ${isSel}>${m.name}</option>`;
+        });
+
+        if (provider === "GEMINI") {
+            keyLabel.innerText = "3. Enter Gemini API Key:";
+        } else if (provider === "OPENAI") {
+            keyLabel.innerText = "3. Enter OpenAI API Key:";
+        } else if (provider === "CLAUDE") {
+            keyLabel.innerText = "3. Enter Anthropic Claude API Key:";
+        }
+
+        updateQuotaUI();
+    }
+
+    function toggleCustomModelInput(isCustom) {
+        const selectEl = document.getElementById('master_model');
+        const customEl = document.getElementById('master_custom_model');
+        if (isCustom) {
+            selectEl.style.display = 'none';
+            customEl.style.display = 'block';
+        } else {
+            selectEl.style.display = 'block';
+            customEl.style.display = 'none';
+        }
+    }
+
+    /* UNIVERSAL MULTI-LLM ROUTER ADAPTER ENGINE */
+    async function callAIModel(promptText, pdfBase64Data = null, mimeType = "application/pdf") {
+        const provider = localStorage.getItem('hca_provider') || "GEMINI";
+        const model = localStorage.getItem('hca_model') || "gemini-3.6-flash";
+        const apiKey = localStorage.getItem('hca_gk');
+
+        if (!apiKey) throw new Error(`Missing ${provider} API Key. Please authenticate in Workspace Settings.`);
+
+        trackGeminiUsage(10000);
+
+        // ROUTE 1: GOOGLE GEMINI NATIVE REST API
+        if (provider === "GEMINI") {
+            const parts = [{ text: promptText }];
+            if (pdfBase64Data) parts.push({ inline_data: { mime_type: mimeType, data: pdfBase64Data } });
+
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    "contents": [{ "parts": parts }],
+                    "generationConfig": { "response_mime_type": "application/json" }
+                })
+            });
+
+            const jsonRes = await res.json();
+            if (jsonRes.error) throw new Error("Gemini API Error: " + jsonRes.error.message);
+            if (jsonRes.usageMetadata?.totalTokenCount) trackGeminiUsage(jsonRes.usageMetadata.totalTokenCount);
+
+            const rawText = jsonRes.candidates[0].content.parts[0].text;
+            return JSON.parse(rawText.replace(/```json|```/g, '').trim());
+        }
+
+        // ROUTE 2: OPENAI (CHATGPT) REST API
+        if (provider === "OPENAI") {
+            const contentParts = [{ type: "text", text: promptText }];
+            if (pdfBase64Data) {
+                const imgMime = mimeType === "application/pdf" ? "image/jpeg" : mimeType;
+                contentParts.push({ type: "image_url", image_url: { url: `data:${imgMime};base64,${pdfBase64Data}` } });
+            }
+
+            const res = await fetch("https://api.openai.com/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: model,
+                    messages: [{ role: "user", content: contentParts }],
+                    response_format: { type: "json_object" }
+                })
+            });
+
+            const jsonRes = await res.json();
+            if (jsonRes.error) throw new Error("OpenAI API Error: " + jsonRes.error.message);
+            if (jsonRes.usage?.total_tokens) trackGeminiUsage(jsonRes.usage.total_tokens);
+
+            const rawText = jsonRes.choices[0].message.content;
+            return JSON.parse(rawText.replace(/```json|```/g, '').trim());
+        }
+
+        // ROUTE 3: ANTHROPIC (CLAUDE) REST API
+        if (provider === "CLAUDE") {
+            const contentParts = [];
+            if (pdfBase64Data) {
+                contentParts.push({
+                    type: mimeType === "application/pdf" ? "document" : "image",
+                    source: { type: "base64", media_type: mimeType, data: pdfBase64Data }
+                });
+            }
+            contentParts.push({ type: "text", text: promptText });
+
+            const res = await fetch("https://api.anthropic.com/v1/messages", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+                body: JSON.stringify({
+                    model: model,
+                    max_tokens: 4096,
+                    messages: [{ role: "user", content: contentParts }]
+                })
+            });
+
+            const jsonRes = await res.json();
+            if (jsonRes.error) throw new Error("Claude API Error: " + jsonRes.error.message);
+            if (jsonRes.usage?.input_tokens) trackGeminiUsage(jsonRes.usage.input_tokens + (jsonRes.usage.output_tokens || 0));
+
+            const rawText = jsonRes.content[0].text;
+            return JSON.parse(rawText.replace(/```json|```/g, '').trim());
+        }
+
+        throw new Error("Unsupported AI Provider specified.");
+    }
 
     /* GEMINI API RATE LIMIT & TOKEN TRACKER ENGINE */
     const GEMINI_LIMITS = {
@@ -879,6 +1057,15 @@
         // Update Dock Pill Status
         const pillText = document.getElementById('gemini-quota-text');
         const pillDot = document.getElementById('gemini-quota-dot');
+        const tierBadge = document.getElementById('gemini-quota-tier-badge');
+        const providerText = document.getElementById('active_quota_provider_text');
+        
+        const activeProvider = localStorage.getItem('hca_provider') || 'GEMINI';
+        const activeModel = localStorage.getItem('hca_model') || 'gemini-3.6-flash';
+
+        if (tierBadge) tierBadge.innerText = activeProvider;
+        if (providerText) providerText.innerText = `${activeProvider} (${activeModel})`;
+
         const availableRPM = Math.max(0, GEMINI_LIMITS.RPM - currentRPM);
 
         if (pillText) {
@@ -1002,11 +1189,21 @@
         location.reload();
     }
 
-    /* STEP 2: INDIVIDUAL GEMINI API KEY GATE HANDLER */
+    /* STEP 2: MULTI-LLM API KEY GATE HANDLER */
     function lockKey() { 
-        const keyVal = document.getElementById('master_gk').value;
-        if(!keyVal) return showToast("Please enter a Gemini API Key", "danger");
-        localStorage.setItem('hca_gk', keyVal); 
+        const keyVal = document.getElementById('master_gk').value.trim();
+        if(!keyVal) return showToast("Please enter an API Key", "danger");
+
+        const provider = document.getElementById('master_provider').value;
+        const isCustom = document.getElementById('toggleCustomModel').checked;
+        const model = isCustom ? document.getElementById('master_custom_model').value.trim() : document.getElementById('master_model').value;
+
+        if (!model) return showToast("Please select or enter a valid Model ID", "danger");
+
+        localStorage.setItem('hca_provider', provider);
+        localStorage.setItem('hca_model', model);
+        localStorage.setItem('hca_gk', keyVal);
+
         checkAuthFlowState(); 
     }
 
@@ -1028,8 +1225,10 @@
         document.getElementById('userLogoutBtn').style.display = 'inline-block';
         document.getElementById('dot-ledger').classList.add('dot-green');
 
-        const geminiKey = localStorage.getItem('hca_gk');
-        if (!geminiKey) {
+        handleProviderChange();
+
+        const apiKey = localStorage.getItem('hca_gk');
+        if (!apiKey) {
             document.getElementById('keyGate').style.display = 'flex';
             document.getElementById('mainPortal').style.display = 'none';
         } else {
@@ -1205,8 +1404,6 @@
     async function convertPDFToExcel(input) {
         const file = input.files[0];
         if (!file) return;
-        const apiKey = localStorage.getItem('hca_gk');
-        if (!apiKey) return showToast("Missing Gemini API Key. Please authenticate.", "danger");
 
         document.getElementById('st').style.display = 'block';
         const reader = new FileReader();
@@ -1216,20 +1413,7 @@
                 const prompt = `ACT AS: Financial Data Analyst. Extract ALL tables and structured transactional rows from this PDF document.
 Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "Amount", "Category"], ["2026-01-01", "Sample Item", "1001", 150.00, "Expenses"]]`;
 
-                trackGeminiUsage(12000);
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        "contents": [{ "parts": [{ "text": prompt }, { "inline_data": { "mime_type": "application/pdf", "data": pdfData }}] }],
-                        "generationConfig": { "response_mime_type": "application/json" }
-                    })
-                });
-
-                const jsonRes = await res.json();
-                if (jsonRes.usageMetadata?.totalTokenCount) trackGeminiUsage(jsonRes.usageMetadata.totalTokenCount);
-
-                const rawText = jsonRes.candidates[0].content.parts[0].text;
-                const rowsData = JSON.parse(rawText.replace(/```json|```/g, '').trim());
+                const rowsData = await callAIModel(prompt, pdfData, "application/pdf");
 
                 const ws = XLSX.utils.aoa_to_sheet(rowsData);
                 const wb = XLSX.utils.book_new();
@@ -1352,20 +1536,17 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
 
     function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
 
-    /* OPTION A: SINGLE BATCH GEMINI REQUEST FOR ALL MISSING VENDORS */
-    async function processPostExtractionVendorEnrichment(uniqueVendorNames, apiKey) {
+    /* OPTION A: SINGLE BATCH MULTI-LLM REQUEST FOR ALL MISSING VENDORS */
+    async function processPostExtractionVendorEnrichment(uniqueVendorNames) {
         initSupabase(); if (!db || !uniqueVendorNames || uniqueVendorNames.length === 0) return;
 
         try {
-            // 1. Check which vendors are already stored in Supabase vendor_knowledge
             const { data: existing } = await db.from('vendor_knowledge').select('vendor_name').in('vendor_name', uniqueVendorNames);
             const existingSet = new Set((existing || []).map(v => v.vendor_name.trim().toLowerCase()));
 
-            // 2. Filter out missing vendors
             const missingVendors = uniqueVendorNames.filter(v => !existingSet.has(v.trim().toLowerCase()));
             if (missingVendors.length === 0) return;
 
-            // 3. Single Batch API Request to Gemini
             const prompt = `ACT AS: Corporate Intelligence Agent. Provide business details for the following list of vendors:
 ${JSON.stringify(missingVendors)}
 
@@ -1378,45 +1559,28 @@ Return ONLY a valid JSON array of objects matching this exact structure:
   }
 ]`;
 
-            trackGeminiUsage(3000);
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    "contents": [{ "parts": [{ "text": prompt }] }],
-                    "generationConfig": { "response_mime_type": "application/json" }
-                })
-            });
+            const batchResults = await callAIModel(prompt);
 
-            const jsonRes = await res.json();
-            if (jsonRes.usageMetadata?.totalTokenCount) trackGeminiUsage(jsonRes.usageMetadata.totalTokenCount);
+            if (Array.isArray(batchResults) && batchResults.length > 0) {
+                const upsertPayload = batchResults.map(item => ({
+                    vendor_name: item.vendor_name,
+                    description: item.description || "Commercial vendor or merchant.",
+                    website: item.website || ""
+                }));
 
-            if (jsonRes.candidates?.[0]?.content?.parts?.[0]?.text) {
-                const rawText = jsonRes.candidates[0].content.parts[0].text;
-                const batchResults = JSON.parse(rawText.replace(/```json|```/g, '').trim());
+                await db.from('vendor_knowledge').upsert(upsertPayload, { onConflict: 'vendor_name' });
 
-                if (Array.isArray(batchResults) && batchResults.length > 0) {
-                    const upsertPayload = batchResults.map(item => ({
-                        vendor_name: item.vendor_name,
-                        description: item.description || "Commercial vendor or merchant.",
-                        website: item.website || ""
-                    }));
-
-                    // Batch insert into Supabase vendor_knowledge table
-                    await db.from('vendor_knowledge').upsert(upsertPayload, { onConflict: 'vendor_name' });
-
-                    // Batch save into browser local storage
-                    upsertPayload.forEach(item => {
-                        const cacheKey = "vendor_cache_" + item.vendor_name.toLowerCase().replace(/\s+/g, '_');
-                        localStorage.setItem(cacheKey, JSON.stringify({ description: item.description, website: item.website }));
-                    });
-                }
+                upsertPayload.forEach(item => {
+                    const cacheKey = "vendor_cache_" + item.vendor_name.toLowerCase().replace(/\s+/g, '_');
+                    localStorage.setItem(cacheKey, JSON.stringify({ description: item.description, website: item.website }));
+                });
             }
         } catch (err) {
             console.error("Option A Batch Vendor Enrichment Error:", err);
         }
     }
 
-    /* FULLY VERIFIED DUAL STATEMENT OCR EXTRACTION WITH BANK NAME FIX */
+    /* FULLY VERIFIED DUAL STATEMENT MULTI-LLM OCR EXTRACTION */
     async function handleFile(input, type) { 
         currentClient = document.getElementById('masterClient').value; 
         if(!currentClient) return showToast("Select client account first", "danger");
@@ -1424,8 +1588,7 @@ Return ONLY a valid JSON array of objects matching this exact structure:
         document.getElementById('st').style.display = 'block'; 
         const reader = new FileReader(); reader.onload = async (e) => { 
             try {
-                const pdfData = e.target.result.split(',')[1]; const apiKey = localStorage.getItem('hca_gk');
-                if (!apiKey) { document.getElementById('st').style.display = 'none'; return showToast("Missing Gemini API Key. Please authenticate.", "danger"); }
+                const pdfData = e.target.result.split(',')[1];
 
                 initSupabase();
                 if (db) {
@@ -1472,22 +1635,7 @@ Return ONLY JSON Object:
   ]
 }`;
 
-                trackGeminiUsage(15000);
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ 
-                        "contents": [{ "parts": [{ "text": prompt }, { "inline_data": { "mime_type": "application/pdf", "data": pdfData }}] }], 
-                        "generationConfig": { "response_mime_type": "application/json" } 
-                    })
-                });
-
-                const jsonRes = await res.json();
-                if (jsonRes.usageMetadata?.totalTokenCount) trackGeminiUsage(jsonRes.usageMetadata.totalTokenCount);
-                if (jsonRes.error) throw new Error("Gemini API Error: " + jsonRes.error.message);
-                if (!jsonRes.candidates?.[0]?.content?.parts?.[0]?.text) throw new Error("Gemini returned invalid or empty response.");
-
-                const rawText = jsonRes.candidates[0].content.parts[0].text;
-                const extracted = JSON.parse(rawText.replace(/```json|```/g, '').trim());
+                const extracted = await callAIModel(prompt, pdfData, "application/pdf");
 
                 const extractedTransactions = extracted.transactions || [];
                 if (extractedTransactions.length === 0) { 
@@ -1497,7 +1645,6 @@ Return ONLY JSON Object:
 
                 const extractedBankName = extracted.bank_name || (type === 'PDF' ? 'Bank Account' : 'Credit Card');
 
-                // Construct mapped transaction rows (Ensuring bank_name is explicitly assigned)
                 const rows = extractedTransactions.map(t => {
                     let assignedCategory = t.category || "Uncategorized";
                     activeRules.forEach(rule => {
@@ -1506,7 +1653,6 @@ Return ONLY JSON Object:
                     });
                     if (assignedCategory && assignedCategory !== "Uncategorized" && !appGLOptions.includes(assignedCategory)) appGLOptions.push(assignedCategory);
 
-                    // SAFE UTF-8 CHARACTER ENCODING FOR FINGERPRINT
                     const rawFingerprintString = (t.date || "") + (t.vendor || "") + (t.desc || "") + (t.amount || "");
                     const safeFingerprint = btoa(unescape(encodeURIComponent(rawFingerprintString)));
 
@@ -1531,7 +1677,6 @@ Return ONLY JSON Object:
                     document.getElementById('inputStmtStart').value = stmtStart; document.getElementById('inputStmtEnd').value = stmtEnd;
                     await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).ilike('client_name', currentClient.trim());
 
-                    // Strip unmapped keys prior to DB insert
                     const dbPayload = rows.map(r => ({
                         client_name: r.client_name,
                         source: r.source,
@@ -1552,9 +1697,8 @@ Return ONLY JSON Object:
 
                     showToast(`✓ Successfully processed ${rows.length} statement transactions!`, "success");
 
-                    // OPTION A: Single Batch Background Post-Extraction Vendor Enrichment
                     const uniqueVendors = Array.from(new Set(rows.map(r => r.vendor.trim()).filter(v => v !== "")));
-                    processPostExtractionVendorEnrichment(uniqueVendors, apiKey);
+                    processPostExtractionVendorEnrichment(uniqueVendors);
                 }
 
                 window.lastExtractedBankName = extractedBankName;
@@ -1654,7 +1798,6 @@ Return ONLY JSON Object:
         const glBody = document.getElementById('tb-gl'); glBody.innerHTML = "";
         appGLOptions.forEach((acc, idx) => { glBody.innerHTML += `<tr><td>${idx + 1}</td><td class="fw-semibold">${acc}</td></tr>`; });
 
-        // RENDER ENHANCED PERMANENT LEDGER TABLE WITH REVERSE & RE-STAGE ACTIONS
         const tbHist = document.getElementById('tb-history');
         tbHist.innerHTML = ""; 
         
@@ -2022,7 +2165,6 @@ Return ONLY JSON Object:
         let avgMonthlyIn = totalIn;
         let avgMonthlyOut = totalOut;
 
-        // Auto-populate sandbox editable inputs with real period Trial Balance calculations
         document.getElementById('sb_start_base').value = currentCash.toFixed(2);
         document.getElementById('sb_start_cons').value = currentCash.toFixed(2);
         
@@ -2061,7 +2203,6 @@ Return ONLY JSON Object:
                 document.getElementById('sb_fixed_base').value = (baseFixed + modVal).toFixed(2);
             }
         } else {
-            // Specific GL Account line-item adjustment
             if (modType === "PERCENTAGE") {
                 document.getElementById('sb_var_base').value = (baseVar * (1 + (modVal / 100))).toFixed(2);
             } else {
@@ -2089,7 +2230,6 @@ Return ONLY JSON Object:
         let totalOutCons = fixedCons + varCons;
         let netBurnCons = totalOutCons - revCons;
 
-        // Render Sandbox Cell Values
         document.getElementById('sb_burn_base').innerText = netBurnBase > 0 ? `-$${netBurnBase.toFixed(2)}` : `+$${Math.abs(netBurnBase).toFixed(2)}`;
         document.getElementById('sb_burn_base').className = netBurnBase > 0 ? "text-end fw-bold fs-6 text-danger" : "text-end fw-bold fs-6 text-success";
 
@@ -2164,7 +2304,6 @@ Return ONLY JSON Object:
 
         const filteredDataset = filterBySelectedPeriod([...historyData, ...localData]);
         
-        // Reset MD&A text boxes to blank when selected month has no transactions
         if (filteredDataset.length === 0) {
             document.getElementById('mda_exec').value = "";
             document.getElementById('mda_rev').value = "";
@@ -2172,9 +2311,6 @@ Return ONLY JSON Object:
             document.getElementById('mda_actions').value = "";
             return;
         }
-
-        const apiKey = localStorage.getItem('hca_gk');
-        if (!apiKey) return;
 
         document.getElementById('mda_exec').value = "Generating AI commentary from fetched dataset...";
         document.getElementById('mda_rev').value = "Analyzing revenue streams...";
@@ -2194,21 +2330,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
   "action_items": "Recommended operational or financial next steps."
 }`;
 
-            trackGeminiUsage(4000);
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    "contents": [{ "parts": [{ "text": prompt }] }],
-                    "generationConfig": { "response_mime_type": "application/json" }
-                })
-            });
-
-            const jsonRes = await res.json();
-            if (jsonRes.usageMetadata?.totalTokenCount) trackGeminiUsage(jsonRes.usageMetadata.totalTokenCount);
-
-            const rawText = jsonRes.candidates[0].content.parts[0].text;
-            const generated = JSON.parse(rawText.replace(/```json|```/g, '').trim());
+            const generated = await callAIModel(prompt);
 
             document.getElementById('mda_exec').value = generated.executive_summary || "";
             document.getElementById('mda_rev').value = generated.revenue_commentary || "";
@@ -2326,7 +2448,6 @@ Generate executive MD&A notes. Return ONLY JSON Object:
     function renderStagingTable(dataRows) {
         const sBody = document.getElementById('tb-staging'); sBody.innerHTML = "";
 
-        // Client-side sorting logic
         dataRows.sort((a, b) => {
             let valA = a[sortKey] || '', valB = b[sortKey] || '';
             if (sortKey === 'amt' || sortKey === 'confidence') {
@@ -2456,7 +2577,6 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         const cleanVendor = vendorName.trim();
         const cacheKey = "vendor_cache_" + cleanVendor.toLowerCase().replace(/\s+/g, '_');
 
-        // 1. Check local storage for sub-millisecond load
         const localCached = localStorage.getItem(cacheKey);
         if (localCached) {
             try {
@@ -2469,7 +2589,6 @@ Generate executive MD&A notes. Return ONLY JSON Object:
             }
         }
 
-        // 2. Query pre-populated Supabase vendor_knowledge table
         initSupabase();
         if (db) {
             const { data: cached } = await db.from('vendor_knowledge').select('*').ilike('vendor_name', cleanVendor).maybeSingle();
@@ -2502,24 +2621,12 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         const reader = new FileReader();
         reader.onload = async (e) => {
             try {
-                const docData = e.target.result.split(',')[1]; const apiKey = localStorage.getItem('hca_gk');
+                const docData = e.target.result.split(',')[1];
                 const mimeType = file.type || (file.name.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
                 
                 const prompt = "ACT AS: Forensic Audit Specialist. Extract receipt total vendor and total amount. Return ONLY JSON Object: {'vendor':'Merchant Name', 'amount':0.00}";
-                trackGeminiUsage(2000);
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ 
-                        "contents": [{ "parts": [{ "text": prompt }, { "inline_data": { "mime_type": mimeType, "data": docData }}] }],
-                        "generationConfig": { "response_mime_type": "application/json" }
-                    })
-                });
-
-                const jsonRes = await res.json();
-                if (jsonRes.usageMetadata?.totalTokenCount) trackGeminiUsage(jsonRes.usageMetadata.totalTokenCount);
-
-                const rawText = jsonRes.candidates[0].content.parts[0].text;
-                const extracted = JSON.parse(rawText.replace(/```json|```/g, '').trim());
+                
+                const extracted = await callAIModel(prompt, docData, mimeType);
 
                 const rowItem = localData.find(r => r.row == rowId);
                 const targetAmt = Math.abs(parseFloat(rowItem.amt));
@@ -2654,19 +2761,17 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         b.innerHTML += `<div id="chat-thinking" class="chat-bubble text-muted small"><em>Processing query...</em></div>`;
         b.scrollTop = b.scrollHeight;
 
-        const apiKey = localStorage.getItem('hca_gk');
         const projectContext = "You are LUFFY, the support assistant. Current Client Context: " + (currentClient || "None Selected");
-        trackGeminiUsage(1000);
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ "contents": [{ "parts": [{ "text": projectContext + ". User Query: " + q }] }] })
-        });
         
-        const jsonRes = await res.json();
-        if (jsonRes.usageMetadata?.totalTokenCount) trackGeminiUsage(jsonRes.usageMetadata.totalTokenCount);
-        const thinking = document.getElementById('chat-thinking'); if(thinking) thinking.remove();
-        const reply = jsonRes.candidates?.[0]?.content?.parts?.[0]?.text || "Unable to retrieve AI response.";
-        b.innerHTML += `<div class="chat-bubble text-dark"><strong>AI:</strong><br>${reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>')}</div>`; 
+        try {
+            const replyObj = await callAIModel(projectContext + ". User Query: " + q + "\n\nReturn response as JSON: {'reply': 'your text here'}");
+            const thinking = document.getElementById('chat-thinking'); if(thinking) thinking.remove();
+            const reply = replyObj.reply || JSON.stringify(replyObj);
+            b.innerHTML += `<div class="chat-bubble text-dark"><strong>AI:</strong><br>${reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>')}</div>`; 
+        } catch(err) {
+            const thinking = document.getElementById('chat-thinking'); if(thinking) thinking.remove();
+            b.innerHTML += `<div class="chat-bubble text-danger"><strong>Error:</strong> ${err.message}</div>`;
+        }
         b.scrollTop = b.scrollHeight;
     }
 
@@ -2676,19 +2781,17 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         b.innerHTML += `<div id="zoro-thinking" class="chat-bubble text-muted small"><em>Scanning dashboard dataset...</em></div>`;
         b.scrollTop = b.scrollHeight;
 
-        const apiKey = localStorage.getItem('hca_gk');
         const dashboardContext = `YOU ARE: ZORO DASHBOARD ASSISTANT. Current Client: ${currentClient || "Unselected"}. Staging rows: ${localData.length}. History rows: ${historyData.length}.`;
-        trackGeminiUsage(2000);
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ "contents": [{ "parts": [{ "text": dashboardContext + "\n\nUser Question: " + q }] }] })
-        });
         
-        const jsonRes = await res.json();
-        if (jsonRes.usageMetadata?.totalTokenCount) trackGeminiUsage(jsonRes.usageMetadata.totalTokenCount);
-        const thinking = document.getElementById('zoro-thinking'); if(thinking) thinking.remove();
-        const reply = jsonRes.candidates?.[0]?.content?.parts?.[0]?.text || "Unable to analyze dashboard context.";
-        b.innerHTML += `<div class="chat-bubble text-dark"><strong>ZORO:</strong><br>${reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>')}</div>`; 
+        try {
+            const replyObj = await callAIModel(dashboardContext + "\n\nUser Question: " + q + "\n\nReturn response as JSON: {'reply': 'your text here'}");
+            const thinking = document.getElementById('zoro-thinking'); if(thinking) thinking.remove();
+            const reply = replyObj.reply || JSON.stringify(replyObj);
+            b.innerHTML += `<div class="chat-bubble text-dark"><strong>ZORO:</strong><br>${reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>')}</div>`; 
+        } catch(err) {
+            const thinking = document.getElementById('zoro-thinking'); if(thinking) thinking.remove();
+            b.innerHTML += `<div class="chat-bubble text-danger"><strong>Error:</strong> ${err.message}</div>`;
+        }
         b.scrollTop = b.scrollHeight;
     }
 
