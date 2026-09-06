@@ -63,6 +63,7 @@
         .chat-window-popup { position: fixed; bottom: 80px; width: 380px; height: 500px; background: white; border-radius: 20px; box-shadow: 0 16px 40px rgba(0,0,0,0.15); display: none; flex-direction: column; z-index: 3000; border: 1px solid var(--app-border); overflow: hidden; }
         #chat-window { left: 25px; }
         #zoro-chat-window { left: 180px; }
+        #gemini-quota-window { left: 335px; height: auto; max-height: 480px; }
         .chat-window-popup .chat-header-bar { background: var(--app-dark); color: white; padding: 16px 20px; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.08); }
         .chat-window-popup .chat-body-content { flex-grow: 1; padding: 18px; overflow-y: auto; font-size: 0.88rem; line-height: 1.5; }
         .chat-bubble { margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #F1F5F9; }
@@ -85,7 +86,7 @@
 
         .vendor-cell { position: relative; }
         .vendor-hover { cursor: pointer; font-weight: 700; color: var(--app-dark); text-decoration: underline dotted var(--app-sage); }
-        .vendor-card-popup { display: none; position: absolute; bottom: 125%; left: 0; width: 290px; background: white; border: 1px solid var(--app-sage); border-radius: 14px; padding: 14px; box-shadow: 0 12px 32px rgba(0,0,0,0.15); z-index: 1000; font-size: 0.82rem; color: var(--app-dark); }
+        .vendor-card-popup { display: none; position: absolute; bottom: 125%; left: 0; width: 290px; background: white; border: 1px solid var(--app-sage); border-radius: 14px; padding: 14px; shadow: 0 12px 32px rgba(0,0,0,0.15); z-index: 1000; font-size: 0.82rem; color: var(--app-dark); }
         .vendor-cell:hover .vendor-card-popup { display: block; }
         .vendor-badge { font-size: 0.65rem; font-weight: bold; background: var(--app-dark); color: white; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; display: inline-block; }
         
@@ -622,7 +623,7 @@
         <div class="table-responsive"><table class="table table-sm table-striped align-middle"><tbody id="tb-gl"></tbody></table></div>
     </div>
 
-    <!-- ENHANCED PERMANENT LEDGER HISTORY WITH BANK NAME, OFFSET ACCOUNT, AND BATCH REVERSAL -->
+    <!-- ENHANCED PERMANENT LEDGER HISTORY WITH BANK NAME, OFFSET ACCOUNT, AND BATCH REVERSAL/RE-STAGE -->
     <div id="tab-history" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <h5 class="fw-bold mb-3">Permanent Ledger History</h5>
         <div class="table-responsive">
@@ -637,7 +638,7 @@
                         <th>Expense Category (Leg 1)</th>
                         <th>Offset Account (Leg 2)</th>
                         <th>Sync Ref</th>
-                        <th class="text-center">Action</th>
+                        <th class="text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="tb-history"></tbody>
@@ -675,6 +676,12 @@
         <span class="fw-semibold small">ZORO</span>
         <span class="chat-bar-badge">Dashboard</span>
     </div>
+    <!-- GEMINI QUOTA STATUS FLOATING PILL -->
+    <div class="chat-trigger-btn" id="gemini-quota-pill" onclick="toggleChat('gemini-quota-window')">
+        <span id="gemini-quota-dot" class="status-dot dot-green" style="margin-right:0;"></span>
+        <span class="fw-semibold small" id="gemini-quota-text">Quota: 15/15 RPM</span>
+        <span class="chat-bar-badge" style="background:#E2E8F0; color:#2C3E50;">Free Tier</span>
+    </div>
 </div>
 
 <div id="chat-window" class="chat-window-popup">
@@ -693,6 +700,63 @@
     </div>
     <div id="zoro-chat-content" class="chat-body-content">ZORO active. Ask questions regarding current dashboard data, spend breakdown, or ledger balances.</div>
     <div class="p-2 border-top"><input id="zoro-chat-input" class="form-control form-control-sm rounded-pill" placeholder="Ask about dashboard data..." onkeydown="if(event.key==='Enter') sendZoroChat()"></div>
+</div>
+
+<!-- GEMINI QUOTA STATUS POPUP WINDOW -->
+<div id="gemini-quota-window" class="chat-window-popup">
+    <div class="chat-header-bar d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2">
+            <span>⚡ Gemini API Rate Monitor</span>
+        </div>
+        <button class="btn-close btn-close-white btn-sm" onclick="toggleChat('gemini-quota-window')"></button>
+    </div>
+    <div class="chat-body-content p-3">
+        <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="fw-bold small">Minute Calls (RPM)</span>
+                <span class="small fw-bold" id="quota-rpm-text">0 / 15</span>
+            </div>
+            <div class="progress" style="height: 8px;">
+                <div id="quota-rpm-bar" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-1">
+                <small class="text-muted" style="font-size:0.72rem;">60-second rolling limit</small>
+                <small class="fw-semibold text-primary" id="quota-rpm-refresh" style="font-size:0.72rem;">Refreshes in 0s</small>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="fw-bold small">Minute Token Density (TPM)</span>
+                <span class="small fw-bold" id="quota-tpm-text">0 / 1M</span>
+            </div>
+            <div class="progress" style="height: 8px;">
+                <div id="quota-tpm-bar" class="progress-bar bg-info" role="progressbar" style="width: 0%"></div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-1">
+                <small class="text-muted" style="font-size:0.72rem;">Estimated token throughput</small>
+                <small class="fw-semibold text-primary" id="quota-tpm-refresh" style="font-size:0.72rem;">Refreshes in 0s</small>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="fw-bold small">Daily Usage Quota (RPD)</span>
+                <span class="small fw-bold" id="quota-rpd-text">0 / 1,500</span>
+            </div>
+            <div class="progress" style="height: 8px;">
+                <div id="quota-rpd-bar" class="progress-bar bg-dark" role="progressbar" style="width: 0%"></div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-1">
+                <small class="text-muted" style="font-size:0.72rem;">Resets Midnight PT (00:00)</small>
+                <small class="fw-semibold text-dark" id="quota-rpd-clock" style="font-size:0.72rem;">Reset in --h --m</small>
+            </div>
+        </div>
+
+        <div class="p-2 bg-light border rounded text-muted small" style="font-size:0.75rem; line-height:1.4;">
+            ℹ️ <strong>Status Warning System:</strong> This non-blocking gauge tracks Free Tier capacity. If a limit is hit, wait for the countdown before sending further OCR requests to prevent rate limit errors.
+        </div>
+    </div>
 </div>
 
 <datalist id="glChoices"></datalist>
@@ -719,6 +783,124 @@
     let sortKey = 'date', sortAsc = true;
 
     const CLASS_OPTIONS = ["General", "Marketing", "Sales", "Operations", "NY-Office"];
+
+    /* GEMINI API RATE LIMIT & TOKEN TRACKER ENGINE */
+    const GEMINI_LIMITS = {
+        RPM: 15,
+        TPM: 1000000,
+        RPD: 1500
+    };
+
+    function getQuotaLogs() {
+        try {
+            return JSON.parse(localStorage.getItem('gemini_quota_logs') || '[]');
+        } catch(e) {
+            return [];
+        }
+    }
+
+    function saveQuotaLogs(logs) {
+        localStorage.setItem('gemini_quota_logs', JSON.stringify(logs));
+    }
+
+    function trackGeminiUsage(estimatedTokens = 1000) {
+        const logs = getQuotaLogs();
+        logs.push({ timestamp: Date.now(), tokens: estimatedTokens });
+        saveQuotaLogs(logs);
+        updateQuotaUI();
+    }
+
+    function updateQuotaUI() {
+        const now = Date.now();
+        const logs = getQuotaLogs();
+
+        // 1. Filter Rolling 60-Second Window
+        const oneMinuteAgo = now - 60000;
+        const recentLogs = logs.filter(l => l.timestamp > oneMinuteAgo);
+
+        // 2. Filter Current Day (Midnight PT)
+        const ptDateStr = new Date().toLocaleDateString("en-US", { timeZone: "America/Los_Angeles" });
+        const dayLogs = logs.filter(l => new Date(l.timestamp).toLocaleDateString("en-US", { timeZone: "America/Los_Angeles" }) === ptDateStr);
+
+        const currentRPM = recentLogs.length;
+        const currentTPM = recentLogs.reduce((acc, curr) => acc + (curr.tokens || 0), 0);
+        const currentRPD = dayLogs.length;
+
+        // Clean up logs older than 48 hours
+        if (logs.length > recentLogs.length + dayLogs.length + 50) {
+            saveQuotaLogs(dayLogs);
+        }
+
+        // Calculate 60-second Rolling Refresh Timer
+        let oldestInWindow = recentLogs.length > 0 ? Math.min(...recentLogs.map(l => l.timestamp)) : now;
+        let secondsToRefresh = Math.max(0, Math.ceil((oldestInWindow + 60000 - now) / 1000));
+        if (currentRPM === 0) secondsToRefresh = 0;
+
+        // Calculate Pacific Time Daily Reset Clock
+        const nowPT = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+        const midnightPT = new Date(nowPT);
+        midnightPT.setHours(24, 0, 0, 0);
+        const diffMs = midnightPT.getTime() - nowPT.getTime();
+        const hoursLeft = Math.floor(diffMs / (1000 * 60 * 60));
+        const minsLeft = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+        // Update UI Elements
+        const rpmText = document.getElementById('quota-rpm-text');
+        const rpmBar = document.getElementById('quota-rpm-bar');
+        const rpmRefresh = document.getElementById('quota-rpm-refresh');
+        if (rpmText) rpmText.innerText = `${currentRPM} / ${GEMINI_LIMITS.RPM}`;
+        if (rpmBar) {
+            const rpmPct = Math.min(100, (currentRPM / GEMINI_LIMITS.RPM) * 100);
+            rpmBar.style.width = `${rpmPct}%`;
+            rpmBar.className = rpmPct >= 90 ? "progress-bar bg-danger" : (rpmPct >= 70 ? "progress-bar bg-warning" : "progress-bar bg-success");
+        }
+        if (rpmRefresh) rpmRefresh.innerText = secondsToRefresh > 0 ? `Refreshes in ${secondsToRefresh}s` : "Full Capacity";
+
+        const tpmText = document.getElementById('quota-tpm-text');
+        const tpmBar = document.getElementById('quota-tpm-bar');
+        const tpmRefresh = document.getElementById('quota-tpm-refresh');
+        if (tpmText) tpmText.innerText = `${(currentTPM / 1000).toFixed(0)}k / 1M`;
+        if (tpmBar) {
+            const tpmPct = Math.min(100, (currentTPM / GEMINI_LIMITS.TPM) * 100);
+            tpmBar.style.width = `${tpmPct}%`;
+        }
+        if (tpmRefresh) tpmRefresh.innerText = secondsToRefresh > 0 ? `Refreshes in ${secondsToRefresh}s` : "Full Capacity";
+
+        const rpdText = document.getElementById('quota-rpd-text');
+        const rpdBar = document.getElementById('quota-rpd-bar');
+        const rpdClock = document.getElementById('quota-rpd-clock');
+        if (rpdText) rpdText.innerText = `${currentRPD} / ${GEMINI_LIMITS.RPD}`;
+        if (rpdBar) {
+            const rpdPct = Math.min(100, (currentRPD / GEMINI_LIMITS.RPD) * 100);
+            rpdBar.style.width = `${rpdPct}%`;
+        }
+        if (rpdClock) rpdClock.innerText = `Reset in ${hoursLeft}h ${minsLeft}m`;
+
+        // Update Dock Pill Status
+        const pillText = document.getElementById('gemini-quota-text');
+        const pillDot = document.getElementById('gemini-quota-dot');
+        const availableRPM = Math.max(0, GEMINI_LIMITS.RPM - currentRPM);
+
+        if (pillText) {
+            if (currentRPM >= GEMINI_LIMITS.RPM) {
+                pillText.innerText = `Quota: Wait ${secondsToRefresh}s`;
+            } else {
+                pillText.innerText = `Quota: ${availableRPM}/15 RPM`;
+            }
+        }
+        if (pillDot) {
+            if (currentRPM >= GEMINI_LIMITS.RPM || currentRPD >= GEMINI_LIMITS.RPD) {
+                pillDot.className = "status-dot dot-red";
+            } else if (currentRPM >= 10) {
+                pillDot.className = "status-dot dot-amber";
+            } else {
+                pillDot.className = "status-dot dot-green";
+            }
+        }
+    }
+
+    // Live refresh loop every second
+    setInterval(updateQuotaUI, 1000);
 
     /* BOOTSTRAP TOAST NOTIFICATION HELPER */
     function showToast(message, type = "success") {
@@ -856,6 +1038,7 @@
             document.getElementById('dot-gemini').classList.add('dot-green');
             await getClientList();
         }
+        updateQuotaUI();
     }
 
     function connectToQuickBooks() {
@@ -1033,6 +1216,7 @@
                 const prompt = `ACT AS: Financial Data Analyst. Extract ALL tables and structured transactional rows from this PDF document.
 Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "Amount", "Category"], ["2026-01-01", "Sample Item", "1001", 150.00, "Expenses"]]`;
 
+                trackGeminiUsage(12000);
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
                     method: "POST", headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
@@ -1042,6 +1226,8 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
                 });
 
                 const jsonRes = await res.json();
+                if (jsonRes.usageMetadata?.totalTokenCount) trackGeminiUsage(jsonRes.usageMetadata.totalTokenCount);
+
                 const rawText = jsonRes.candidates[0].content.parts[0].text;
                 const rowsData = JSON.parse(rawText.replace(/```json|```/g, '').trim());
 
@@ -1192,6 +1378,7 @@ Return ONLY a valid JSON array of objects matching this exact structure:
   }
 ]`;
 
+            trackGeminiUsage(3000);
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -1201,6 +1388,8 @@ Return ONLY a valid JSON array of objects matching this exact structure:
             });
 
             const jsonRes = await res.json();
+            if (jsonRes.usageMetadata?.totalTokenCount) trackGeminiUsage(jsonRes.usageMetadata.totalTokenCount);
+
             if (jsonRes.candidates?.[0]?.content?.parts?.[0]?.text) {
                 const rawText = jsonRes.candidates[0].content.parts[0].text;
                 const batchResults = JSON.parse(rawText.replace(/```json|```/g, '').trim());
@@ -1283,6 +1472,7 @@ Return ONLY JSON Object:
   ]
 }`;
 
+                trackGeminiUsage(15000);
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
                     method: "POST", headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ 
@@ -1292,6 +1482,7 @@ Return ONLY JSON Object:
                 });
 
                 const jsonRes = await res.json();
+                if (jsonRes.usageMetadata?.totalTokenCount) trackGeminiUsage(jsonRes.usageMetadata.totalTokenCount);
                 if (jsonRes.error) throw new Error("Gemini API Error: " + jsonRes.error.message);
                 if (!jsonRes.candidates?.[0]?.content?.parts?.[0]?.text) throw new Error("Gemini returned invalid or empty response.");
 
@@ -1463,18 +1654,22 @@ Return ONLY JSON Object:
         const glBody = document.getElementById('tb-gl'); glBody.innerHTML = "";
         appGLOptions.forEach((acc, idx) => { glBody.innerHTML += `<tr><td>${idx + 1}</td><td class="fw-semibold">${acc}</td></tr>`; });
 
-        // RENDER ENHANCED PERMANENT LEDGER TABLE WITH BANK NAME, OFFSET ACCOUNT, AND BATCH REVERSAL
+        // RENDER ENHANCED PERMANENT LEDGER TABLE WITH REVERSE & RE-STAGE ACTIONS
         const tbHist = document.getElementById('tb-history');
         tbHist.innerHTML = ""; 
         
-        // Group rows by sync reference for batch actions
         const seenRefs = new Set();
 
         res.history.forEach(i => {
             const showRevBtn = !seenRefs.has(i.qbo);
             seenRefs.add(i.qbo);
 
-            const revActionHtml = showRevBtn ? `<button class="btn btn-xs btn-outline-danger py-0 fw-bold rounded-pill" onclick="reverseFullBatch('${i.qbo}')">↩️ Reverse Batch</button>` : `<span class="text-muted small">Batch #${i.qbo}</span>`;
+            const revActionHtml = showRevBtn ? `
+                <div class="d-flex gap-1 justify-content-center">
+                    <button class="btn btn-xs btn-outline-danger py-0 fw-bold rounded-pill" onclick="reverseFullBatch('${i.qbo}')">↩️ Reverse</button>
+                    <button class="btn btn-xs btn-outline-primary py-0 fw-bold rounded-pill" onclick="restageFullBatch('${i.qbo}')">⚡ Re-Stage</button>
+                </div>
+            ` : `<span class="text-muted small">Batch #${i.qbo}</span>`;
 
             tbHist.innerHTML += `<tr>
                 <td>${i.date}</td>
@@ -1524,13 +1719,11 @@ Return ONLY JSON Object:
         document.getElementById('st').style.display = 'block';
 
         try {
-            // 1. Fetch all rows matching the target batch sync reference
             const { data: batchRows, error: fetchErr } = await db.from('permanent_ledger').select('*').ilike('client_name', currentClient.trim()).eq('qbo_id', syncRef);
             if (fetchErr || !batchRows || batchRows.length === 0) throw new Error("Could not retrieve batch rows for reversal: " + (fetchErr?.message || "No matching rows found."));
 
             const reversalRef = `${syncRef}-REV`;
 
-            // 2. Generate counter-rows in permanent_ledger (inverting amounts & swapping leg duties)
             const reversalPayload = batchRows.map(r => ({
                 client_name: r.client_name,
                 source: r.source,
@@ -1549,7 +1742,6 @@ Return ONLY JSON Object:
             const { error: insErr } = await db.from('permanent_ledger').insert(reversalPayload);
             if (insErr) throw new Error("Failed to insert reversal batch into Permanent Ledger: " + insErr.message);
 
-            // 3. Optional: Sync reversal payload to QuickBooks Online
             try {
                 const res = await fetch("https://oxhwhxnoysowuokdhmtr.supabase.co/functions/v1/qbo-sync", {
                     method: "POST",
@@ -1568,6 +1760,55 @@ Return ONLY JSON Object:
         } catch (err) {
             document.getElementById('st').style.display = 'none';
             showToast("Reversal Error: " + err.message, "danger");
+        }
+    }
+
+    /* BATCH RE-STAGE CONTROLLER FOR USER-DRIVEN ACCOUNT MAPPING FIXES */
+    async function restageFullBatch(syncRef) {
+        if (!syncRef) return showToast("Invalid Sync Reference.", "danger");
+        if (!confirm(`Do you want to copy Batch #${syncRef} back into the Review Staging queue for account editing?`)) return;
+
+        initSupabase(); if (!db) return;
+        document.getElementById('st').style.display = 'block';
+
+        try {
+            const { data: batchRows, error: fetchErr } = await db
+                .from('permanent_ledger')
+                .select('*')
+                .ilike('client_name', currentClient.trim())
+                .eq('qbo_id', syncRef);
+
+            if (fetchErr || !batchRows || batchRows.length === 0) {
+                throw new Error("Could not find batch rows: " + (fetchErr?.message || "No matching rows."));
+            }
+
+            const stagingPayload = batchRows.map(r => ({
+                client_name: r.client_name,
+                source: r.source,
+                bank_name: r.bank_name,
+                txn_date: r.txn_date,
+                vendor: r.vendor,
+                description: r.description.replace(/^\[REVERSAL OF BATCH #.*?\]\s*/, ''),
+                amount: Math.abs(parseFloat(r.amount)),
+                category: r.category || "Uncategorized",
+                status: "PENDING",
+                bank_category: r.bank_category || "Uncategorized",
+                class_name: r.class_name || "General",
+                fingerprint: btoa(unescape(encodeURIComponent(`RESTAGED_${Date.now()}_${Math.random()}`)))
+            }));
+
+            const { error: insErr } = await db.from('review_staging').insert(stagingPayload);
+            if (insErr) throw new Error("Failed to copy rows to staging: " + insErr.message);
+
+            document.getElementById('st').style.display = 'none';
+            showToast(`✓ Batch #${syncRef} copied back to Staging Queue! Switching to Review tab...`, "success");
+
+            await loadDash();
+            switchTab('review');
+
+        } catch (err) {
+            document.getElementById('st').style.display = 'none';
+            showToast("Re-Stage Error: " + err.message, "danger");
         }
     }
 
@@ -1953,6 +2194,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
   "action_items": "Recommended operational or financial next steps."
 }`;
 
+            trackGeminiUsage(4000);
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -1963,6 +2205,8 @@ Generate executive MD&A notes. Return ONLY JSON Object:
             });
 
             const jsonRes = await res.json();
+            if (jsonRes.usageMetadata?.totalTokenCount) trackGeminiUsage(jsonRes.usageMetadata.totalTokenCount);
+
             const rawText = jsonRes.candidates[0].content.parts[0].text;
             const generated = JSON.parse(rawText.replace(/```json|```/g, '').trim());
 
@@ -2262,6 +2506,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
                 const mimeType = file.type || (file.name.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
                 
                 const prompt = "ACT AS: Forensic Audit Specialist. Extract receipt total vendor and total amount. Return ONLY JSON Object: {'vendor':'Merchant Name', 'amount':0.00}";
+                trackGeminiUsage(2000);
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
                     method: "POST", headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ 
@@ -2271,6 +2516,8 @@ Generate executive MD&A notes. Return ONLY JSON Object:
                 });
 
                 const jsonRes = await res.json();
+                if (jsonRes.usageMetadata?.totalTokenCount) trackGeminiUsage(jsonRes.usageMetadata.totalTokenCount);
+
                 const rawText = jsonRes.candidates[0].content.parts[0].text;
                 const extracted = JSON.parse(rawText.replace(/```json|```/g, '').trim());
 
@@ -2409,12 +2656,14 @@ Generate executive MD&A notes. Return ONLY JSON Object:
 
         const apiKey = localStorage.getItem('hca_gk');
         const projectContext = "You are LUFFY, the support assistant. Current Client Context: " + (currentClient || "None Selected");
+        trackGeminiUsage(1000);
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ "contents": [{ "parts": [{ "text": projectContext + ". User Query: " + q }] }] })
         });
         
         const jsonRes = await res.json();
+        if (jsonRes.usageMetadata?.totalTokenCount) trackGeminiUsage(jsonRes.usageMetadata.totalTokenCount);
         const thinking = document.getElementById('chat-thinking'); if(thinking) thinking.remove();
         const reply = jsonRes.candidates?.[0]?.content?.parts?.[0]?.text || "Unable to retrieve AI response.";
         b.innerHTML += `<div class="chat-bubble text-dark"><strong>AI:</strong><br>${reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>')}</div>`; 
@@ -2429,12 +2678,14 @@ Generate executive MD&A notes. Return ONLY JSON Object:
 
         const apiKey = localStorage.getItem('hca_gk');
         const dashboardContext = `YOU ARE: ZORO DASHBOARD ASSISTANT. Current Client: ${currentClient || "Unselected"}. Staging rows: ${localData.length}. History rows: ${historyData.length}.`;
+        trackGeminiUsage(2000);
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ "contents": [{ "parts": [{ "text": dashboardContext + "\n\nUser Question: " + q }] }] })
         });
         
         const jsonRes = await res.json();
+        if (jsonRes.usageMetadata?.totalTokenCount) trackGeminiUsage(jsonRes.usageMetadata.totalTokenCount);
         const thinking = document.getElementById('zoro-thinking'); if(thinking) thinking.remove();
         const reply = jsonRes.candidates?.[0]?.content?.parts?.[0]?.text || "Unable to analyze dashboard context.";
         b.innerHTML += `<div class="chat-bubble text-dark"><strong>ZORO:</strong><br>${reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>')}</div>`; 
