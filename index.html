@@ -137,7 +137,6 @@
     </header>
     <div class="container">
         
-        <!-- STEP 1: SUPABASE USER AUTHENTICATION GATE -->
         <div id="userAuthGate" class="row justify-content-center">
             <div class="col-md-5">
                 <div class="card card-custom p-4 text-center">
@@ -152,7 +151,6 @@
             </div>
         </div>
 
-        <!-- MAIN PORTAL WITH LIVE API KEY CONTROL BAR -->
         <div id="mainPortal" style="display:none">
             
             <div class="api-switcher-card">
@@ -194,8 +192,8 @@
                                 <label class="form-check-label small text-muted" for="master_toggleCustom">Custom ID</label>
                             </div>
                         </div>
-                        <select id="master_model" class="form-select form-select-sm rounded-pill fw-semibold"></select>
-                        <input type="text" id="master_custom_model" class="form-control form-control-sm rounded-pill fw-semibold" placeholder="e.g. gemini-3.6-flash" style="display:none;">
+                        <select id="master_model" class="form-select form-select-sm rounded-pill fw-semibold" onchange="handleModelChange()"></select>
+                        <input type="text" id="master_custom_model" class="form-control form-control-sm rounded-pill fw-semibold" placeholder="e.g. gemini-3.6-flash" style="display:none;" onchange="handleModelChange()">
                     </div>
                     <div class="col-md-4">
                         <label class="small fw-bold text-muted mb-1" id="key_label_text">3. Enter Provider API Key</label>
@@ -330,7 +328,6 @@
         </div>
     </div>
 
-    <!-- Global Month & Year Filter Bar -->
     <div class="global-filter-bar d-flex align-items-center justify-content-between shadow-sm" title="Global Date Scope Filter">
         <div class="d-flex align-items-center gap-3">
             <span class="fw-bold small text-uppercase" style="letter-spacing:0.5px;">📅 Period Scope Filter:</span>
@@ -377,7 +374,6 @@
         <div id="nav-meta" class="app-nav-btn" onclick="switchTab('meta')" title="Inspect and edit client integration metadata">CLIENT METADATA</div>
     </div>
 
-    <!-- Unified Parameters & Live Reconciliation Gate Bar -->
     <div class="stmt-balance-bar shadow-sm">
         <div class="d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">
@@ -459,7 +455,6 @@
         </table>
     </div>
 
-    <!-- TRIAL BALANCE-POWERED PROPOSED IMPACT TAB -->
     <div id="tab-impact" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="fw-bold mb-0">Period Trial Balance Impact Analysis</h5>
@@ -498,7 +493,6 @@
         </div>
     </div>
 
-    <!-- 100% DETERMINISTIC SCHEDULE C TAX READINESS TAB -->
     <div id="tab-tax" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <div class="d-flex justify-content-between align-items-center mb-2">
             <div>
@@ -508,15 +502,15 @@
             <button class="btn btn-sm btn-outline-dark fw-bold rounded-pill px-3" onclick="exportTaxScheduleC()" title="Download CSV summary formatted for tax preparation">📥 Export Schedule C Summary</button>
         </div>
 
-        <!-- CPA TAX PREPARATION AID DISCLAIMER -->
         <div class="alert alert-warning py-2 small mb-3">
             ⚠️ <strong>Tax Preparation Notice:</strong> This Schedule C summary is a preliminary categorization aid derived from statement extractions. It requires review by a licensed CPA or tax preparer before filing.
         </div>
 
         <div class="row g-3 mb-4">
-            <div class="col-md-4"><div class="summary-card"><h6>Gross Inflows (Income)</h6><h3 id="tax-gross-inflows" class="fw-bold text-success mb-0">$0.00</h3></div></div>
-            <div class="col-md-4"><div class="summary-card"><h6>Total Deductible Expenses</h6><h3 id="tax-total-deductions" class="fw-bold text-danger mb-0">$0.00</h3></div></div>
-            <div class="col-md-4"><div class="summary-card"><h6>Estimated Taxable Net Profit</h6><h3 id="tax-estimated-net" class="fw-bold text-primary mb-0">$0.00</h3></div></div>
+            <div class="col-md-3"><div class="summary-card"><h6>Gross Inflows (Income)</h6><h3 id="tax-gross-inflows" class="fw-bold text-success mb-0">$0.00</h3></div></div>
+            <div class="col-md-3"><div class="summary-card"><h6>Total Deductible Expenses</h6><h3 id="tax-total-deductions" class="fw-bold text-danger mb-0">$0.00</h3></div></div>
+            <div class="col-md-3"><div class="summary-card"><h6>Pending Review (Unmapped)</h6><h3 id="tax-pending-review" class="fw-bold text-warning mb-0">$0.00</h3></div></div>
+            <div class="col-md-3"><div class="summary-card"><h6>Estimated Taxable Net Profit</h6><h3 id="tax-estimated-net" class="fw-bold text-primary mb-0">$0.00</h3></div></div>
         </div>
 
         <div class="table-responsive">
@@ -603,7 +597,6 @@
     </div>
 </div>
 
-<!-- Floating Widgets Dock -->
 <div class="widgets-dock" id="floatingWidgetsDock">
     <div class="chat-trigger-btn" onclick="toggleChat('chat-window')" title="Open LUFFY System Support Assistant">
         <svg class="icon-svg" style="width:16px; height:16px;" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
@@ -724,7 +717,6 @@
 
     const CLASS_OPTIONS = ["General", "Marketing", "Sales", "Operations", "NY-Office"];
 
-    /* DEFAULT IRS SCHEDULE C TAX LINE MAPPING MATRIX */
     const SCHEDULE_C_MAPPING = {
         "Advertising": "Line 8: Advertising",
         "Marketing": "Line 8: Advertising",
@@ -755,7 +747,6 @@
         "Dues & Subscriptions": "Line 27b: Other expenses"
     };
 
-    /* TIGHTENED SCHEDULE C HEURISTIC LOOKUP USING WORD BOUNDARIES */
     function getScheduleCLine(glAccount) {
         if (!glAccount || glAccount === "Uncategorized") return "Unmapped GL Account — Review Required";
         if (SCHEDULE_C_MAPPING[glAccount]) return SCHEDULE_C_MAPPING[glAccount];
@@ -786,6 +777,7 @@
         );
     }
 
+    /* MODEL REGISTRY WITH OPENAI STATEMENT WARNING LABEL */
     const MODEL_REGISTRY = {
         GEMINI: [
             { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash (Workhorse - Default)", recommended: true },
@@ -795,9 +787,9 @@
             { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro" }
         ],
         OPENAI: [
-            { id: "gpt-5.4", name: "GPT-5.4 (Flagship)", recommended: true },
-            { id: "gpt-5.5", name: "GPT-5.5 (Next-Gen)" },
-            { id: "gpt-5.4-mini", name: "GPT-5.4 Mini (Lightweight)" },
+            { id: "gpt-5.4", name: "GPT-5.4 (No Direct PDF Statement Support)", recommended: true },
+            { id: "gpt-5.5", name: "GPT-5.5 (No Direct PDF Statement Support)" },
+            { id: "gpt-5.4-mini", name: "GPT-5.4 Mini (No Direct PDF Statement Support)" },
             { id: "o3", name: "OpenAI o3 Reasoning" },
             { id: "o4-mini", name: "OpenAI o4-mini" }
         ],
@@ -831,6 +823,22 @@
             else if (provider === "CLAUDE") keyLabel.innerText = "3. Enter Anthropic Claude API Key:";
         }
 
+        localStorage.setItem('hca_provider', provider);
+        const activeModel = modelSel ? modelSel.value : 'gemini-3.6-flash';
+        localStorage.setItem('hca_model', activeModel);
+
+        updateQuotaUI();
+    }
+
+    function handleModelChange() {
+        const provider = document.getElementById('master_provider').value;
+        const isCustom = document.getElementById('master_toggleCustom').checked;
+        const model = isCustom ? document.getElementById('master_custom_model').value.trim() : document.getElementById('master_model').value;
+        
+        if (model) {
+            localStorage.setItem('hca_provider', provider);
+            localStorage.setItem('hca_model', model);
+        }
         updateQuotaUI();
     }
 
@@ -1003,7 +1011,6 @@
         toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove());
     }
 
-    /* AUTHENTICATION HANDLERS (REMOVED CLIENT-SIDE ROLE INSERTIONS) */
     async function handleUserSignIn() {
         initSupabase();
         const email = document.getElementById('auth_email').value.trim();
@@ -1050,14 +1057,19 @@
         location.reload();
     }
 
-    /* MULTI-PROVIDER KEY VAULT SAVE (COMPOSITE ON-CONFLICT: USER_ID, PROVIDER) */
     async function lockKey() { 
-        const keyVal = document.getElementById('master_gk').value.trim();
+        const keyInput = document.getElementById('master_gk');
+        const providerInput = document.getElementById('master_provider');
+        const toggleCustomInput = document.getElementById('master_toggleCustom');
+        const modelSelect = document.getElementById('master_model');
+        const customModelInput = document.getElementById('master_custom_model');
+
+        const keyVal = keyInput ? keyInput.value.trim() : "";
         if (!keyVal) return showToast("Please enter an API Key", "danger");
 
-        const provider = document.getElementById('master_provider').value;
-        const isCustom = document.getElementById('master_toggleCustom').checked;
-        const model = isCustom ? document.getElementById('master_custom_model').value.trim() : document.getElementById('master_model').value;
+        const provider = providerInput ? providerInput.value : "GEMINI";
+        const isCustom = toggleCustomInput ? toggleCustomInput.checked : false;
+        const model = isCustom ? (customModelInput ? customModelInput.value.trim() : "") : (modelSelect ? modelSelect.value : "");
 
         if (!model) return showToast("Please select or enter a valid Model ID", "danger");
 
@@ -1090,7 +1102,7 @@
         checkAuthFlowState(); 
     }
 
-    /* AUTHENTICATION STATE & ROLE CONTROLLER (FIXED KEYGATE CRASH) */
+    /* AUTH STATE & MODEL RESTORATION CONTROLLER */
     async function checkAuthFlowState() {
         initSupabase();
         const { data: { session } } = await db.auth.getSession();
@@ -1117,21 +1129,42 @@
         document.getElementById('userLogoutBtn').style.display = 'inline-block';
         document.getElementById('dot-ledger').classList.add('dot-green');
 
+        const activeProvider = localStorage.getItem('hca_provider') || 'GEMINI';
+        const activeModel = localStorage.getItem('hca_model') || '';
+
+        const masterProv = document.getElementById('master_provider');
+        if (masterProv) masterProv.value = activeProvider;
+
         handleProviderChange();
 
-        const provider = localStorage.getItem('hca_provider') || 'GEMINI';
+        // Restore vaulted key and specific model state
         const { data: vaultedKeys } = await db.from('user_api_keys')
             .select('provider, model')
             .eq('user_id', currentUserId);
 
         if (vaultedKeys && vaultedKeys.length > 0) {
-            const activeKey = vaultedKeys.find(k => k.provider === provider) || vaultedKeys[0];
-            localStorage.setItem('hca_provider', activeKey.provider);
-            if (activeKey.model) localStorage.setItem('hca_model', activeKey.model);
-            
-            const masterProv = document.getElementById('master_provider');
-            if (masterProv) masterProv.value = activeKey.provider;
+            const matchedKey = vaultedKeys.find(k => k.provider === activeProvider) || vaultedKeys[0];
+            const targetModel = activeModel || matchedKey.model || '';
+
+            localStorage.setItem('hca_provider', matchedKey.provider);
+            if (masterProv) masterProv.value = matchedKey.provider;
             handleProviderChange();
+
+            if (targetModel) {
+                const modelSel = document.getElementById('master_model');
+                const registryModels = (MODEL_REGISTRY[matchedKey.provider] || []).map(m => m.id);
+                
+                if (registryModels.includes(targetModel)) {
+                    if (modelSel) modelSel.value = targetModel;
+                } else {
+                    const customToggle = document.getElementById('master_toggleCustom');
+                    const customInput = document.getElementById('master_custom_model');
+                    if (customToggle) customToggle.checked = true;
+                    toggleCustomModelInput(true);
+                    if (customInput) customInput.value = targetModel;
+                }
+                localStorage.setItem('hca_model', targetModel);
+            }
         }
 
         localStorage.setItem('hca_gk', 'VAULT_MANAGED');
@@ -1141,7 +1174,14 @@
         updateQuotaUI();
     }
 
-    function onClientChange() { pingStatus(); }
+    function onClientChange() { 
+        pingStatus(); 
+        // Load cached QBO Account details if available
+        const cachedDetails = localStorage.getItem(`qbo_account_details_${currentClient}`);
+        if (cachedDetails) {
+            try { rawQBOAccountDetails = JSON.parse(cachedDetails); } catch(e) {}
+        }
+    }
 
     function connectToQuickBooks() {
         const selected = document.getElementById('masterClient').value;
@@ -1210,7 +1250,10 @@
             if (!res.ok || !result.success) throw new Error(result.error || "Failed to fetch accounts from QuickBooks.");
 
             appGLOptions = result.accounts;
-            if (result.account_details) rawQBOAccountDetails = result.account_details;
+            if (result.account_details) {
+                rawQBOAccountDetails = result.account_details;
+                localStorage.setItem(`qbo_account_details_${targetClient}`, JSON.stringify(result.account_details));
+            }
 
             const badge = document.getElementById('glCountBadge');
             if (badge) { badge.style.display = 'block'; badge.innerText = `✓ Synced ${result.count} Accounts Live from QBO`; }
@@ -1483,13 +1526,17 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
 
     function triggerFile(t) { document.getElementById(t === 'PDF' ? 'f_pdf' : 'f_cc').click(); }
 
+    /* USER_ID SCOPED VENDOR ENRICHMENT LOOKUPS */
     async function processPostExtractionVendorEnrichment(uniqueVendorNames) {
         initSupabase(); if (!db || !uniqueVendorNames || uniqueVendorNames.length === 0 || !currentUserId) return;
 
         try {
-            const { data: existing } = await db.from('vendor_knowledge').select('vendor_name').in('vendor_name', uniqueVendorNames);
-            const existingSet = new Set((existing || []).map(v => v.vendor_name.trim().toLowerCase()));
+            const { data: existing } = await db.from('vendor_knowledge')
+                .select('vendor_name')
+                .eq('user_id', currentUserId)
+                .in('vendor_name', uniqueVendorNames);
 
+            const existingSet = new Set((existing || []).map(v => v.vendor_name.trim().toLowerCase()));
             const missingVendors = uniqueVendorNames.filter(v => !existingSet.has(v.trim().toLowerCase()));
             if (missingVendors.length === 0) return;
 
@@ -1523,7 +1570,7 @@ Return ONLY a valid JSON array of objects matching this exact structure:
                 });
             }
         } catch (err) {
-            console.error("Option A Batch Vendor Enrichment Error:", err);
+            console.error("Batch Vendor Enrichment Error:", err);
         }
     }
 
@@ -2117,7 +2164,44 @@ Return ONLY JSON Object:
         }
     }
 
-    /* SOURCE-AWARE & TRANSFER-FILTERED TAX READINESS SUMMARY */
+    /* UNIFIED TAX CLASSIFICATION ENGINE */
+    function getTaxClassification(item) {
+        let val = parseFloat(String(item.amt).replace(/[^0-9.-]+/g, "")) || 0;
+        let cat = item.cat || "Uncategorized";
+        let lowerCat = cat.toLowerCase();
+        let srcType = String(item.src || "").toUpperCase();
+
+        let accountType = "";
+        if (rawQBOAccountDetails && Array.isArray(rawQBOAccountDetails)) {
+            const accObj = rawQBOAccountDetails.find(a => a.name === cat || a.AccountName === cat);
+            if (accObj) accountType = String(accObj.type || accObj.AccountType || "").toLowerCase();
+        }
+
+        // Exclude Non-Schedule C Lines
+        if (accountType.includes("bank") || accountType.includes("credit card") || accountType.includes("equity") || accountType.includes("liability") ||
+            lowerCat.includes("transfer") || lowerCat.includes("owner draw") || lowerCat.includes("capital contribution") || lowerCat.includes("credit card payment")) {
+            return { type: "EXCLUDED", val: 0 };
+        }
+
+        let taxLine = getScheduleCLine(cat);
+
+        if (srcType === "CREDIT CARD") {
+            // Positive CC = Expense | Negative CC = Refund netting expense down
+            let netExpense = val;
+            let deductibleVal = taxLine.includes("Line 24b") ? (netExpense * 0.50) : netExpense;
+            return { type: taxLine.includes("Unmapped") ? "UNMAPPED" : "DEDUCTION", taxLine, deductibleVal, cat };
+        } else {
+            // Bank Statements: Positive = Inflow/Revenue | Negative = Expense
+            if (val > 0) {
+                return { type: "INFLOW", grossVal: val };
+            } else {
+                let absExpense = Math.abs(val);
+                let deductibleVal = taxLine.includes("Line 24b") ? (absExpense * 0.50) : absExpense;
+                return { type: taxLine.includes("Unmapped") ? "UNMAPPED" : "DEDUCTION", taxLine, deductibleVal, cat };
+            }
+        }
+    }
+
     function renderTaxReadinessTab() {
         const tbody = document.getElementById('tb-tax-summary');
         if (!tbody) return;
@@ -2127,46 +2211,26 @@ Return ONLY JSON Object:
         const taxBuckets = {};
         let totalGrossInflows = 0;
         let totalTaxDeductions = 0;
+        let totalPendingReview = 0;
 
         filteredDataset.forEach(item => {
-            let val = parseFloat(String(item.amt).replace(/[^0-9.-]+/g, "")) || 0;
-            let cat = item.cat || "Uncategorized";
-            let lowerCat = cat.toLowerCase();
-            let srcType = String(item.src || "").toUpperCase();
-
-            // Exclude non-deductible inter-account transfers & owner equity moves
-            if (lowerCat.includes("transfer") || lowerCat.includes("owner draw") || lowerCat.includes("equity") || lowerCat.includes("credit card payment")) {
-                return;
-            }
-
-            let isExpense = false;
-            let absVal = Math.abs(val);
-
-            if (srcType === "CREDIT CARD") {
-                if (val > 0) isExpense = true; // Credit Card purchase = Expense
-            } else {
-                if (val < 0) isExpense = true; // Bank outflow = Expense
-                else totalGrossInflows += val;  // Bank inflow = Revenue
-            }
-
-            if (isExpense) {
-                let taxLine = getScheduleCLine(cat);
-
-                if (!taxBuckets[taxLine]) {
-                    taxBuckets[taxLine] = { total: 0, items: 0, categories: new Set() };
-                }
-
-                let deductibleAmount = taxLine.includes("Line 24b") ? (absVal * 0.50) : absVal;
-
-                taxBuckets[taxLine].total += deductibleAmount;
-                taxBuckets[taxLine].items += 1;
-                taxBuckets[taxLine].categories.add(cat);
-                totalTaxDeductions += deductibleAmount;
+            const res = getTaxClassification(item);
+            if (res.type === "INFLOW") {
+                totalGrossInflows += res.grossVal;
+            } else if (res.type === "UNMAPPED") {
+                totalPendingReview += res.deductibleVal;
+            } else if (res.type === "DEDUCTION") {
+                if (!taxBuckets[res.taxLine]) taxBuckets[res.taxLine] = { total: 0, items: 0, categories: new Set() };
+                taxBuckets[res.taxLine].total += res.deductibleVal;
+                taxBuckets[res.taxLine].items += 1;
+                taxBuckets[res.taxLine].categories.add(res.cat);
+                totalTaxDeductions += res.deductibleVal;
             }
         });
 
         document.getElementById('tax-gross-inflows').innerText = `$${totalGrossInflows.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
         document.getElementById('tax-total-deductions').innerText = `$${totalTaxDeductions.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+        document.getElementById('tax-pending-review').innerText = `$${totalPendingReview.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
         document.getElementById('tax-estimated-net').innerText = `$${(totalGrossInflows - totalTaxDeductions).toLocaleString('en-US', {minimumFractionDigits: 2})}`;
 
         const sortedLines = Object.keys(taxBuckets).sort();
@@ -2184,36 +2248,23 @@ Return ONLY JSON Object:
         });
     }
 
-    /* SANITIZED SCHEDULE C CSV EXPORT WITH FORMULA INJECTION PROTECTION */
     function exportTaxScheduleC() {
         const filteredDataset = filterBySelectedPeriod([...historyData, ...localData]);
         let csvContent = "data:text/csv;charset=utf-8,IRS Schedule C Line,GL Category,Transaction Date,Vendor,Description,Amount,Deductible Amount\n";
 
         filteredDataset.forEach(i => {
-            let val = parseFloat(String(i.amt).replace(/[^0-9.-]+/g, "")) || 0;
-            let cat = i.cat || "Uncategorized";
-            let lowerCat = cat.toLowerCase();
-            let srcType = String(i.src || "").toUpperCase();
-
-            if (lowerCat.includes("transfer") || lowerCat.includes("owner draw") || lowerCat.includes("equity") || lowerCat.includes("credit card payment")) {
-                return;
-            }
-
-            let isExpense = (srcType === "CREDIT CARD") ? (val > 0) : (val < 0);
-
-            if (isExpense) {
+            const res = getTaxClassification(i);
+            if (res.type === "DEDUCTION") {
+                let val = parseFloat(String(i.amt).replace(/[^0-9.-]+/g, "")) || 0;
                 let absVal = Math.abs(val);
-                let taxLine = getScheduleCLine(cat);
-                let dedVal = taxLine.includes("Line 24b") ? (absVal * 0.50) : absVal;
 
-                // Sanitize formula triggers (=, +, -, @) and escape quotes
                 const sanitize = (str) => {
                     let clean = String(str || '').replace(/"/g, '""');
                     if (/^[=+\-@]/.test(clean.trim())) clean = "'" + clean;
                     return `"${clean}"`;
                 };
 
-                csvContent += `${sanitize(taxLine)},${sanitize(cat)},${sanitize(i.date)},${sanitize(i.vendor)},${sanitize(i.desc)},${absVal},${dedVal}\n`;
+                csvContent += `${sanitize(res.taxLine)},${sanitize(i.cat)},${sanitize(i.date)},${sanitize(i.vendor)},${sanitize(i.desc)},${absVal},${res.deductibleVal}\n`;
             }
         });
 
@@ -2462,7 +2513,12 @@ Return ONLY JSON Object:
 
         initSupabase();
         if (db) {
-            const { data: cached } = await db.from('vendor_knowledge').select('*').ilike('vendor_name', cleanVendor).maybeSingle();
+            const { data: cached } = await db.from('vendor_knowledge')
+                .select('*')
+                .eq('user_id', currentUserId)
+                .ilike('vendor_name', cleanVendor)
+                .maybeSingle();
+
             if (cached && cached.description) {
                 const linkHtml = formatLink(cached.website);
                 popupEl.innerHTML = `<span class="vendor-badge">VERIFIED MERCHANT</span><br><strong>${escapeHTML(cleanVendor)}</strong><br><span>${escapeHTML(cached.description)}</span>${linkHtml}`;
