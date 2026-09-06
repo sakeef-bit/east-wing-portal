@@ -161,7 +161,7 @@
             </div>
         </div>
 
-        <!-- STEP 2: MULTI-LLM WORKSPACE API AUTHORIZATION GATE -->
+        <!-- STEP 2: MULTI-LLM WORKSPACE API AUTHORIZATION GATE (BYOK VAULT) -->
         <div id="keyGate" class="row justify-content-center" style="display:none;">
             <div class="col-md-6"><div class="card card-custom p-4 text-center">
                 <h5 class="mb-2 fw-bold">Workspace AI Provider Authorization</h5>
@@ -191,9 +191,10 @@
                 <div class="mb-3 text-start">
                     <label class="small fw-bold text-muted mb-1" id="key_label_text" title="Enter provider API secret key">3. Enter Gemini API Key:</label>
                     <input type="password" id="master_gk" class="form-control text-center rounded-pill" placeholder="Enter API Key" title="Enter workspace API key">
+                    <div class="form-text text-muted" style="font-size:0.75rem;">🔒 Saved securely to your Supabase account vault. Never exposed in browser storage.</div>
                 </div>
 
-                <button class="btn btn-dark-app w-100 rounded-pill" onclick="lockKey()" title="Save API credentials and authenticate session">
+                <button class="btn btn-dark-app w-100 rounded-pill" onclick="lockKey()" title="Save API credentials to vault and authenticate session">
                     <svg class="icon-svg" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
                     Authenticate Workspace Engine
                 </button>
@@ -813,6 +814,8 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94aHdoeG5veXNvd3Vva2RobXRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NDU1MTEsImV4cCI6MjEwMzIyMTUxMX0.hQm9RsFit-TVz1pH0Y1Q3VITdbfwLUKA42uq2frZkyc";
     
     let db = null;
+    let currentUserId = null; // Cache session user_id for explicit defensive scoping
+
     function initSupabase() {
         if (!db && window.supabase) db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         return db;
@@ -895,113 +898,44 @@
         }
     }
 
-    /* UNIVERSAL MULTI-LLM ROUTER ADAPTER ENGINE
-       FIX (Anthropic CORS Header): Set explicit "anthropic-dangerous-direct-browser-access": "true" HTTP header.
-       FIX (Single-log Quota): Usage logged exactly once per call. */
+    /* STEP B: REFACTORED callAIModel TO DELEGATE TO SUPABASE EDGE FUNCTION AI-ROUTER
+       This function forwards requests to the server-side Edge Function, eliminating client-side API key leaks. */
     async function callAIModel(promptText, pdfBase64Data = null, mimeType = "application/pdf") {
         const provider = localStorage.getItem('hca_provider') || "GEMINI";
         const model = localStorage.getItem('hca_model') || "gemini-3.6-flash";
-        const apiKey = localStorage.getItem('hca_gk');
 
-        if (!apiKey) throw new Error(`Missing ${provider} API Key. Please authenticate in Workspace Settings.`);
+        initSupabase();
+        const { data: { session } } = await db.auth.getSession();
+        if (!session) throw new Error("Unauthorized: Please sign in to access AI Engine functions.");
 
-        // ROUTE 1: GOOGLE GEMINI NATIVE REST API
-        if (provider === "GEMINI") {
-            const parts = [{ text: promptText }];
-            if (pdfBase64Data) parts.push({ inline_data: { mime_type: mimeType, data: pdfBase64Data } });
+        const payload = {
+            provider: provider,
+            model: model,
+            promptText: promptText,
+            pdfBase64Data: pdfBase64Data,
+            mimeType: mimeType
+        };
 
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    "contents": [{ "parts": parts }],
-                    "generationConfig": { "response_mime_type": "application/json" }
-                })
-            });
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-router`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "apikey": SUPABASE_KEY,
+                "Authorization": `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify(payload)
+        });
 
-            const jsonRes = await res.json();
-            if (res.status === 429 || jsonRes.error?.code === 429) {
-                const retryMatch = jsonRes.error?.message?.match(/retry in ([0-9.]+)s/i);
-                const retrySecs = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) : 30;
-                throw new Error(`Google Gemini Rate Limit Reached. Cooldown active — please retry in ${retrySecs} seconds.`);
-            }
-            if (jsonRes.error) throw new Error("Gemini API Error: " + jsonRes.error.message);
-            trackGeminiUsage(jsonRes.usageMetadata?.totalTokenCount || 10000);
-
-            const rawText = jsonRes.candidates[0].content.parts[0].text;
-            return JSON.parse(rawText.replace(/```json|```/g, '').trim());
+        const result = await res.json();
+        if (!res.ok || !result.success) {
+            throw new Error(result.error || "AI Edge Function Router failed to process request.");
         }
 
-        // ROUTE 2: OPENAI (CHATGPT) REST API
-        if (provider === "OPENAI") {
-            const contentParts = [{ type: "text", text: promptText }];
-            if (pdfBase64Data) {
-                const imgMime = mimeType === "application/pdf" ? "image/jpeg" : mimeType;
-                contentParts.push({ type: "image_url", image_url: { url: `data:${imgMime};base64,${pdfBase64Data}` } });
-            }
-
-            const res = await fetch("https://api.openai.com/v1/chat/completions", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${apiKey}`
-                },
-                body: JSON.stringify({
-                    model: model,
-                    messages: [{ role: "user", content: contentParts }],
-                    response_format: { type: "json_object" }
-                })
-            });
-
-            const jsonRes = await res.json();
-            if (res.status === 429 || jsonRes.error?.code === 429) {
-                throw new Error("OpenAI API Rate Limit Reached. Please wait a minute before retrying.");
-            }
-            if (jsonRes.error) throw new Error("OpenAI API Error: " + jsonRes.error.message);
-            trackGeminiUsage(jsonRes.usage?.total_tokens || 10000);
-
-            const rawText = jsonRes.choices[0].message.content;
-            return JSON.parse(rawText.replace(/```json|```/g, '').trim());
+        if (result.tokens) {
+            trackGeminiUsage(result.tokens);
         }
 
-        // ROUTE 3: ANTHROPIC (CLAUDE) REST API
-        if (provider === "CLAUDE") {
-            const contentParts = [];
-            if (pdfBase64Data) {
-                contentParts.push({
-                    type: mimeType === "application/pdf" ? "document" : "image",
-                    source: { type: "base64", media_type: mimeType, data: pdfBase64Data }
-                });
-            }
-            contentParts.push({ type: "text", text: promptText + "\n\nCRITICAL: Respond ONLY with raw valid JSON object. No conversational intro or prose." });
-
-            const res = await fetch("https://api.anthropic.com/v1/messages", {
-                method: "POST",
-                headers: { 
-                    "Content-Type": "application/json", 
-                    "x-api-key": apiKey, 
-                    "anthropic-version": "2023-06-01",
-                    "anthropic-dangerous-direct-browser-access": "true" 
-                },
-                body: JSON.stringify({
-                    model: model,
-                    max_tokens: 8192,
-                    messages: [{ role: "user", content: contentParts }]
-                })
-            });
-
-            const jsonRes = await res.json();
-            if (res.status === 429 || jsonRes.error?.type === "rate_limit_error") {
-                throw new Error("Anthropic Claude Rate Limit Reached. Please wait a minute before retrying.");
-            }
-            if (jsonRes.error) throw new Error("Claude API Error: " + jsonRes.error.message);
-            trackGeminiUsage((jsonRes.usage?.input_tokens || 0) + (jsonRes.usage?.output_tokens || 0) || 10000);
-
-            const rawText = jsonRes.content[0].text;
-            return JSON.parse(rawText.replace(/```json|```/g, '').trim());
-        }
-
-        throw new Error("Unsupported AI Provider specified.");
+        return result.data;
     }
 
     /* GEMINI & MULTI-PROVIDER RATE LIMIT & TOKEN TRACKER ENGINE */
@@ -1162,6 +1096,7 @@
         const { data, error } = await db.auth.signInWithPassword({ email, password });
         
         if (!error && data?.user) {
+            currentUserId = data.user.id;
             const { data: existingRole } = await db
                 .from('user_roles')
                 .select('role')
@@ -1195,6 +1130,7 @@
         const { data, error } = await db.auth.signUp({ email, password });
 
         if (!error && data?.user) {
+            currentUserId = data.user.id;
             const { data: existingRole } = await db
                 .from('user_roles')
                 .select('role')
@@ -1223,14 +1159,15 @@
         localStorage.removeItem('hca_gk');
         localStorage.removeItem('hca_provider');
         localStorage.removeItem('hca_model');
+        currentUserId = null;
         forecastBaselines = null;
         location.reload();
     }
 
-    /* STEP 2: MULTI-LLM API KEY GATE HANDLER */
-    function lockKey() { 
+    /* STEP B: SECURE BYOK VAULT SAVE HANDLER WITH DEFENSIVE USER_ID PAYLOAD BINDING */
+    async function lockKey() { 
         const keyVal = document.getElementById('master_gk').value.trim();
-        if(!keyVal) return showToast("Please enter an API Key", "danger");
+        if (!keyVal) return showToast("Please enter an API Key", "danger");
 
         const provider = document.getElementById('master_provider').value;
         const isCustom = document.getElementById('toggleCustomModel').checked;
@@ -1238,10 +1175,32 @@
 
         if (!model) return showToast("Please select or enter a valid Model ID", "danger");
 
+        initSupabase();
+        const { data: { user } } = await db.auth.getUser();
+        if (!user) return showToast("Authentication error: Session expired.", "danger");
+
+        currentUserId = user.id;
+        document.getElementById('st').style.display = 'block';
+
+        // Explicit user_id payload binding for multi-tenant vault security
+        const { error } = await db.from('user_api_keys').upsert({
+            user_id: user.id,
+            provider: provider,
+            api_key: keyVal,
+            updated_at: new Date()
+        }, { onConflict: 'user_id,provider' });
+
+        document.getElementById('st').style.display = 'none';
+
+        if (error) {
+            return showToast("Failed to save key to Vault: " + error.message, "danger");
+        }
+
         localStorage.setItem('hca_provider', provider);
         localStorage.setItem('hca_model', model);
-        localStorage.setItem('hca_gk', keyVal);
+        localStorage.setItem('hca_gk', 'VAULT_MANAGED');
 
+        showToast("✓ Key saved securely to user vault!", "success");
         checkAuthFlowState(); 
     }
 
@@ -1255,17 +1214,19 @@
             document.getElementById('keyGate').style.display = 'none';
             document.getElementById('mainPortal').style.display = 'none';
             document.getElementById('userLogoutBtn').style.display = 'none';
+            currentUserId = null;
             return;
         }
 
+        currentUserId = session.user.id;
         document.getElementById('userAuthGate').style.display = 'none';
         document.getElementById('userLogoutBtn').style.display = 'inline-block';
         document.getElementById('dot-ledger').classList.add('dot-green');
 
         handleProviderChange();
 
-        const apiKey = localStorage.getItem('hca_gk');
-        if (!apiKey) {
+        const apiKeyFlag = localStorage.getItem('hca_gk');
+        if (!apiKeyFlag) {
             document.getElementById('keyGate').style.display = 'flex';
             document.getElementById('mainPortal').style.display = 'none';
         } else {
@@ -1316,11 +1277,15 @@
 
     async function disconnectQuickBooks() {
         initSupabase();
-        if (!currentClient || !db) return showToast("Please select a client account first", "danger");
+        if (!currentClient || !db || !currentUserId) return showToast("Please select a client account first", "danger");
         if (!confirm(`Are you sure you want to disconnect QuickBooks for ${currentClient}?`)) return;
 
         document.getElementById('st').style.display = 'block';
-        const { error } = await db.from('client_metadata').update({ qbo_id: null, qbo_refresh_token: null }).ilike('client_name', currentClient.trim());
+        const { error } = await db.from('client_metadata')
+            .update({ qbo_id: null, qbo_refresh_token: null })
+            .eq('user_id', currentUserId)
+            .ilike('client_name', currentClient.trim());
+            
         document.getElementById('st').style.display = 'none';
 
         if (error) showToast("Disconnection Error: " + error.message, "danger");
@@ -1359,10 +1324,15 @@
         await checkAuthFlowState();
     };
 
+    /* EXPLICIT USER_ID SCOPED CLIENT LIST FETCH */
     async function getClientList() {
         initSupabase();
-        if (!db) return;
-        const { data, error } = await db.from('client_metadata').select('client_name');
+        if (!db || !currentUserId) return;
+        
+        const { data, error } = await db.from('client_metadata')
+            .select('client_name')
+            .eq('user_id', currentUserId);
+
         if (error) console.error("Database fetch error:", error);
 
         const sel = document.getElementById('masterClient');
@@ -1370,35 +1340,43 @@
         if (data) data.forEach(v => sel.innerHTML += `<option value="${escapeHTML(v.client_name)}">${escapeHTML(v.client_name)}</option>`);
     }
 
+    /* EXPLICIT USER_ID SCOPED CLIENT SAVE & PROVISIONING */
     async function save() { 
         initSupabase();
-        if(!db) return showToast("Database connection uninitialized", "danger");
+        if(!db || !currentUserId) return showToast("Database session uninitialized", "danger");
         const cName = document.getElementById('n').value.trim();
         if(!cName) return showToast("Company Legal Name is required", "danger");
 
         document.getElementById('st').style.display = 'block';
         const payload = {
+            user_id: currentUserId,
             client_name: cName, nature: document.getElementById('nature').value || "General",
             client_email: document.getElementById('client_email').value || "",
             gl_list: (typeof appGLOptions !== 'undefined') ? appGLOptions.join(",") : ""
         };
 
-        const { error } = await db.from('client_metadata').upsert(payload, { onConflict: 'client_name' });
+        const { error } = await db.from('client_metadata').upsert(payload, { onConflict: 'user_id,client_name' });
         document.getElementById('st').style.display = 'none';
 
         if (error) showToast("Database Save Error: " + error.message, "danger");
         else { showToast("✓ Client profile saved successfully!", "success"); showPane('launchpad'); await getClientList(); document.getElementById('masterClient').value = cName; pingStatus(); }
     }
 
+    /* EXPLICIT USER_ID SCOPED STATUS CHECK */
     async function pingStatus() {
         currentClient = document.getElementById('masterClient').value;
-        if(!currentClient) return;
+        if(!currentClient || !currentUserId) return;
         document.getElementById('actionGrid').style.opacity = "1";
         document.getElementById('actionGrid').style.pointerEvents = "auto";
         
         initSupabase();
         if (db) {
-            const { data } = await db.from('client_metadata').select('*').ilike('client_name', currentClient.trim()).maybeSingle();
+            const { data } = await db.from('client_metadata')
+                .select('*')
+                .eq('user_id', currentUserId)
+                .ilike('client_name', currentClient.trim())
+                .maybeSingle();
+
             document.getElementById('dot-ledger').className = 'status-dot dot-green';
             const connBtn = document.getElementById('btnConnectQBO');
             const discBtn = document.getElementById('btnDisconnectQBO');
@@ -1416,8 +1394,13 @@
 
     async function pushQBO() {
         initSupabase();
-        if(!db) return;
-        const { data: approved } = await db.from('review_staging').select('*').ilike('client_name', currentClient.trim()).eq('status', 'APPROVED');
+        if(!db || !currentUserId) return;
+        const { data: approved } = await db.from('review_staging')
+            .select('*')
+            .eq('user_id', currentUserId)
+            .ilike('client_name', currentClient.trim())
+            .eq('status', 'APPROVED');
+
         if(!approved || approved.length === 0) return showToast("No rows marked as APPROVED.", "danger");
 
         const pushBtn = document.getElementById('btnPushQBO');
@@ -1522,14 +1505,18 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
 
     async function uploadGLFromDash(input) {
         const file = input.files[0];
-        if (!file || !currentClient) return;
+        if (!file || !currentClient || !currentUserId) return;
         initSupabase(); if (!db) return;
         const reader = new FileReader();
         reader.onload = async (e) => {
             document.getElementById('st').style.display = 'block';
             const lines = e.target.result.split(/\r?\n/);
             appGLOptions = lines.map(l => l.split(',')[0].replace(/"/g, '').trim()).filter(v => v && v.toLowerCase() !== "account name" && v.toLowerCase() !== "account");
-            const { error } = await db.from('client_metadata').update({ gl_list: appGLOptions.join(",") }).ilike('client_name', currentClient.trim());
+            const { error } = await db.from('client_metadata')
+                .update({ gl_list: appGLOptions.join(",") })
+                .eq('user_id', currentUserId)
+                .ilike('client_name', currentClient.trim());
+
             document.getElementById('st').style.display = 'none';
             if (error) showToast("Error updating GL List: " + error.message, "danger");
             else { showToast(`Successfully updated ${appGLOptions.length} GL Accounts.`, "success"); await loadDash(); }
@@ -1537,9 +1524,14 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
         reader.readAsText(file);
     }
 
+    /* EXPLICIT USER_ID SCOPED CATEGORY RULES FETCH */
     async function loadRules() {
-        initSupabase(); if (!db || !currentClient) return;
-        const { data } = await db.from('category_rules').select('*').ilike('client_name', currentClient.trim());
+        initSupabase(); if (!db || !currentClient || !currentUserId) return;
+        const { data } = await db.from('category_rules')
+            .select('*')
+            .eq('user_id', currentUserId)
+            .ilike('client_name', currentClient.trim());
+
         activeRules = data || []; renderRulesUI();
     }
 
@@ -1556,21 +1548,25 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
     function addRuleRow() {
         const kw = document.getElementById('ruleKeyword').value.trim(); const acc = document.getElementById('ruleAccount').value;
         if(!kw) return showToast("Enter a keyword", "danger");
-        activeRules.push({ client_name: currentClient, keyword: kw, target_account: acc });
+        activeRules.push({ user_id: currentUserId, client_name: currentClient, keyword: kw, target_account: acc });
         document.getElementById('ruleKeyword').value = ''; renderRulesUI();
     }
 
     async function removeRule(idx) {
-        initSupabase(); if(activeRules[idx].id && db) await db.from('category_rules').delete().eq('id', activeRules[idx].id);
+        initSupabase(); 
+        if(activeRules[idx].id && db && currentUserId) {
+            await db.from('category_rules').delete().eq('id', activeRules[idx].id).eq('user_id', currentUserId);
+        }
         activeRules.splice(idx, 1); renderRulesUI();
     }
 
+    /* EXPLICIT USER_ID SCOPED RULES SAVE */
     async function saveRules() {
-        initSupabase(); if(!db || !currentClient) return;
+        initSupabase(); if(!db || !currentClient || !currentUserId) return;
         document.getElementById('st').style.display = 'block';
-        await db.from('category_rules').delete().ilike('client_name', currentClient.trim());
+        await db.from('category_rules').delete().eq('user_id', currentUserId).ilike('client_name', currentClient.trim());
         if(activeRules.length > 0) {
-            const rows = activeRules.map(r => ({ client_name: currentClient, keyword: r.keyword, target_account: r.target_account }));
+            const rows = activeRules.map(r => ({ user_id: currentUserId, client_name: currentClient, keyword: r.keyword, target_account: r.target_account }));
             await db.from('category_rules').insert(rows);
         }
         document.getElementById('st').style.display = 'none'; showToast("Rules matrix saved.", "success");
@@ -1580,7 +1576,7 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
 
     /* OPTION A: SINGLE BATCH MULTI-LLM REQUEST FOR ALL MISSING VENDORS */
     async function processPostExtractionVendorEnrichment(uniqueVendorNames) {
-        initSupabase(); if (!db || !uniqueVendorNames || uniqueVendorNames.length === 0) return;
+        initSupabase(); if (!db || !uniqueVendorNames || uniqueVendorNames.length === 0 || !currentUserId) return;
 
         try {
             const { data: existing } = await db.from('vendor_knowledge').select('vendor_name').in('vendor_name', uniqueVendorNames);
@@ -1605,6 +1601,7 @@ Return ONLY a valid JSON array of objects matching this exact structure:
 
             if (Array.isArray(batchResults) && batchResults.length > 0) {
                 const upsertPayload = batchResults.map(item => ({
+                    user_id: currentUserId,
                     vendor_name: item.vendor_name,
                     description: item.description || "Commercial vendor or merchant.",
                     website: item.website || ""
@@ -1622,10 +1619,10 @@ Return ONLY a valid JSON array of objects matching this exact structure:
         }
     }
 
-    /* FULLY VERIFIED DUAL STATEMENT MULTI-LLM OCR EXTRACTION */
+    /* FULLY VERIFIED DUAL STATEMENT MULTI-LLM OCR EXTRACTION WITH EXPLICIT USER_ID INSERTS */
     async function handleFile(input, type) { 
         currentClient = document.getElementById('masterClient').value; 
-        if(!currentClient) return showToast("Select client account first", "danger");
+        if(!currentClient || !currentUserId) return showToast("Select client account first", "danger");
 
         document.getElementById('st').style.display = 'block'; 
         const reader = new FileReader(); reader.onload = async (e) => { 
@@ -1634,9 +1631,9 @@ Return ONLY a valid JSON array of objects matching this exact structure:
 
                 initSupabase();
                 if (db) {
-                    const { data: meta } = await db.from('client_metadata').select('gl_list').ilike('client_name', currentClient.trim()).maybeSingle();
+                    const { data: meta } = await db.from('client_metadata').select('gl_list').eq('user_id', currentUserId).ilike('client_name', currentClient.trim()).maybeSingle();
                     if (meta && meta.gl_list) appGLOptions = meta.gl_list.split(',').filter(Boolean);
-                    const { data: ledger } = await db.from('permanent_ledger').select('*').ilike('client_name', currentClient.trim()).limit(50);
+                    const { data: ledger } = await db.from('permanent_ledger').select('*').eq('user_id', currentUserId).ilike('client_name', currentClient.trim()).limit(50);
                     if (ledger) historyData = ledger.map(l => ({ date: l.txn_date, src: l.source, bank_name: l.bank_name || "", vendor: l.vendor || "", desc: l.description, amt: String(l.amount), cat: l.category, bnk: l.bank_category || "Uncategorized", qbo: l.qbo_id || "SYNCED" }));
                 }
 
@@ -1699,6 +1696,7 @@ Return ONLY JSON Object:
                     const safeFingerprint = btoa(unescape(encodeURIComponent(rawFingerprintString)));
 
                     return {
+                        user_id: currentUserId,
                         client_name: currentClient, 
                         source: type === 'PDF' ? 'BANK' : 'CREDIT CARD',
                         bank_name: extractedBankName, 
@@ -1717,9 +1715,10 @@ Return ONLY JSON Object:
                 if (db) {
                     stmtStart = extracted.starting_balance || 0; stmtEnd = extracted.ending_balance || 0;
                     document.getElementById('inputStmtStart').value = stmtStart; document.getElementById('inputStmtEnd').value = stmtEnd;
-                    await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).ilike('client_name', currentClient.trim());
+                    await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).eq('user_id', currentUserId).ilike('client_name', currentClient.trim());
 
                     const dbPayload = rows.map(r => ({
+                        user_id: r.user_id,
                         client_name: r.client_name,
                         source: r.source,
                         bank_name: r.bank_name,
@@ -1761,17 +1760,18 @@ Return ONLY JSON Object:
         reader.readAsDataURL(input.files[0]); 
     }
 
+    /* EXPLICIT USER_ID SCOPED DASHBOARD DATA LOAD */
     async function loadDash() { 
         currentClient = document.getElementById('masterClient').value; 
-        if(!currentClient) return showToast("Select client account first", "danger"); 
+        if(!currentClient || !currentUserId) return showToast("Select client account first", "danger"); 
 
         document.getElementById('st').style.display = 'block'; 
         initSupabase();
         let staging = [], ledger = [], meta = null;
         if (db) {
-            const { data: sData } = await db.from('review_staging').select('*').ilike('client_name', currentClient.trim());
-            const { data: lData } = await db.from('permanent_ledger').select('*').ilike('client_name', currentClient.trim());
-            const { data: mData } = await db.from('client_metadata').select('*').ilike('client_name', currentClient.trim()).maybeSingle();
+            const { data: sData } = await db.from('review_staging').select('*').eq('user_id', currentUserId).ilike('client_name', currentClient.trim());
+            const { data: lData } = await db.from('permanent_ledger').select('*').eq('user_id', currentUserId).ilike('client_name', currentClient.trim());
+            const { data: mData } = await db.from('client_metadata').select('*').eq('user_id', currentUserId).ilike('client_name', currentClient.trim()).maybeSingle();
             staging = sData || []; ledger = lData || []; meta = mData;
         }
 
@@ -1901,19 +1901,25 @@ Return ONLY JSON Object:
         recalcJE(); applyGlobalDateFilter();
     }
 
-    /* FULL BATCH JOURNAL ENTRY REVERSAL CONTROLLER */
+    /* FULL BATCH JOURNAL ENTRY REVERSAL CONTROLLER WITH EXPLICIT USER_ID SCOPING */
     async function reverseFullBatch(syncRef) {
         if (!syncRef) return showToast("Invalid Sync Reference for reversal.", "danger");
         if (!confirm(`Are you sure you want to reverse the ENTIRE Batch #${syncRef}? This will post offsetting entries to QuickBooks for all associated line items.`)) return;
 
-        initSupabase(); if (!db) return;
+        initSupabase(); if (!db || !currentUserId) return;
         document.getElementById('st').style.display = 'block';
 
         try {
-            const { data: batchRows, error: fetchErr } = await db.from('permanent_ledger').select('*').ilike('client_name', currentClient.trim()).eq('qbo_id', syncRef);
+            const { data: batchRows, error: fetchErr } = await db.from('permanent_ledger')
+                .select('*')
+                .eq('user_id', currentUserId)
+                .ilike('client_name', currentClient.trim())
+                .eq('qbo_id', syncRef);
+
             if (fetchErr || !batchRows || batchRows.length === 0) throw new Error("Could not retrieve batch rows for reversal: " + (fetchErr?.message || "No matching rows found."));
 
             const reversalPayload = batchRows.map(r => ({
+                user_id: currentUserId,
                 client_name: r.client_name,
                 source: r.source,
                 bank_name: r.bank_name,
@@ -1946,18 +1952,19 @@ Return ONLY JSON Object:
         }
     }
 
-    /* BATCH RE-STAGE CONTROLLER FOR USER-DRIVEN ACCOUNT MAPPING FIXES */
+    /* BATCH RE-STAGE CONTROLLER FOR USER-DRIVEN ACCOUNT MAPPING FIXES WITH EXPLICIT USER_ID BINDING */
     async function restageFullBatch(syncRef) {
         if (!syncRef) return showToast("Invalid Sync Reference.", "danger");
         if (!confirm(`Do you want to copy Batch #${syncRef} back into the Review Staging queue for account editing?`)) return;
 
-        initSupabase(); if (!db) return;
+        initSupabase(); if (!db || !currentUserId) return;
         document.getElementById('st').style.display = 'block';
 
         try {
             const { data: batchRows, error: fetchErr } = await db
                 .from('permanent_ledger')
                 .select('*')
+                .eq('user_id', currentUserId)
                 .ilike('client_name', currentClient.trim())
                 .eq('qbo_id', syncRef);
 
@@ -1966,6 +1973,7 @@ Return ONLY JSON Object:
             }
 
             const stagingPayload = batchRows.map(r => ({
+                user_id: currentUserId,
                 client_name: r.client_name,
                 source: r.source,
                 bank_name: r.bank_name,
@@ -2449,9 +2457,10 @@ Provide 3 concise bullet points advising management on runway optimization, cash
         }
     }
 
-    /* AUTOMATED DATA-FETCH MD&A GENERATOR CONTROLLER WITH EMPTY PERIOD RESET */
+    /* AUTOMATED DATA-FETCH MD&A GENERATOR CONTROLLER WITH EMPTY PERIOD RESET AND USER_ID SCOPING */
     async function loadMDANotes() {
         initSupabase();
+        if (!currentUserId) return;
         const selYear = document.getElementById('globalFilterYear').value;
         const selMonth = document.getElementById('globalFilterMonth').value;
 
@@ -2462,6 +2471,7 @@ Provide 3 concise bullet points advising management on runway optimization, cash
 
         const { data } = await db.from('mda_notes')
             .select('*')
+            .eq('user_id', currentUserId)
             .ilike('client_name', currentClient.trim())
             .eq('period_year', year)
             .eq('period_month', month)
@@ -2511,6 +2521,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
             document.getElementById('mda_actions').value = generated.action_items || "";
 
             await db.from('mda_notes').upsert({
+                user_id: currentUserId,
                 client_name: currentClient,
                 period_year: year,
                 period_month: month,
@@ -2519,7 +2530,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
                 expense_commentary: generated.expense_commentary || "",
                 action_items: generated.action_items || "",
                 updated_at: new Date()
-            }, { onConflict: 'client_name,period_year,period_month' });
+            }, { onConflict: 'user_id,client_name,period_year,period_month' });
 
         } catch (e) {
             document.getElementById('mda_exec').value = "";
@@ -2531,6 +2542,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
 
     async function saveMDANotes() {
         initSupabase();
+        if (!currentUserId) return showToast("Session expired", "danger");
         const selYear = document.getElementById('globalFilterYear').value;
         const selMonth = document.getElementById('globalFilterMonth').value;
 
@@ -2538,6 +2550,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         const month = selMonth === 'ALL' ? (new Date().getMonth() + 1) : parseInt(selMonth);
 
         const payload = {
+            user_id: currentUserId,
             client_name: currentClient,
             period_year: year,
             period_month: month,
@@ -2548,7 +2561,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
             updated_at: new Date()
         };
 
-        const { error } = await db.from('mda_notes').upsert(payload, { onConflict: 'client_name,period_year,period_month' });
+        const { error } = await db.from('mda_notes').upsert(payload, { onConflict: 'user_id,client_name,period_year,period_month' });
         if (error) showToast("Error saving MD&A notes: " + error.message, "danger");
         else showToast(`✓ MD&A Notes saved successfully for period ${month}/${year}!`, "success");
     }
@@ -2558,8 +2571,11 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         stmtEnd = parseFloat(document.getElementById('inputStmtEnd').value) || 0;
 
         initSupabase();
-        if (db && currentClient) {
-            await db.from('client_metadata').update({ stmt_start: stmtStart, stmt_end: stmtEnd }).ilike('client_name', currentClient.trim());
+        if (db && currentClient && currentUserId) {
+            await db.from('client_metadata')
+                .update({ stmt_start: stmtStart, stmt_end: stmtEnd })
+                .eq('user_id', currentUserId)
+                .ilike('client_name', currentClient.trim());
         }
         recalcJE();
     }
@@ -2603,14 +2619,18 @@ Generate executive MD&A notes. Return ONLY JSON Object:
     }
 
     async function updateClientMetadataFromTab() {
-        initSupabase(); if (!db || !currentClient) return;
+        initSupabase(); if (!db || !currentClient || !currentUserId) return;
         document.getElementById('st').style.display = 'block';
         const newNature = document.getElementById('edit_m_nature').value.trim();
         const newEmail = document.getElementById('edit_m_email').value.trim();
         const rawGL = document.getElementById('edit_m_gl').value;
         const newGL = rawGL.split(',').map(x => x.trim()).filter(Boolean).join(',');
 
-        const { error } = await db.from('client_metadata').update({ nature: newNature, client_email: newEmail, gl_list: newGL }).ilike('client_name', currentClient.trim());
+        const { error } = await db.from('client_metadata')
+            .update({ nature: newNature, client_email: newEmail, gl_list: newGL })
+            .eq('user_id', currentUserId)
+            .ilike('client_name', currentClient.trim());
+
         document.getElementById('st').style.display = 'none';
 
         if (error) showToast("Metadata Update Error: " + error.message, "danger");
@@ -2746,9 +2766,9 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         if (!confirm(`Are you sure you want to delete ${ids.length} selected row(s)?`)) return;
 
         initSupabase();
-        if (db) {
+        if (db && currentUserId) {
             document.getElementById('st').style.display = 'block';
-            await db.from('review_staging').delete().in('id', ids);
+            await db.from('review_staging').delete().in('id', ids).eq('user_id', currentUserId);
             document.getElementById('st').style.display = 'none';
             showToast(`✓ Deleted ${ids.length} selected row(s)`, "success");
             await loadDash();
@@ -2810,9 +2830,9 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         else if(filterType === 'LOWCONF') renderStagingTable(filterBySelectedPeriod(localData.filter(r => r.confidence !== undefined && parseFloat(r.confidence) < 0.8)));
     }
 
-    /* MULTI-PAGE & PDF RECEIPT OCR MATCHING CONTROLLER */
+    /* MULTI-PAGE & PDF RECEIPT OCR MATCHING CONTROLLER WITH EXPLICIT USER_ID SCOPING */
     async function handleReceiptUpload(input, rowId) {
-        const file = input.files[0]; if(!file) return;
+        const file = input.files[0]; if(!file || !currentUserId) return;
         document.getElementById('st').style.display = 'block';
         const reader = new FileReader();
         reader.onload = async (e) => {
@@ -2829,7 +2849,8 @@ Generate executive MD&A notes. Return ONLY JSON Object:
                 const matchAmt = Math.abs(parseFloat(extracted.amount));
 
                 if(Math.abs(targetAmt - matchAmt) <= (targetAmt * 0.02)) {
-                    initSupabase(); if (db) await db.from('review_staging').update({ receipt_linked: true }).eq('id', rowId);
+                    initSupabase(); 
+                    if (db) await db.from('review_staging').update({ receipt_linked: true }).eq('id', rowId).eq('user_id', currentUserId);
                     showToast("✓ Receipt Verified & Linked!", "success"); await loadDash();
                 } else {
                     showToast(`Mismatch! Statement: $${targetAmt} vs Receipt: $${matchAmt}`, "danger");
@@ -3028,8 +3049,9 @@ Generate executive MD&A notes. Return ONLY JSON Object:
 
     function approveAll() { document.querySelectorAll('.row-stat').forEach(s => s.value = "APPROVED"); recalcJE(); }
     
+    /* EXPLICIT USER_ID SCOPED STAGING SAVES */
     async function saveAll() {
-        initSupabase(); if(!db) return;
+        initSupabase(); if(!db || !currentUserId) return;
         document.getElementById('st').style.display = 'block'; 
         for (let item of localData) {
             const amtVal = document.getElementById('a' + item.row) ? parseFloat(document.getElementById('a' + item.row).value) : parseFloat(item.amt);
@@ -3040,7 +3062,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
 
             await db.from('review_staging').update({
                 amount: amtVal, category: catVal, status: statVal, bank_category: bnkVal, class_name: clsVal
-            }).eq('id', item.row);
+            }).eq('id', item.row).eq('user_id', currentUserId);
         }
         await loadDash();
         showToast("✓ Saved all staging updates!", "success");
