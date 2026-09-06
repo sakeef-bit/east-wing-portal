@@ -116,21 +116,21 @@
 <!-- Bootstrap Toast Dock -->
 <div class="toast-dock" id="toastContainer"></div>
 
-<nav class="navbar d-flex justify-content-between align-items-center">
+<nav class="navbar d-flex justify-content-between align-items-center" title="LedgerIQ Navigation Bar">
     <div class="d-flex align-items-center gap-2">
         <span class="fs-4 brand-logo-text">Ledger<span class="fw-light text-muted">IQ</span></span>
-        <span class="brand-badge">PRO</span>
+        <span class="brand-badge" title="Enterprise Professional License Active">PRO</span>
     </div>
     <div class="d-flex align-items-center gap-4">
-        <div class="small fw-bold d-flex gap-3 status-pill">
-            <div class="d-flex align-items-center"><span class="status-dot" id="dot-ledger"></span> Supabase</div>
-            <div class="d-flex align-items-center"><span class="status-dot" id="dot-gemini"></span> AI</div>
-            <div class="d-flex align-items-center"><span class="status-dot" id="dot-qbo"></span> QBO</div>
+        <div class="small fw-bold d-flex gap-3 status-pill" title="Live System Connection Monitor">
+            <div class="d-flex align-items-center" title="Supabase Database Status"><span class="status-dot" id="dot-ledger"></span> Supabase</div>
+            <div class="d-flex align-items-center" title="AI Engine API Connection Status"><span class="status-dot" id="dot-gemini"></span> AI</div>
+            <div class="d-flex align-items-center" title="QuickBooks Online OAuth Connection Status"><span class="status-dot" id="dot-qbo"></span> QBO</div>
         </div>
-        <button id="userLogoutBtn" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold" style="display:none;" onclick="handleUserLogout()">
+        <button id="userLogoutBtn" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold" style="display:none;" onclick="handleUserLogout()" title="Sign out of your active accountant session">
             Sign Out
         </button>
-        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold d-inline-flex align-items-center gap-2" onclick="location.reload()">
+        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold d-inline-flex align-items-center gap-2" onclick="location.reload()" title="Reload application and return to portal home">
             <svg class="icon-svg" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg> Home
         </button>
     </div>
@@ -138,7 +138,7 @@
 
 <div id="view-launchpad">
     <header class="hero-section">
-        <div class="privacy-disclaimer-box">
+        <div class="privacy-disclaimer-box" title="Data Privacy Guarantee">
             ⚡ Powered by Advanced AI Intelligence. Your financial documents and chat interactions are processed securely and are never used to train or improve AI models.
         </div>
         <h1 class="display-5 fw-bold mb-2">Financial Automation Portal</h1>
@@ -151,11 +151,11 @@
             <div class="col-md-5">
                 <div class="card card-custom p-4 text-center">
                     <h5 class="mb-3 fw-bold">Accountant Sign-In</h5>
-                    <input type="email" id="auth_email" class="form-control mb-2 text-center rounded-pill" placeholder="Enter Work Email">
-                    <input type="password" id="auth_password" class="form-control mb-3 text-center rounded-pill" placeholder="Enter Password">
+                    <input type="email" id="auth_email" class="form-control mb-2 text-center rounded-pill" placeholder="Enter Work Email" title="Enter registered work email address">
+                    <input type="password" id="auth_password" class="form-control mb-3 text-center rounded-pill" placeholder="Enter Password" title="Enter account password">
                     <div class="d-flex gap-2">
-                        <button class="btn btn-dark-app w-50 rounded-pill" onclick="handleUserSignIn()">Sign In</button>
-                        <button class="btn btn-outline-secondary w-50 rounded-pill" onclick="handleUserSignUp()">Sign Up</button>
+                        <button class="btn btn-dark-app w-50 rounded-pill" onclick="handleUserSignIn()" title="Sign in with credentials">Sign In</button>
+                        <button class="btn btn-outline-secondary w-50 rounded-pill" onclick="handleUserSignUp()" title="Create a new workspace account">Sign Up</button>
                     </div>
                 </div>
             </div>
@@ -168,8 +168,8 @@
                 <p class="small text-muted mb-3">Select your AI Engine Provider and target model family for document extraction.</p>
                 
                 <div class="mb-2 text-start">
-                    <label class="small fw-bold text-muted mb-1">1. Select AI Provider:</label>
-                    <select id="master_provider" class="form-select form-select-sm rounded-pill font-semibold" onchange="handleProviderChange()">
+                    <label class="small fw-bold text-muted mb-1" title="Choose the AI LLM provider">1. Select AI Provider:</label>
+                    <select id="master_provider" class="form-select form-select-sm rounded-pill font-semibold" onchange="handleProviderChange()" title="Switch between Google Gemini, OpenAI, and Anthropic Claude">
                         <option value="GEMINI" selected>Google Gemini (Recommended)</option>
                         <option value="OPENAI">OpenAI (ChatGPT)</option>
                         <option value="CLAUDE">Anthropic (Claude)</option>
@@ -178,22 +178,22 @@
 
                 <div class="mb-2 text-start">
                     <div class="d-flex justify-content-between align-items-center mb-1">
-                        <label class="small fw-bold text-muted">2. Select Target Model:</label>
+                        <label class="small fw-bold text-muted" title="Select model identifier">2. Select Target Model:</label>
                         <div class="form-check form-switch mb-0">
-                            <input class="form-check-input" type="checkbox" id="toggleCustomModel" onchange="toggleCustomModelInput(this.checked)">
-                            <label class="form-check-label small text-muted" for="toggleCustomModel">Custom ID</label>
+                            <input class="form-check-input" type="checkbox" id="toggleCustomModel" onchange="toggleCustomModelInput(this.checked)" title="Enable custom unlisted model ID">
+                            <label class="form-check-label small text-muted" for="toggleCustomModel" title="Toggle manual text entry for model ID">Custom ID</label>
                         </div>
                     </div>
-                    <select id="master_model" class="form-select form-select-sm rounded-pill font-semibold"></select>
-                    <input type="text" id="master_custom_model" class="form-control form-control-sm rounded-pill font-semibold mt-2" placeholder="e.g. gemini-3.7-flash or gpt-5.5" style="display:none;">
+                    <select id="master_model" class="form-select form-select-sm rounded-pill font-semibold" title="Select pre-configured LLM model version"></select>
+                    <input type="text" id="master_custom_model" class="form-control form-control-sm rounded-pill font-semibold mt-2" placeholder="e.g. gemini-3.6-flash or gpt-4o" style="display:none;" title="Type unlisted model string ID">
                 </div>
 
                 <div class="mb-3 text-start">
-                    <label class="small fw-bold text-muted mb-1" id="key_label_text">3. Enter Gemini API Key:</label>
-                    <input type="password" id="master_gk" class="form-control text-center rounded-pill" placeholder="Enter API Key">
+                    <label class="small fw-bold text-muted mb-1" id="key_label_text" title="Enter provider API secret key">3. Enter Gemini API Key:</label>
+                    <input type="password" id="master_gk" class="form-control text-center rounded-pill" placeholder="Enter API Key" title="Enter workspace API key">
                 </div>
 
-                <button class="btn btn-dark-app w-100 rounded-pill" onclick="lockKey()">
+                <button class="btn btn-dark-app w-100 rounded-pill" onclick="lockKey()" title="Save API credentials and authenticate session">
                     <svg class="icon-svg" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
                     Authenticate Workspace Engine
                 </button>
@@ -205,15 +205,15 @@
             <div class="card p-4 rounded-xl border-0 shadow-sm mb-4">
                 <div class="row align-items-center">
                     <div class="col-md-6">
-                        <select id="masterClient" class="form-select rounded-pill shadow-none" onchange="pingStatus()"><option value="">-- Select Client Account --</option></select>
+                        <select id="masterClient" class="form-select rounded-pill shadow-none" onchange="onClientChange()" title="Select target company account for processing"><option value="">-- Select Client Account --</option></select>
                     </div>
                     <div class="col-md-6 text-end pt-0 d-flex gap-2 justify-content-end">
-                        <button id="btnConnectQBO" class="btn btn-qbo" onclick="connectToQuickBooks()">
+                        <button id="btnConnectQBO" class="btn btn-qbo" onclick="connectToQuickBooks()" title="Authorize live connection with Intuit QuickBooks Online">
                             <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
                             Connect QuickBooks
                         </button>
-                        <button id="btnDisconnectQBO" class="btn btn-disconnect" onclick="disconnectQuickBooks()">Disconnect QBO</button>
-                        <button class="btn btn-dark-app rounded-pill" onclick="showPane('config')">
+                        <button id="btnDisconnectQBO" class="btn btn-disconnect" onclick="disconnectQuickBooks()" title="Disconnect current client from QuickBooks Online">Disconnect QBO</button>
+                        <button class="btn btn-dark-app rounded-pill" onclick="showPane('config')" title="Manage client profile, Chart of Accounts, and Auto-Rules">
                             <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6z"/></svg>
                             Client Settings
                         </button>
@@ -222,21 +222,21 @@
             </div>
             <div class="row g-4 mb-4" id="actionGrid" style="opacity:0.3; pointer-events:none;">
                 <div class="col-md-4"><div class="card card-custom">
-                    <div class="card-img-container"><img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80" class="card-img-top"></div>
-                    <div class="card-body p-4 text-center"><button class="btn btn-app w-100" onclick="triggerFile('PDF')">Process Bank Statement</button></div>
+                    <div class="card-img-container"><img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80" class="card-img-top" alt="Bank Statement Processing"></div>
+                    <div class="card-body p-4 text-center"><button class="btn btn-app w-100" onclick="triggerFile('PDF')" title="Upload bank PDF statement for OCR transaction extraction">Process Bank Statement</button></div>
                 </div></div>
                 <div class="col-md-4"><div class="card card-custom">
-                    <div class="card-img-container"><img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=600&q=80" class="card-img-top"></div>
-                    <div class="card-body p-4 text-center"><button class="btn btn-app w-100" onclick="triggerFile('CC')">Process Credit Card PDF</button></div>
+                    <div class="card-img-container"><img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=600&q=80" class="card-img-top" alt="Credit Card Processing"></div>
+                    <div class="card-body p-4 text-center"><button class="btn btn-app w-100" onclick="triggerFile('CC')" title="Upload credit card PDF statement for OCR extraction">Process Credit Card PDF</button></div>
                 </div></div>
                 <div class="col-md-4"><div class="card card-custom">
-                    <div class="card-img-container"><img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80" class="card-img-top"></div>
-                    <div class="card-body p-4 text-center"><button class="btn btn-app w-100" onclick="loadDash()">Open Review Dashboard</button></div>
+                    <div class="card-img-container"><img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80" class="card-img-top" alt="Review Dashboard"></div>
+                    <div class="card-body p-4 text-center"><button class="btn btn-app w-100" onclick="loadDash()" title="Open review queue, trial balance impact, and P&L views">Open Review Dashboard</button></div>
                 </div></div>
             </div>
 
             <div class="card p-4 rounded-xl border-0 shadow-sm">
-                <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                <h5 class="fw-bold mb-3 d-flex align-items-center gap-2" title="Utility converting tools between formats">
                     <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
                     Doc Shift Studio
                 </h5>
@@ -245,7 +245,7 @@
                         <div class="upload-box text-center">
                             <h6 class="fw-bold mb-1">PDF to Excel (.xlsx) Converter</h6>
                             <p class="small text-muted mb-2">Convert financial PDF statements into clean, editable Excel spreadsheets.</p>
-                            <button class="btn btn-sm btn-dark-app rounded-pill" onclick="document.getElementById('pdfToExcelInput').click()">Convert PDF to Excel</button>
+                            <button class="btn btn-sm btn-dark-app rounded-pill" onclick="document.getElementById('pdfToExcelInput').click()" title="Select PDF statement file to convert to Excel">Convert PDF to Excel</button>
                             <input type="file" id="pdfToExcelInput" accept=".pdf" style="display:none" onchange="convertPDFToExcel(this)">
                         </div>
                     </div>
@@ -253,7 +253,7 @@
                         <div class="upload-box text-center">
                             <h6 class="fw-bold mb-1">Excel (.xlsx/.csv) to PDF Converter</h6>
                             <p class="small text-muted mb-2">Generate formatted PDF documents complete with headers from Excel files.</p>
-                            <button class="btn btn-sm btn-app rounded-pill" onclick="document.getElementById('excelToPdfInput').click()">Convert Excel to PDF</button>
+                            <button class="btn btn-sm btn-app rounded-pill" onclick="document.getElementById('excelToPdfInput').click()" title="Select Excel or CSV file to convert to formatted PDF">Convert Excel to PDF</button>
                             <input type="file" id="excelToPdfInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="convertExcelToPDF(this)">
                         </div>
                     </div>
@@ -271,28 +271,28 @@
         <div class="col-md-6"><div class="card p-4 card-custom">
             <h4 class="fw-bold mb-3">Client Provisioning</h4>
             <div class="row g-3">
-                <div class="col-12"><input id="n" class="form-control" placeholder="Company Legal Name"></div>
-                <div class="col-12"><input id="nature" class="form-control" placeholder="Business Industry / Nature"></div>
-                <div class="col-12"><input id="client_email" class="form-control" placeholder="Client Authorization Email"></div>
+                <div class="col-12"><input id="n" class="form-control" placeholder="Company Legal Name" title="Enter formal legal business entity name"></div>
+                <div class="col-12"><input id="nature" class="form-control" placeholder="Business Industry / Nature" title="Describe industry or business operations"></div>
+                <div class="col-12"><input id="client_email" class="form-control" placeholder="Client Authorization Email" title="Enter client contact email address"></div>
                 
                 <div class="col-12 mt-2">
                     <div class="upload-box text-center">
                         <h6 class="fw-bold mb-1">QuickBooks Chart of Accounts Source</h6>
                         <div class="mb-2">
-                            <button type="button" class="btn btn-sm btn-outline-success w-100 fw-bold rounded-pill" onclick="syncQBOAccounts()">🔄 Sync Live QBO Chart of Accounts</button>
+                            <button type="button" class="btn btn-sm btn-outline-success w-100 fw-bold rounded-pill" onclick="syncQBOAccounts()" title="Fetch live Chart of Accounts from QuickBooks Online">🔄 Sync Live QBO Chart of Accounts</button>
                         </div>
                         <div class="text-center small text-muted my-1">- OR -</div>
                         <p class="small text-muted mb-2">Upload your QuickBooks export (.csv - Optional):</p>
-                        <input type="file" id="glFileInputConfig" accept=".csv" class="form-control mb-2" onchange="handleGLFileUpload(this)">
-                        <button class="btn btn-sm btn-outline-secondary rounded-pill fw-semibold" onclick="downloadQBTemplate()">Download Template</button>
+                        <input type="file" id="glFileInputConfig" accept=".csv" class="form-control mb-2" onchange="handleGLFileUpload(this)" title="Upload exported CSV chart of accounts file">
+                        <button class="btn btn-sm btn-outline-secondary rounded-pill fw-semibold" onclick="downloadQBTemplate()" title="Download standard CSV template format for GL accounts">Download Template</button>
                         <div id="glCountBadge" class="small text-success mt-2 fw-bold" style="display:none;"></div>
                     </div>
                 </div>
 
                 <div class="col-12 d-flex gap-2 mt-3">
-                    <button onclick="save()" class="btn btn-dark-app flex-grow-1">Save Profile</button>
-                    <button onclick="generateAuthorizationLink()" class="btn btn-outline-primary">Generate Email Link</button>
-                    <button onclick="showPane('launchpad')" class="btn btn-outline-secondary">Cancel</button>
+                    <button onclick="save()" class="btn btn-dark-app flex-grow-1" title="Save company profile to Supabase database">Save Profile</button>
+                    <button onclick="generateAuthorizationLink()" class="btn btn-outline-primary" title="Copy direct OAuth link for client authorization">Generate Email Link</button>
+                    <button onclick="showPane('launchpad')" class="btn btn-outline-secondary" title="Cancel edits and return to portal launchpad">Cancel</button>
                 </div>
             </div>
         </div></div>
@@ -300,13 +300,13 @@
         <div class="col-md-6"><div class="card p-4 card-custom">
             <h4 class="fw-bold mb-2">Category Auto-Rules Engine</h4>
             <p class="small text-muted mb-3">Automatically categorize future transactions by vendor keywords.</p>
-            <div id="rulesList" class="mb-3" style="max-height: 180px; overflow-y: auto;"></div>
+            <div id="rulesList" class="mb-3" style="max-height: 180px; overflow-y: auto;" title="Active vendor mapping rules"></div>
             <div class="input-group mb-3">
-                <input id="ruleKeyword" class="form-control form-control-sm" placeholder="Keyword (e.g. Uber)">
-                <select id="ruleAccount" class="form-select form-select-sm"></select>
-                <button class="btn btn-primary btn-sm" onclick="addRuleRow()">Add Rule</button>
+                <input id="ruleKeyword" class="form-control form-control-sm" placeholder="Keyword (e.g. Uber)" title="Vendor search keyword string">
+                <select id="ruleAccount" class="form-select form-select-sm" title="Target expense account to assign"></select>
+                <button class="btn btn-primary btn-sm" onclick="addRuleRow()" title="Add keyword rule to active matrix">Add Rule</button>
             </div>
-            <button class="btn btn-dark-app w-100" onclick="saveRules()">Save Rules Matrix</button>
+            <button class="btn btn-dark-app w-100" onclick="saveRules()" title="Save rules matrix to Supabase database">Save Rules Matrix</button>
         </div></div>
     </div>
 </div>
@@ -315,20 +315,20 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 id="activeTitle" class="fw-bold mb-0">Dashboard</h2>
         <div class="gap-2 d-flex">
-            <button class="btn btn-outline-success btn-sm rounded-pill px-3 fw-bold" onclick="syncQBOAccounts()">🔄 Sync QBO Accounts</button>
-            <button class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold" onclick="approveAll()">Approve All Rows</button>
-            <button class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold" onclick="saveAll()">Save Staging Updates</button>
-            <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold" onclick="showPane('launchpad')">Exit Dashboard</button>
+            <button class="btn btn-outline-success btn-sm rounded-pill px-3 fw-bold" onclick="syncQBOAccounts()" title="Refresh live Chart of Accounts from QuickBooks Online">🔄 Sync QBO Accounts</button>
+            <button class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold" onclick="approveAll()" title="Set status of all staging rows to APPROVED">Approve All Rows</button>
+            <button class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold" onclick="saveAll()" title="Save edits made to staging queue in Supabase">Save Staging Updates</button>
+            <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold" onclick="showPane('launchpad')" title="Exit dashboard and return to launchpad screen">Exit Dashboard</button>
         </div>
     </div>
 
     <!-- Global Month & Year Filter Bar -->
-    <div class="global-filter-bar d-flex align-items-center justify-content-between shadow-sm">
+    <div class="global-filter-bar d-flex align-items-center justify-content-between shadow-sm" title="Global Date Scope Filter">
         <div class="d-flex align-items-center gap-3">
             <span class="fw-bold small text-uppercase" style="letter-spacing:0.5px;">📅 Period Scope Filter:</span>
             <div class="d-flex align-items-center gap-2">
                 <label class="small text-white-50 fw-semibold">Year:</label>
-                <select id="globalFilterYear" class="form-select form-select-sm rounded-pill fw-bold" style="width: 100px;" onchange="applyGlobalDateFilter()">
+                <select id="globalFilterYear" class="form-select form-select-sm rounded-pill fw-bold" style="width: 100px;" onchange="applyGlobalDateFilter()" title="Filter view by transaction year">
                     <option value="ALL">All Years</option>
                     <option value="2026" selected>2026</option>
                     <option value="2025">2025</option>
@@ -336,7 +336,7 @@
             </div>
             <div class="d-flex align-items-center gap-2">
                 <label class="small text-white-50 fw-semibold">Month:</label>
-                <select id="globalFilterMonth" class="form-select form-select-sm rounded-pill fw-bold" style="width: 130px;" onchange="applyGlobalDateFilter()">
+                <select id="globalFilterMonth" class="form-select form-select-sm rounded-pill fw-bold" style="width: 130px;" onchange="applyGlobalDateFilter()" title="Filter view by transaction month">
                     <option value="ALL">All Months</option>
                     <option value="01">01 - January</option>
                     <option value="02">02 - February</option>
@@ -353,100 +353,100 @@
                 </select>
             </div>
         </div>
-        <button class="btn btn-sm btn-outline-light rounded-pill px-3" onclick="resetGlobalFilter()">Reset to All</button>
+        <button class="btn btn-sm btn-outline-light rounded-pill px-3" onclick="resetGlobalFilter()" title="Clear date filters to view all historical periods">Reset to All</button>
     </div>
     
     <div class="app-nav">
-        <div id="nav-review" class="app-nav-btn active" onclick="switchTab('review')">REVIEW STAGING</div>
-        <div id="nav-impact" class="app-nav-btn" onclick="switchTab('impact')">PROPOSED IMPACT</div>
-        <div id="nav-pnl" class="app-nav-btn" onclick="switchTab('pnl')">VISUAL P&L</div>
-        <div id="nav-forecast" class="app-nav-btn" onclick="switchTab('forecast')">CASH FORECAST</div>
-        <div id="nav-mda" class="app-nav-btn" onclick="switchTab('mda')">MD&A NOTES</div>
-        <div id="nav-vendor" class="app-nav-btn" onclick="switchTab('vendor')">VENDOR AUDIT</div>
-        <div id="nav-gl" class="app-nav-btn" onclick="switchTab('gl')">CHART OF ACCOUNTS</div>
-        <div id="nav-history" class="app-nav-btn" onclick="switchTab('history')">PERMANENT LEDGER</div>
-        <div id="nav-je-bank" class="app-nav-btn" onclick="switchTab('je-bank')">BANK JE VIEW</div>
-        <div id="nav-je-cc" class="app-nav-btn" onclick="switchTab('je-cc')">CREDIT CARD JE VIEW</div>
-        <div id="nav-meta" class="app-nav-btn" onclick="switchTab('meta')">CLIENT METADATA</div>
+        <div id="nav-review" class="app-nav-btn active" onclick="switchTab('review')" title="View and categorize unposted statement staging queue">REVIEW STAGING</div>
+        <div id="nav-impact" class="app-nav-btn" onclick="switchTab('impact')" title="Analyze trial balance impact of pending adjustments">PROPOSED IMPACT</div>
+        <div id="nav-pnl" class="app-nav-btn" onclick="switchTab('pnl')" title="View interactive revenue, expense, and net income charts">VISUAL P&L</div>
+        <div id="nav-forecast" class="app-nav-btn" onclick="switchTab('forecast')" title="Model 90-day predictive cash flow trajectory">CASH FORECAST</div>
+        <div id="nav-mda" class="app-nav-btn" onclick="switchTab('mda')" title="View and generate AI executive financial analysis notes">MD&A NOTES</div>
+        <div id="nav-vendor" class="app-nav-btn" onclick="switchTab('vendor')" title="Audit vendor spending consistency and inactivity">VENDOR AUDIT</div>
+        <div id="nav-gl" class="app-nav-btn" onclick="switchTab('gl')" title="View active General Ledger Chart of Accounts">CHART OF ACCOUNTS</div>
+        <div id="nav-history" class="app-nav-btn" onclick="switchTab('history')" title="Inspect permanent posted transaction ledger and batch sync references">PERMANENT LEDGER</div>
+        <div id="nav-je-bank" class="app-nav-btn" onclick="switchTab('je-bank')" title="View balanced journal entries for bank statement extractions">BANK JE VIEW</div>
+        <div id="nav-je-cc" class="app-nav-btn" onclick="switchTab('je-cc')" title="View balanced journal entries for credit card statement extractions">CREDIT CARD JE VIEW</div>
+        <div id="nav-meta" class="app-nav-btn" onclick="switchTab('meta')" title="Inspect and edit client integration metadata">CLIENT METADATA</div>
     </div>
 
     <!-- Unified Parameters & Live Reconciliation Gate Bar -->
     <div class="stmt-balance-bar shadow-sm">
         <div class="d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">
-                <span class="fw-bold text-dark small"><svg class="icon-svg me-1" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg> Statement Reconciliation Parameters:</span>
+                <span class="fw-bold text-dark small" title="Reconciliation calculation controls"><svg class="icon-svg me-1" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg> Statement Reconciliation Parameters:</span>
                 <div class="d-flex align-items-center gap-1" id="boxStartBalance">
-                    <label class="small text-muted fw-semibold me-1">Start / Previous Balance ($):</label>
-                    <input type="number" step="0.01" id="inputStmtStart" class="form-control form-control-sm rounded-pill text-end fw-bold" style="width: 130px;" value="0.00" onchange="updateStatementTargetBalances()">
+                    <label class="small text-muted fw-semibold me-1" title="Opening statement balance ($)">Start / Previous Balance ($):</label>
+                    <input type="number" step="0.01" id="inputStmtStart" class="form-control form-control-sm rounded-pill text-end fw-bold" style="width: 130px;" value="0.00" onchange="updateStatementTargetBalances()" title="Set opening statement balance for reconciliation check">
                 </div>
                 <div class="d-flex align-items-center gap-1">
-                    <label class="small text-muted fw-semibold me-1">Target Statement Balance ($):</label>
-                    <input type="number" step="0.01" id="inputStmtEnd" class="form-control form-control-sm rounded-pill text-end fw-bold text-primary" style="width: 130px;" value="0.00" onchange="updateStatementTargetBalances()">
+                    <label class="small text-muted fw-semibold me-1" title="Target closing statement balance ($)">Target Statement Balance ($):</label>
+                    <input type="number" step="0.01" id="inputStmtEnd" class="form-control form-control-sm rounded-pill text-end fw-bold text-primary" style="width: 130px;" value="0.00" onchange="updateStatementTargetBalances()" title="Set target closing balance for reconciliation check">
                 </div>
             </div>
-            <button class="btn btn-sm btn-outline-secondary rounded-pill fw-semibold px-3" onclick="updateStatementTargetBalances()">Re-Calculate Balance Gate</button>
+            <button class="btn btn-sm btn-outline-secondary rounded-pill fw-semibold px-3" onclick="updateStatementTargetBalances()" title="Recalculate reconciliation math against target statement balance">Re-Calculate Balance Gate</button>
         </div>
-        <div id="reconStatusBadge" class="recon-status-badge text-center">Evaluating Statement Balance Gate...</div>
+        <div id="reconStatusBadge" class="recon-status-badge text-center" title="Live status indicator for statement balance reconciliation">Evaluating Statement Balance Gate...</div>
     </div>
 
     <div id="tab-review" class="bg-white p-4 rounded-xl shadow-sm">
         <div class="d-flex justify-content-between mb-3 align-items-center">
             <h5 class="fw-bold mb-0">Staging Queue</h5>
             <div class="d-flex gap-2">
-                <button class="btn btn-outline-success btn-sm rounded-pill px-3 fw-semibold" onclick="bulkApproveSelected()">Approve Selected</button>
-                <button class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold" onclick="bulkPendingSelected()">Set Pending Selected</button>
-                <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold" onclick="bulkDeleteSelected()">Delete Selected</button>
-                <button id="btnPushQBO" class="btn btn-dark btn-sm rounded-pill px-4 fw-semibold sync-gate-btn" onclick="pushQBO()">Push Approved to QBO</button>
+                <button class="btn btn-outline-success btn-sm rounded-pill px-3 fw-semibold" onclick="bulkApproveSelected()" title="Approve selected checked rows">Approve Selected</button>
+                <button class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold" onclick="bulkPendingSelected()" title="Set status of selected checked rows to PENDING">Set Pending Selected</button>
+                <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold" onclick="bulkDeleteSelected()" title="Delete selected checked rows from staging database">Delete Selected</button>
+                <button id="btnPushQBO" class="btn btn-dark btn-sm rounded-pill px-4 fw-semibold sync-gate-btn" onclick="pushQBO()" title="Post approved staging transactions live to QuickBooks Online">Push Approved to QBO</button>
             </div>
         </div>
 
         <div class="d-flex gap-2 mb-3 align-items-center">
             <span class="small fw-bold text-muted me-1">Quick Filters:</span>
-            <button class="btn btn-outline-secondary filter-btn active" onclick="filterStagingRows('ALL')">Show All</button>
-            <button class="btn btn-outline-secondary filter-btn" onclick="filterStagingRows('UNCAT')">Uncategorized Only</button>
-            <button class="btn btn-outline-danger filter-btn" onclick="filterStagingRows('DUP')">Duplicates Only</button>
-            <button class="btn btn-outline-primary filter-btn" onclick="filterStagingRows('HIGH')">High Value (> $1,000)</button>
-            <button class="btn btn-outline-warning filter-btn" onclick="filterStagingRows('LOWCONF')">Low Confidence Only</button>
+            <button class="btn btn-outline-secondary filter-btn active" onclick="filterStagingRows('ALL')" title="Show all staging queue rows">Show All</button>
+            <button class="btn btn-outline-secondary filter-btn" onclick="filterStagingRows('UNCAT')" title="Filter to show unassigned transactions only">Uncategorized Only</button>
+            <button class="btn btn-outline-danger filter-btn" onclick="filterStagingRows('DUP')" title="Filter to show duplicate transactions matching permanent ledger">Duplicates Only</button>
+            <button class="btn btn-outline-primary filter-btn" onclick="filterStagingRows('HIGH')" title="Filter to show high-value transactions (> $1,000)">High Value (> $1,000)</button>
+            <button class="btn btn-outline-warning filter-btn" onclick="filterStagingRows('LOWCONF')" title="Filter to show low confidence OCR extractions (< 80%)">Low Confidence Only</button>
         </div>
 
         <!-- DUAL BULK MATCHING CONTROL BAR (EXPENSE & BANK ACCOUNTS) -->
         <div class="batch-bar mb-4 row g-3 align-items-center">
             <div class="col-md-3">
-                <input type="text" id="batchSearchInput" class="form-control form-control-sm" placeholder="Filter Vendor or Description..." onkeyup="handleStagingSearch(this.value)">
+                <input type="text" id="batchSearchInput" class="form-control form-control-sm" placeholder="Filter Vendor or Description..." onkeyup="handleStagingSearch(this.value)" title="Filter staging rows by vendor or description string">
             </div>
             <div class="col-md-3">
                 <div class="input-group input-group-sm">
-                    <select id="batchCategorySelect" class="form-select form-select-sm"><option value="Uncategorized">-- Assign Expense Account --</option></select>
-                    <button class="btn btn-app btn-sm fw-semibold" onclick="applyBatch()">Apply Category Match</button>
+                    <select id="batchCategorySelect" class="form-select form-select-sm" title="Select expense category to bulk assign"><option value="Uncategorized">-- Assign Expense Account --</option></select>
+                    <button class="btn btn-app btn-sm fw-semibold" onclick="applyBatch()" title="Apply selected expense category to search-matched rows">Apply Category Match</button>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="input-group input-group-sm">
-                    <select id="batchBankSelect" class="form-select form-select-sm"><option value="Uncategorized">-- Bulk Assign Bank / Offset Account --</option></select>
-                    <button class="btn btn-dark-app btn-sm fw-semibold" onclick="applyBankBatch()">Apply Bank Match to All</button>
+                    <select id="batchBankSelect" class="form-select form-select-sm" title="Select bank/offset GL account to bulk assign"><option value="Uncategorized">-- Bulk Assign Bank / Offset Account --</option></select>
+                    <button class="btn btn-dark-app btn-sm fw-semibold" onclick="applyBankBatch()" title="Bulk assign selected bank account to all visible staging rows">Apply Bank Match to All</button>
                 </div>
             </div>
             <div class="col-md-2 text-end">
-                <small class="text-muted fw-bold" id="visibleRowCountBadge">Rows: 0</small>
+                <small class="text-muted fw-bold" id="visibleRowCountBadge" title="Count of currently visible staging queue rows">Rows: 0</small>
             </div>
         </div>
         
         <table class="table table-hover table-sm align-middle">
             <thead class="table-light">
                 <tr>
-                    <th style="width: 35px;"><input type="checkbox" id="selectAllStaging" class="form-check-input" onchange="toggleSelectAllStaging(this)"></th>
-                    <th class="sortable-hdr" onclick="sortStagingTable('src')">Src ↕</th>
-                    <th class="sortable-hdr" onclick="sortStagingTable('bank_name')">Bank / Issuer ↕</th>
-                    <th class="sortable-hdr" onclick="sortStagingTable('date')">Date ↕</th>
-                    <th class="sortable-hdr" onclick="sortStagingTable('vendor')">Vendor (Hover Details) ↕</th>
-                    <th>Statement Line Item</th>
-                    <th class="sortable-hdr" onclick="sortStagingTable('amt')">Amount ($) ↕</th>
-                    <th>Expense Account</th>
-                    <th>Stat</th>
-                    <th>Bank Account</th>
-                    <th>Class Allocation</th>
-                    <th class="sortable-hdr" onclick="sortStagingTable('confidence')">Conf. Score ↕</th>
-                    <th>Receipt OCR</th>
+                    <th style="width: 35px;"><input type="checkbox" id="selectAllStaging" class="form-check-input" onchange="toggleSelectAllStaging(this)" title="Select or deselect all staging queue rows"></th>
+                    <th class="sortable-hdr" onclick="sortStagingTable('src')" title="Sort by document source type">Src ↕</th>
+                    <th class="sortable-hdr" onclick="sortStagingTable('bank_name')" title="Sort by financial institution or card issuer">Bank / Issuer ↕</th>
+                    <th class="sortable-hdr" onclick="sortStagingTable('date')" title="Sort by transaction date">Date ↕</th>
+                    <th class="sortable-hdr" onclick="sortStagingTable('vendor')" title="Sort by extracted merchant vendor name">Vendor (Hover Details) ↕</th>
+                    <th title="Raw line item text from statement source">Statement Line Item</th>
+                    <th class="sortable-hdr" onclick="sortStagingTable('amt')" title="Sort by transaction dollar amount">Amount ($) ↕</th>
+                    <th title="Target GL Expense/Revenue Account">Expense Account</th>
+                    <th title="Approval status (PENDING / APPROVED)">Stat</th>
+                    <th title="Balancing Bank / Credit Card Asset/Liability Account">Bank Account</th>
+                    <th title="Class allocation tracking tag">Class Allocation</th>
+                    <th class="sortable-hdr" onclick="sortStagingTable('confidence')" title="Sort by OCR AI extraction confidence score">Conf. Score ↕</th>
+                    <th title="Match receipt image or PDF to statement line">Receipt OCR</th>
                 </tr>
             </thead>
             <tbody id="tb-staging"></tbody>
@@ -457,18 +457,18 @@
     <div id="tab-impact" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="fw-bold mb-0">Period Trial Balance Impact Analysis</h5>
-            <button class="btn btn-sm btn-outline-success fw-bold rounded-pill" onclick="loadDash()">🔄 Refresh Period Balances</button>
+            <button class="btn btn-sm btn-outline-success fw-bold rounded-pill" onclick="loadDash()" title="Refresh trial balance calculations from active database">🔄 Refresh Period Balances</button>
         </div>
         <div class="table-responsive">
             <table class="table table-bordered table-hover align-middle small bg-white">
                 <thead class="table-dark">
                     <tr>
-                        <th>Account Name</th>
-                        <th>Period Debits ($)</th>
-                        <th>Period Credits ($)</th>
-                        <th>Period Net Movement ($)</th>
-                        <th>Pending Staging Adjustments</th>
-                        <th>Proposed Ending Balance ($)</th>
+                        <th title="Chart of Account Title">Account Name</th>
+                        <th title="Total period debits ($)">Period Debits ($)</th>
+                        <th title="Total period credits ($)">Period Credits ($)</th>
+                        <th title="Net period movement ($)">Period Net Movement ($)</th>
+                        <th title="Pending adjustments from approved staging queue">Pending Staging Adjustments</th>
+                        <th title="Calculated proposed ending balance after approved staging queue">Proposed Ending Balance ($)</th>
                     </tr>
                 </thead>
                 <tbody id="tb-impact"></tbody>
@@ -478,10 +478,10 @@
 
     <div id="tab-pnl" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <div class="row g-3 mb-4">
-            <div class="col-md-3"><div class="summary-card"><h6>Total Revenue</h6><h3 id="stat-rev" class="fw-bold mb-0">$0.00</h3></div></div>
-            <div class="col-md-3"><div class="summary-card"><h6>Total Expenses</h6><h3 id="stat-exp" class="text-danger fw-bold mb-0">$0.00</h3></div></div>
-            <div class="col-md-3"><div class="summary-card"><h6>Net Income</h6><h3 id="stat-net" class="fw-bold mb-0">$0.00</h3></div></div>
-            <div class="col-md-3"><div class="summary-card"><h6>Profit Margin</h6><h3 id="stat-margin" class="fw-bold mb-0">0%</h3></div></div>
+            <div class="col-md-3"><div class="summary-card" title="Total period revenue inflows"><h6>Total Revenue</h6><h3 id="stat-rev" class="fw-bold mb-0">$0.00</h3></div></div>
+            <div class="col-md-3"><div class="summary-card" title="Total period operating expenses"><h6>Total Expenses</h6><h3 id="stat-exp" class="text-danger fw-bold mb-0">$0.00</h3></div></div>
+            <div class="col-md-3"><div class="summary-card" title="Net operating income (Revenue - Expenses)"><h6>Net Income</h6><h3 id="stat-net" class="fw-bold mb-0">$0.00</h3></div></div>
+            <div class="col-md-3"><div class="summary-card" title="Net profit margin percentage"><h6>Profit Margin</h6><h3 id="stat-margin" class="fw-bold mb-0">0%</h3></div></div>
         </div>
         <div class="row g-4">
             <div class="col-md-7"><div class="card p-3 border"><h6 class="fw-bold text-muted mb-3">Revenue vs. Expense Trend</h6><div style="height: 280px;"><canvas id="chart-bar"></canvas></div></div></div>
@@ -496,42 +496,43 @@
                 <h5 class="fw-bold mb-0">Predictive 90-Day Cash Flow Forecast</h5>
                 <p class="small text-muted mb-0">Forward-looking cash trajectory modeling based on historical ledger cycles and approved staging items.</p>
             </div>
-            <button class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold" onclick="renderCashForecast()">🔄 Recalculate Runway</button>
+            <button class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold" onclick="renderCashForecast(true)" title="Recalculate forecast and generate AI liquidity advice">🔄 Recalculate Runway</button>
         </div>
         <div class="row g-3 mb-4">
-            <div class="col-md-4"><div class="summary-card"><h6>Estimated Cash Runway</h6><h3 id="fc-runway-days" class="fw-bold text-primary mb-0">-- Days</h3></div></div>
-            <div class="col-md-4"><div class="summary-card"><h6>Projected Net Burn Rate</h6><h3 id="fc-burn-rate" class="fw-bold text-danger mb-0">$0.00 / mo</h3></div></div>
-            <div class="col-md-4"><div class="summary-card"><h6>Projected 90-Day Cash Floor</h6><h3 id="fc-lowest-point" class="fw-bold mb-0">$0.00</h3></div></div>
+            <div class="col-md-4"><div class="summary-card" title="Estimated liquid cash runway in days based on baseline net burn"><h6>Estimated Cash Runway</h6><h3 id="fc-runway-days" class="fw-bold text-primary mb-0">-- Days</h3></div></div>
+            <div class="col-md-4"><div class="summary-card" title="Projected monthly net cash burn rate"><h6>Projected Net Burn Rate</h6><h3 id="fc-burn-rate" class="fw-bold text-danger mb-0">$0.00 / mo</h3></div></div>
+            <div class="col-md-4"><div class="summary-card" title="Lowest projected cash balance point over the 90-day trajectory window"><h6>Projected 90-Day Cash Floor</h6><h3 id="fc-lowest-point" class="fw-bold mb-0">$0.00</h3></div></div>
         </div>
 
         <!-- UNIVERSAL SENSITIVITY SIDE-BOX SIMULATOR -->
         <div class="card p-4 border mb-4 rounded-xl bg-light">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="fw-bold text-dark mb-0">🎛️ Universal Sensitivity & Scenario Modeling Side-Boxes</h6>
-                <button class="btn btn-xs btn-outline-secondary rounded-pill px-2" onclick="renderCashForecast()">Reset to Trial Balance Defaults</button>
+                <h6 class="fw-bold text-dark mb-0" title="Sensitivity modeling controls">🎛️ Universal Sensitivity & Scenario Modeling Side-Boxes</h6>
+                <button class="btn btn-xs btn-outline-secondary rounded-pill px-2" onclick="resetForecastDefaults()" title="Reset sandbox inputs to unadjusted ledger baselines">Reset to Trial Balance Defaults</button>
             </div>
             <div class="row g-3">
                 <div class="col-md-3">
-                    <label class="fw-bold small text-muted mb-1">1. Select Chart of Account</label>
-                    <select id="sens_acc_picker" class="form-select form-select-sm fw-semibold" onchange="updateUniversalSensitivity()">
+                    <label class="fw-bold small text-muted mb-1" title="Select account metric to adjust">1. Select Chart of Account</label>
+                    <select id="sens_acc_picker" class="form-select form-select-sm fw-semibold" onchange="updateUniversalSensitivity()" title="Select metric family for sensitivity shift">
                         <option value="TOTAL_REVENUE">Total Revenue / Inflows</option>
-                        <option value="TOTAL_EXPENSE">Total Expenses / Outflows</option>
+                        <option value="FIXED_EXPENSE">Fixed Overhead Costs</option>
+                        <option value="VARIABLE_EXPENSE">Variable Monthly Costs</option>
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="fw-bold small text-muted mb-1">2. Sensitivity Modifier Type</label>
-                    <select id="sens_type_picker" class="form-select form-select-sm fw-semibold" onchange="updateUniversalSensitivity()">
+                    <label class="fw-bold small text-muted mb-1" title="Choose percentage or dollar modification">2. Sensitivity Modifier Type</label>
+                    <select id="sens_type_picker" class="form-select form-select-sm fw-semibold" onchange="updateUniversalSensitivity()" title="Choose modifier unit type">
                         <option value="PERCENTAGE">Percentage Shift (%)</option>
                         <option value="ABSOLUTE">Absolute Dollar Change ($)</option>
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="fw-bold small text-muted mb-1">3. Adjustment Value (+/-)</label>
-                    <input type="number" id="sens_val_input" class="form-control form-control-sm text-end fw-bold" value="0" step="1" onchange="updateUniversalSensitivity()">
+                    <label class="fw-bold small text-muted mb-1" title="Adjustment magnitude value">3. Adjustment Value (+/-)</label>
+                    <input type="number" id="sens_val_input" class="form-control form-control-sm text-end fw-bold" value="0" step="1" onchange="updateUniversalSensitivity()" title="Enter positive or negative modifier value">
                 </div>
                 <div class="col-md-3">
-                    <label class="fw-bold small text-muted mb-1">4. Effective Duration</label>
-                    <select id="sens_duration_picker" class="form-select form-select-sm fw-semibold" onchange="updateUniversalSensitivity()">
+                    <label class="fw-bold small text-muted mb-1" title="Shift duration frequency">4. Effective Duration</label>
+                    <select id="sens_duration_picker" class="form-select form-select-sm fw-semibold" onchange="updateUniversalSensitivity()" title="Specify if shift recurs monthly or occurs once">
                         <option value="RECURRING">Recurring Monthly</option>
                         <option value="ONETIME">One-Time Event</option>
                     </select>
@@ -542,48 +543,48 @@
         <!-- EDITABLE CASH BURN SCENARIO SANDBOX TABLE -->
         <div class="card p-4 border mb-4 rounded-xl">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="fw-bold text-dark mb-0">🛠️ Interactive Cash Burn & Scenario Sandbox (Editable Inputs)</h6>
-                <button class="btn btn-xs btn-outline-secondary rounded-pill px-2" onclick="renderCashForecast()">Reset to Ledger Defaults</button>
+                <h6 class="fw-bold text-dark mb-0" title="Editable sandbox parameter inputs">🛠️ Interactive Cash Burn & Scenario Sandbox (Editable Inputs)</h6>
+                <button class="btn btn-xs btn-outline-secondary rounded-pill px-2" onclick="resetForecastDefaults()" title="Reset sandbox inputs to unadjusted ledger baselines">Reset to Ledger Defaults</button>
             </div>
             <div class="table-responsive">
                 <table class="table table-bordered align-middle small mb-0 bg-white">
                     <thead class="table-dark">
                         <tr>
-                            <th>Parameter Name</th>
-                            <th>Baseline / Expected ($)</th>
-                            <th>Conservative Case ($)</th>
-                            <th>Notes & Impact</th>
+                            <th title="Parameter Title">Parameter Name</th>
+                            <th title="Baseline expected monthly dollar value">Baseline / Expected ($)</th>
+                            <th title="Conservative scenario monthly dollar value">Conservative Case ($)</th>
+                            <th title="Description and impact overview">Notes & Impact</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td class="fw-bold">Starting Liquid Cash ($)</td>
-                            <td><input type="number" id="sb_start_base" class="form-control form-control-sm text-end fw-bold" onchange="updateForecastSandbox()"></td>
-                            <td><input type="number" id="sb_start_cons" class="form-control form-control-sm text-end fw-bold" onchange="updateForecastSandbox()"></td>
-                            <td class="text-muted">Current cash available across checking, savings, and liquid accounts.</td>
+                            <td class="fw-bold" title="Opening bank cash position for the selected scope">Starting Liquid Cash ($)</td>
+                            <td><input type="number" id="sb_start_base" class="form-control form-control-sm text-end fw-bold" onchange="updateForecastSandbox()" title="Baseline opening cash position"></td>
+                            <td><input type="number" id="sb_start_cons" class="form-control form-control-sm text-end fw-bold" onchange="updateForecastSandbox()" title="Conservative opening cash position"></td>
+                            <td class="text-muted">Opening liquid cash position across bank accounts for active period scope.</td>
                         </tr>
                         <tr>
-                            <td class="fw-bold">Monthly Recurring Revenues ($)</td>
-                            <td><input type="number" id="sb_rev_base" class="form-control form-control-sm text-end text-success fw-bold" onchange="updateForecastSandbox()"></td>
-                            <td><input type="number" id="sb_rev_cons" class="form-control form-control-sm text-end text-success fw-bold" onchange="updateForecastSandbox()"></td>
-                            <td class="text-muted">Expected monthly billing, retainers, and customer cash deposits.</td>
+                            <td class="fw-bold" title="Monthly recurring cash inflows">Monthly Recurring Revenues ($)</td>
+                            <td><input type="number" id="sb_rev_base" class="form-control form-control-sm text-end text-success fw-bold" onchange="updateForecastSandbox()" title="Baseline monthly revenue inflows"></td>
+                            <td><input type="number" id="sb_rev_cons" class="form-control form-control-sm text-end text-success fw-bold" onchange="updateForecastSandbox()" title="Conservative monthly revenue inflows"></td>
+                            <td class="text-muted">Average monthly cash revenue derived from historical bank inflows.</td>
                         </tr>
                         <tr>
-                            <td class="fw-bold">Fixed Monthly Overhead ($)</td>
-                            <td><input type="number" id="sb_fixed_base" class="form-control form-control-sm text-end text-danger fw-bold" onchange="updateForecastSandbox()"></td>
-                            <td><input type="number" id="sb_fixed_cons" class="form-control form-control-sm text-end text-danger fw-bold" onchange="updateForecastSandbox()"></td>
-                            <td class="text-muted">Rent, payroll baseline, insurance, and active SaaS vendor subscriptions.</td>
+                            <td class="fw-bold" title="Fixed recurring overhead costs derived from monthly recurring vendor frequency">Fixed Monthly Overhead ($)</td>
+                            <td><input type="number" id="sb_fixed_base" class="form-control form-control-sm text-end text-danger fw-bold" onchange="updateForecastSandbox()" title="Baseline fixed overhead expenses"></td>
+                            <td><input type="number" id="sb_fixed_cons" class="form-control form-control-sm text-end text-danger fw-bold" onchange="updateForecastSandbox()" title="Conservative fixed overhead expenses"></td>
+                            <td class="text-muted">Fixed overhead spending auto-classified by vendor monthly occurrence frequency.</td>
                         </tr>
                         <tr>
-                            <td class="fw-bold">Variable Monthly Costs ($)</td>
-                            <td><input type="number" id="sb_var_base" class="form-control form-control-sm text-end text-danger fw-bold" onchange="updateForecastSandbox()"></td>
-                            <td><input type="number" id="sb_var_cons" class="form-control form-control-sm text-end text-danger fw-bold" onchange="updateForecastSandbox()"></td>
-                            <td class="text-muted">Fluctuation in travel, materials, professional fees, and office supplies.</td>
+                            <td class="fw-bold" title="Variable non-recurring monthly costs">Variable Monthly Costs ($)</td>
+                            <td><input type="number" id="sb_var_base" class="form-control form-control-sm text-end text-danger fw-bold" onchange="updateForecastSandbox()" title="Baseline variable costs"></td>
+                            <td><input type="number" id="sb_var_cons" class="form-control form-control-sm text-end text-danger fw-bold" onchange="updateForecastSandbox()" title="Conservative variable costs"></td>
+                            <td class="text-muted">Variable or discretionary spending from non-recurring vendor activity.</td>
                         </tr>
                         <tr class="table-light">
-                            <td class="fw-bold">Calculated Monthly Cash Burn ($)</td>
-                            <td id="sb_burn_base" class="text-end fw-bold fs-6">--</td>
-                            <td id="sb_burn_cons" class="text-end fw-bold fs-6">--</td>
+                            <td class="fw-bold" title="Calculated net monthly burn (Outflows - Revenue)">Calculated Monthly Cash Burn ($)</td>
+                            <td id="sb_burn_base" class="text-end fw-bold fs-6" title="Calculated baseline monthly net burn">--</td>
+                            <td id="sb_burn_cons" class="text-end fw-bold fs-6" title="Calculated conservative monthly net burn">--</td>
                             <td class="fw-bold text-dark" id="sb_burn_summary">Net monthly cash movement.</td>
                         </tr>
                     </tbody>
@@ -594,13 +595,13 @@
         <div class="row g-4 mb-4">
             <div class="col-md-8">
                 <div class="card p-3 border">
-                    <h6 class="fw-bold text-muted mb-3">90-Day Projected Cash Trajectory ($)</h6>
+                    <h6 class="fw-bold text-muted mb-3" title="Visual 90-day cash balance projection">90-Day Projected Cash Trajectory ($)</h6>
                     <div style="height: 300px;"><canvas id="chart-forecast"></canvas></div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card p-3 border h-100 bg-light">
-                    <h6 class="fw-bold text-dark mb-2">⚡ AI Runway Recommendations</h6>
+                    <h6 class="fw-bold text-dark mb-2" title="AI synthesized runway and liquidity recommendations">⚡ AI Runway Recommendations</h6>
                     <div id="fc-ai-advice" class="small text-secondary" style="line-height: 1.6;">Select a client and click "Recalculate Runway" to generate predictive liquidity advice.</div>
                 </div>
             </div>
@@ -614,24 +615,24 @@
                 <h5 class="fw-bold mb-0">Management's Discussion & Analysis (MD&A) Notes</h5>
                 <p class="small text-muted mb-0">Record executive comments, variances, and strategic insights for <strong id="mdaPeriodTitle" class="text-primary">August 2026</strong>.</p>
             </div>
-            <button class="btn btn-dark-app btn-sm rounded-pill px-4" onclick="saveMDANotes()">Save MD&A Notes</button>
+            <button class="btn btn-dark-app btn-sm rounded-pill px-4" onclick="saveMDANotes()" title="Save MD&A notes to Supabase database">Save MD&A Notes</button>
         </div>
         <div class="row g-3">
             <div class="col-md-6">
-                <label class="fw-bold small text-muted">1. Executive Summary & Period Highlights</label>
-                <textarea id="mda_exec" class="form-control" rows="5" placeholder="Enter key accomplishments, net income commentary, or major events..."></textarea>
+                <label class="fw-bold small text-muted" title="Executive high-level period overview">1. Executive Summary & Period Highlights</label>
+                <textarea id="mda_exec" class="form-control" rows="5" placeholder="Enter key accomplishments, net income commentary, or major events..." title="Executive summary commentary"></textarea>
             </div>
             <div class="col-md-6">
-                <label class="fw-bold small text-muted">2. Revenue Variances & Income Growth Analysis</label>
-                <textarea id="mda_rev" class="form-control" rows="5" placeholder="Explain drivers behind revenue shifts, customer acquisitions, or billing changes..."></textarea>
+                <label class="fw-bold small text-muted" title="Analysis of revenue growth or decline drivers">2. Revenue Variances & Income Growth Analysis</label>
+                <textarea id="mda_rev" class="form-control" rows="5" placeholder="Explain drivers behind revenue shifts, customer acquisitions, or billing changes..." title="Revenue analysis commentary"></textarea>
             </div>
             <div class="col-md-6">
-                <label class="fw-bold small text-muted">3. Cost & Expense Driver Breakdown</label>
-                <textarea id="mda_exp" class="form-control" rows="5" placeholder="Identify anomalous vendor spend, seasonal cost increases, or software adjustments..."></textarea>
+                <label class="fw-bold small text-muted" title="Breakdown of key cost drivers and spending anomalies">3. Cost & Expense Driver Breakdown</label>
+                <textarea id="mda_exp" class="form-control" rows="5" placeholder="Identify anomalous vendor spend, seasonal cost increases, or software adjustments..." title="Expense driver commentary"></textarea>
             </div>
             <div class="col-md-6">
-                <label class="fw-bold small text-muted">4. Recommended Action Items & Next Steps</label>
-                <textarea id="mda_actions" class="form-control" rows="5" placeholder="List action items for management, cost savings targets, or follow-ups..."></textarea>
+                <label class="fw-bold small text-muted" title="Strategic action items for executive management">4. Recommended Action Items & Next Steps</label>
+                <textarea id="mda_actions" class="form-control" rows="5" placeholder="List action items for management, cost savings targets, or follow-ups..." title="Recommended action items"></textarea>
             </div>
         </div>
     </div>
@@ -642,7 +643,7 @@
                 <h5 class="fw-bold mb-0">Vendor Monthly Consistency Audit</h5>
                 <p class="small text-muted mb-0">Track monthly vendor spending trends and identify inactive vendor relationships.</p>
             </div>
-            <span id="vendorCountBadge" class="badge bg-dark px-3 py-2 fs-6">0 Active Vendors</span>
+            <span id="vendorCountBadge" class="badge bg-dark px-3 py-2 fs-6" title="Total distinct vendors tracked">0 Active Vendors</span>
         </div>
         <div class="table-responsive">
             <table class="table table-bordered table-hover align-middle small bg-white">
@@ -656,10 +657,10 @@
         <div class="d-flex justify-content-between mb-3 align-items-center">
             <h5 class="fw-bold mb-0">Active Chart of Accounts</h5>
             <div class="d-flex gap-2">
-                <button class="btn btn-outline-success btn-sm rounded-pill fw-semibold" onclick="syncQBOAccounts()">🔄 Sync QBO Accounts</button>
-                <button class="btn btn-outline-primary btn-sm rounded-pill fw-semibold" onclick="document.getElementById('dashGLFileInput').click()">Upload New GL CSV</button>
+                <button class="btn btn-outline-success btn-sm rounded-pill fw-semibold" onclick="syncQBOAccounts()" title="Sync live chart of accounts from QuickBooks Online">🔄 Sync QBO Accounts</button>
+                <button class="btn btn-outline-primary btn-sm rounded-pill fw-semibold" onclick="document.getElementById('dashGLFileInput').click()" title="Upload a new CSV file containing GL accounts">Upload New GL CSV</button>
                 <input type="file" id="dashGLFileInput" accept=".csv" style="display:none" onchange="uploadGLFromDash(this)">
-                <button class="btn btn-outline-secondary btn-sm rounded-pill fw-semibold" onclick="downloadQBTemplate()">Download Standard Template</button>
+                <button class="btn btn-outline-secondary btn-sm rounded-pill fw-semibold" onclick="downloadQBTemplate()" title="Download standard CSV account template format">Download Standard Template</button>
             </div>
         </div>
         <div class="table-responsive"><table class="table table-sm table-striped align-middle"><tbody id="tb-gl"></tbody></table></div>
@@ -672,15 +673,15 @@
             <table class="table table-sm table-hover align-middle small">
                 <thead class="table-light">
                     <tr>
-                        <th>Date</th>
-                        <th>Bank / Card Issuer</th>
-                        <th>Vendor</th>
-                        <th>Description</th>
-                        <th>Amount ($)</th>
-                        <th>Expense Category (Leg 1)</th>
-                        <th>Offset Account (Leg 2)</th>
-                        <th>Sync Ref</th>
-                        <th class="text-center">Actions</th>
+                        <th title="Transaction Date">Date</th>
+                        <th title="Financial institution or card issuer">Bank / Card Issuer</th>
+                        <th title="Merchant or Vendor entity">Vendor</th>
+                        <th title="Transaction line item description">Description</th>
+                        <th title="Line dollar amount">Amount ($)</th>
+                        <th title="GL Expense or Revenue Category">Expense Category (Leg 1)</th>
+                        <th title="Balancing Bank or Credit Card offset account">Offset Account (Leg 2)</th>
+                        <th title="Journal Entry sync reference ID">Sync Ref</th>
+                        <th class="text-center" title="Available batch audit actions">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="tb-history"></tbody>
@@ -690,13 +691,13 @@
     
     <div id="tab-je-bank" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <h5 class="fw-bold mb-3 text-dark">Bank Statement Journal Entry & Cash Reconciliation View</h5>
-        <div id="jeBalanceAlertBank" class="alert mb-4 text-center fw-bold"></div>
+        <div id="jeBalanceAlertBank" class="alert mb-4 text-center fw-bold" title="Reconciliation journal balance indicator"></div>
         <div id="jeListBank" class="mt-3 font-monospace"></div>
     </div>
 
     <div id="tab-je-cc" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <h5 class="fw-bold mb-3 text-dark">Credit Card Statement Journal Entry & Liability Reconciliation View</h5>
-        <div id="jeBalanceAlertCC" class="alert mb-4 text-center fw-bold"></div>
+        <div id="jeBalanceAlertCC" class="alert mb-4 text-center fw-bold" title="Reconciliation journal balance indicator"></div>
         <div id="jeListCC" class="mt-3 font-monospace"></div>
     </div>
 
@@ -708,18 +709,18 @@
 
 <!-- Floating Widgets Dock -->
 <div class="widgets-dock" id="floatingWidgetsDock">
-    <div class="chat-trigger-btn" onclick="toggleChat('chat-window')">
+    <div class="chat-trigger-btn" onclick="toggleChat('chat-window')" title="Open LUFFY System Support Assistant">
         <svg class="icon-svg" style="width:16px; height:16px;" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
         <span class="fw-semibold small">LUFFY</span>
         <span class="chat-bar-badge">System</span>
     </div>
-    <div class="chat-trigger-btn" onclick="toggleChat('zoro-chat-window')">
+    <div class="chat-trigger-btn" onclick="toggleChat('zoro-chat-window')" title="Open ZORO Dashboard Assistant">
         <svg class="icon-svg" style="width:16px; height:16px;" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
         <span class="fw-semibold small">ZORO</span>
         <span class="chat-bar-badge">Dashboard</span>
     </div>
     <!-- GEMINI QUOTA STATUS FLOATING PILL -->
-    <div class="chat-trigger-btn" id="gemini-quota-pill" onclick="toggleChat('gemini-quota-window')">
+    <div class="chat-trigger-btn" id="gemini-quota-pill" onclick="toggleChat('gemini-quota-window')" title="Click to view AI API Rate Limit Monitor">
         <span id="gemini-quota-dot" class="status-dot dot-green" style="margin-right:0;"></span>
         <span class="fw-semibold small" id="gemini-quota-text">Quota: 15/15 RPM</span>
         <span class="chat-bar-badge" id="gemini-quota-tier-badge" style="background:#E2E8F0; color:#2C3E50;">Gemini</span>
@@ -729,19 +730,19 @@
 <div id="chat-window" class="chat-window-popup">
     <div class="chat-header-bar d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center gap-2"><span>LUFFY Assistant</span></div>
-        <button class="btn-close btn-close-white btn-sm" onclick="toggleChat('chat-window')"></button>
+        <button class="btn-close btn-close-white btn-sm" onclick="toggleChat('chat-window')" title="Close assistant window"></button>
     </div>
     <div id="chat-content" class="chat-body-content">LUFFY active. Ask questions regarding system workflow, setup, or features.</div>
-    <div class="p-2 border-top"><input id="chat-input" class="form-control form-control-sm rounded-pill" placeholder="Type system command..." onkeydown="if(event.key==='Enter') sendChat()"></div>
+    <div class="p-2 border-top"><input id="chat-input" class="form-control form-control-sm rounded-pill" placeholder="Type system command..." onkeydown="if(event.key==='Enter') sendChat()" title="Type question for LUFFY system assistant"></div>
 </div>
 
 <div id="zoro-chat-window" class="chat-window-popup">
     <div class="chat-header-bar d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center gap-2"><span>ZORO Dashboard Assistant</span></div>
-        <button class="btn-close btn-close-white btn-sm" onclick="toggleChat('zoro-chat-window')"></button>
+        <button class="btn-close btn-close-white btn-sm" onclick="toggleChat('zoro-chat-window')" title="Close assistant window"></button>
     </div>
     <div id="zoro-chat-content" class="chat-body-content">ZORO active. Ask questions regarding current dashboard data, spend breakdown, or ledger balances.</div>
-    <div class="p-2 border-top"><input id="zoro-chat-input" class="form-control form-control-sm rounded-pill" placeholder="Ask about dashboard data..." onkeydown="if(event.key==='Enter') sendZoroChat()"></div>
+    <div class="p-2 border-top"><input id="zoro-chat-input" class="form-control form-control-sm rounded-pill" placeholder="Ask about dashboard data..." onkeydown="if(event.key==='Enter') sendZoroChat()" title="Type question for ZORO dashboard assistant"></div>
 </div>
 
 <!-- GEMINI QUOTA STATUS POPUP WINDOW -->
@@ -750,12 +751,12 @@
         <div class="d-flex align-items-center gap-2">
             <span>⚡ AI Engine Rate Monitor</span>
         </div>
-        <button class="btn-close btn-close-white btn-sm" onclick="toggleChat('gemini-quota-window')"></button>
+        <button class="btn-close btn-close-white btn-sm" onclick="toggleChat('gemini-quota-window')" title="Close rate monitor"></button>
     </div>
     <div class="chat-body-content p-3">
         <div class="mb-3">
             <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="fw-bold small">Minute Calls (RPM)</span>
+                <span class="fw-bold small" title="Requests Per Minute capacity">Minute Calls (RPM)</span>
                 <span class="small fw-bold" id="quota-rpm-text">0 / 15</span>
             </div>
             <div class="progress" style="height: 8px;">
@@ -769,7 +770,7 @@
 
         <div class="mb-3">
             <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="fw-bold small">Minute Token Density (TPM)</span>
+                <span class="fw-bold small" title="Tokens Per Minute capacity">Minute Token Density (TPM)</span>
                 <span class="small fw-bold" id="quota-tpm-text">0 / 1M</span>
             </div>
             <div class="progress" style="height: 8px;">
@@ -783,7 +784,7 @@
 
         <div class="mb-3">
             <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="fw-bold small">Daily Usage Quota (RPD)</span>
+                <span class="fw-bold small" title="Requests Per Day capacity">Daily Usage Quota (RPD)</span>
                 <span class="small fw-bold" id="quota-rpd-text">0 / 1,500</span>
             </div>
             <div class="progress" style="height: 8px;">
@@ -823,8 +824,17 @@
     let stmtStart = 0, stmtEnd = 0, barChart = null, forecastChart = null;
 
     let sortKey = 'date', sortAsc = true;
+    let forecastBaselines = null; // Preserves unadjusted baseline values
 
     const CLASS_OPTIONS = ["General", "Marketing", "Sales", "Operations", "NY-Office"];
+
+    /* TEXT SANITIZATION UTILITY FOR SAFE DOM INSERTION (XSS PROTECTION) */
+    function escapeHTML(str) {
+        if (typeof str !== 'string') return str;
+        return str.replace(/[&<>'"]/g, 
+            tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+        );
+    }
 
     /* MULTI-LLM MODEL REGISTRY & CONFIGURATION MATRIX */
     const MODEL_REGISTRY = {
@@ -844,8 +854,8 @@
         ],
         CLAUDE: [
             { id: "claude-sonnet-5", name: "Claude Sonnet 5 (Recommended)", recommended: true },
-            { id: "claude-opus-4.8", name: "Claude Opus 4.8" },
-            { id: "claude-haiku-4.5", name: "Claude Haiku 4.5" }
+            { id: "claude-opus-5", name: "Claude Opus 5" },
+            { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5" }
         ]
     };
 
@@ -859,7 +869,7 @@
 
         models.forEach(m => {
             const isSel = m.recommended ? 'selected' : '';
-            modelSel.innerHTML += `<option value="${m.id}" ${isSel}>${m.name}</option>`;
+            modelSel.innerHTML += `<option value="${m.id}" ${isSel}>${escapeHTML(m.name)}</option>`;
         });
 
         if (provider === "GEMINI") {
@@ -886,9 +896,8 @@
     }
 
     /* UNIVERSAL MULTI-LLM ROUTER ADAPTER ENGINE
-       FIX (quota): usage is now logged exactly ONCE per call, after the response.
-       The previous upfront trackGeminiUsage(10000) plus the per-route call made
-       every request count twice, so the RPM gauge read double. */
+       FIX (Anthropic CORS Header): Set explicit "anthropic-dangerous-direct-browser-access": "true" HTTP header.
+       FIX (Single-log Quota): Usage logged exactly once per call. */
     async function callAIModel(promptText, pdfBase64Data = null, mimeType = "application/pdf") {
         const provider = localStorage.getItem('hca_provider') || "GEMINI";
         const model = localStorage.getItem('hca_model') || "gemini-3.6-flash";
@@ -956,14 +965,19 @@
                     source: { type: "base64", media_type: mimeType, data: pdfBase64Data }
                 });
             }
-            contentParts.push({ type: "text", text: promptText });
+            contentParts.push({ type: "text", text: promptText + "\n\nCRITICAL: Respond ONLY with raw valid JSON object. No conversational intro or prose." });
 
             const res = await fetch("https://api.anthropic.com/v1/messages", {
                 method: "POST",
-                headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+                headers: { 
+                    "Content-Type": "application/json", 
+                    "x-api-key": apiKey, 
+                    "anthropic-version": "2023-06-01",
+                    "anthropic-dangerous-direct-browser-access": "true" 
+                },
                 body: JSON.stringify({
                     model: model,
-                    max_tokens: 4096,
+                    max_tokens: 8192,
                     messages: [{ role: "user", content: contentParts }]
                 })
             });
@@ -979,11 +993,11 @@
         throw new Error("Unsupported AI Provider specified.");
     }
 
-    /* GEMINI API RATE LIMIT & TOKEN TRACKER ENGINE */
-    const GEMINI_LIMITS = {
-        RPM: 15,
-        TPM: 1000000,
-        RPD: 1500
+    /* GEMINI & MULTI-PROVIDER RATE LIMIT & TOKEN TRACKER ENGINE */
+    const PROVIDER_LIMITS = {
+        GEMINI: { RPM: 15, TPM: 1000000, RPD: 1500 },
+        OPENAI: { RPM: 60, TPM: 2000000, RPD: 10000 },
+        CLAUDE: { RPM: 50, TPM: 1500000, RPD: 5000 }
     };
 
     function getQuotaLogs() {
@@ -1009,11 +1023,13 @@
         const now = Date.now();
         const logs = getQuotaLogs();
 
-        // 1. Filter Rolling 60-Second Window
+        const activeProvider = localStorage.getItem('hca_provider') || 'GEMINI';
+        const activeModel = localStorage.getItem('hca_model') || 'gemini-3.6-flash';
+        const limits = PROVIDER_LIMITS[activeProvider] || PROVIDER_LIMITS.GEMINI;
+
         const oneMinuteAgo = now - 60000;
         const recentLogs = logs.filter(l => l.timestamp > oneMinuteAgo);
 
-        // 2. Filter Current Day (Midnight PT)
         const ptDateStr = new Date().toLocaleDateString("en-US", { timeZone: "America/Los_Angeles" });
         const dayLogs = logs.filter(l => new Date(l.timestamp).toLocaleDateString("en-US", { timeZone: "America/Los_Angeles" }) === ptDateStr);
 
@@ -1021,17 +1037,14 @@
         const currentTPM = recentLogs.reduce((acc, curr) => acc + (curr.tokens || 0), 0);
         const currentRPD = dayLogs.length;
 
-        // Clean up logs older than 48 hours
         if (logs.length > recentLogs.length + dayLogs.length + 50) {
             saveQuotaLogs(dayLogs);
         }
 
-        // Calculate 60-second Rolling Refresh Timer
         let oldestInWindow = recentLogs.length > 0 ? Math.min(...recentLogs.map(l => l.timestamp)) : now;
         let secondsToRefresh = Math.max(0, Math.ceil((oldestInWindow + 60000 - now) / 1000));
         if (currentRPM === 0) secondsToRefresh = 0;
 
-        // Calculate Pacific Time Daily Reset Clock
         const nowPT = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
         const midnightPT = new Date(nowPT);
         midnightPT.setHours(24, 0, 0, 0);
@@ -1039,13 +1052,12 @@
         const hoursLeft = Math.floor(diffMs / (1000 * 60 * 60));
         const minsLeft = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
 
-        // Update UI Elements
         const rpmText = document.getElementById('quota-rpm-text');
         const rpmBar = document.getElementById('quota-rpm-bar');
         const rpmRefresh = document.getElementById('quota-rpm-refresh');
-        if (rpmText) rpmText.innerText = `${currentRPM} / ${GEMINI_LIMITS.RPM}`;
+        if (rpmText) rpmText.innerText = `${currentRPM} / ${limits.RPM}`;
         if (rpmBar) {
-            const rpmPct = Math.min(100, (currentRPM / GEMINI_LIMITS.RPM) * 100);
+            const rpmPct = Math.min(100, (currentRPM / limits.RPM) * 100);
             rpmBar.style.width = `${rpmPct}%`;
             rpmBar.className = rpmPct >= 90 ? "progress-bar bg-danger" : (rpmPct >= 70 ? "progress-bar bg-warning" : "progress-bar bg-success");
         }
@@ -1054,9 +1066,9 @@
         const tpmText = document.getElementById('quota-tpm-text');
         const tpmBar = document.getElementById('quota-tpm-bar');
         const tpmRefresh = document.getElementById('quota-tpm-refresh');
-        if (tpmText) tpmText.innerText = `${(currentTPM / 1000).toFixed(0)}k / 1M`;
+        if (tpmText) tpmText.innerText = `${(currentTPM / 1000).toFixed(0)}k / ${(limits.TPM / 1000000).toFixed(1)}M`;
         if (tpmBar) {
-            const tpmPct = Math.min(100, (currentTPM / GEMINI_LIMITS.TPM) * 100);
+            const tpmPct = Math.min(100, (currentTPM / limits.TPM) * 100);
             tpmBar.style.width = `${tpmPct}%`;
         }
         if (tpmRefresh) tpmRefresh.innerText = secondsToRefresh > 0 ? `Refreshes in ${secondsToRefresh}s` : "Full Capacity";
@@ -1064,38 +1076,34 @@
         const rpdText = document.getElementById('quota-rpd-text');
         const rpdBar = document.getElementById('quota-rpd-bar');
         const rpdClock = document.getElementById('quota-rpd-clock');
-        if (rpdText) rpdText.innerText = `${currentRPD} / ${GEMINI_LIMITS.RPD}`;
+        if (rpdText) rpdText.innerText = `${currentRPD} / ${limits.RPD.toLocaleString()}`;
         if (rpdBar) {
-            const rpdPct = Math.min(100, (currentRPD / GEMINI_LIMITS.RPD) * 100);
+            const rpdPct = Math.min(100, (currentRPD / limits.RPD) * 100);
             rpdBar.style.width = `${rpdPct}%`;
         }
         if (rpdClock) rpdClock.innerText = `Reset in ${hoursLeft}h ${minsLeft}m`;
 
-        // Update Dock Pill Status
         const pillText = document.getElementById('gemini-quota-text');
         const pillDot = document.getElementById('gemini-quota-dot');
         const tierBadge = document.getElementById('gemini-quota-tier-badge');
         const providerText = document.getElementById('active_quota_provider_text');
-        
-        const activeProvider = localStorage.getItem('hca_provider') || 'GEMINI';
-        const activeModel = localStorage.getItem('hca_model') || 'gemini-3.6-flash';
 
         if (tierBadge) tierBadge.innerText = activeProvider;
         if (providerText) providerText.innerText = `${activeProvider} (${activeModel})`;
 
-        const availableRPM = Math.max(0, GEMINI_LIMITS.RPM - currentRPM);
+        const availableRPM = Math.max(0, limits.RPM - currentRPM);
 
         if (pillText) {
-            if (currentRPM >= GEMINI_LIMITS.RPM) {
+            if (currentRPM >= limits.RPM) {
                 pillText.innerText = `Quota: Wait ${secondsToRefresh}s`;
             } else {
-                pillText.innerText = `Quota: ${availableRPM}/15 RPM`;
+                pillText.innerText = `Quota: ${availableRPM}/${limits.RPM} RPM`;
             }
         }
         if (pillDot) {
-            if (currentRPM >= GEMINI_LIMITS.RPM || currentRPD >= GEMINI_LIMITS.RPD) {
+            if (currentRPM >= limits.RPM || currentRPD >= limits.RPD) {
                 pillDot.className = "status-dot dot-red";
-            } else if (currentRPM >= 10) {
+            } else if (currentRPM >= (limits.RPM * 0.7)) {
                 pillDot.className = "status-dot dot-amber";
             } else {
                 pillDot.className = "status-dot dot-green";
@@ -1103,7 +1111,6 @@
         }
     }
 
-    // Live refresh loop every second
     setInterval(updateQuotaUI, 1000);
 
     /* BOOTSTRAP TOAST NOTIFICATION HELPER */
@@ -1118,7 +1125,7 @@
             <div id="${toastId}" class="toast align-items-center ${bgClass} border-0 mb-2 shadow" role="alert" aria-live="assertive" aria-atomic="true">
                 <div class="d-flex">
                     <div class="toast-body font-semibold small">
-                        ${message}
+                        ${escapeHTML(message)}
                     </div>
                     <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                 </div>
@@ -1203,6 +1210,9 @@
         initSupabase();
         await db.auth.signOut();
         localStorage.removeItem('hca_gk');
+        localStorage.removeItem('hca_provider');
+        localStorage.removeItem('hca_model');
+        forecastBaselines = null;
         location.reload();
     }
 
@@ -1237,7 +1247,6 @@
             return;
         }
 
-        // User is logged in via Supabase
         document.getElementById('userAuthGate').style.display = 'none';
         document.getElementById('userLogoutBtn').style.display = 'inline-block';
         document.getElementById('dot-ledger').classList.add('dot-green');
@@ -1255,6 +1264,11 @@
             await getClientList();
         }
         updateQuotaUI();
+    }
+
+    function onClientChange() {
+        forecastBaselines = null; // Invalidate cached forecast when client changes
+        pingStatus();
     }
 
     function connectToQuickBooks() {
@@ -1342,7 +1356,7 @@
 
         const sel = document.getElementById('masterClient');
         sel.innerHTML = '<option value="">-- Select Client Account --</option>';
-        if (data) data.forEach(v => sel.innerHTML += `<option value="${v.client_name}">${v.client_name}</option>`);
+        if (data) data.forEach(v => sel.innerHTML += `<option value="${escapeHTML(v.client_name)}">${escapeHTML(v.client_name)}</option>`);
     }
 
     async function save() { 
@@ -1520,12 +1534,12 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
 
     function renderRulesUI() {
         const listDiv = document.getElementById('rulesList');
-        listDiv.innerHTML = activeRules.map((r, i) => `<div class="d-flex justify-content-between align-items-center bg-light p-2 mb-1 rounded"><span class="small fw-semibold">${r.keyword} &rarr; <span class="text-primary">${r.target_account}</span></span><button onclick="removeRule(${i})" class="btn btn-xs btn-outline-danger py-0 px-1">&times;</button></div>`).join('');
+        listDiv.innerHTML = activeRules.map((r, i) => `<div class="d-flex justify-content-between align-items-center bg-light p-2 mb-1 rounded"><span class="small fw-semibold">${escapeHTML(r.keyword)} &rarr; <span class="text-primary">${escapeHTML(r.target_account)}</span></span><button onclick="removeRule(${i})" class="btn btn-xs btn-outline-danger py-0 px-1">&times;</button></div>`).join('');
         populateRuleSelects();
     }
 
     function populateRuleSelects() {
-        const sel = document.getElementById('ruleAccount'); sel.innerHTML = appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('');
+        const sel = document.getElementById('ruleAccount'); sel.innerHTML = appGLOptions.map(o => `<option value="${escapeHTML(o)}">${escapeHTML(o)}</option>`).join('');
     }
 
     function addRuleRow() {
@@ -1719,6 +1733,7 @@ Return ONLY JSON Object:
                 }
 
                 window.lastExtractedBankName = extractedBankName;
+                forecastBaselines = null; // Reset baseline cache on new upload
                 await loadDash();
 
                 if (rows.length > 0 && rows[0].txn_date) {
@@ -1782,9 +1797,6 @@ Return ONLY JSON Object:
             if (meta.gl_list) appGLOptions = meta.gl_list.split(',').filter(Boolean);
         }
 
-        /* FIX: carry `src` through from permanent_ledger. The trial balance and the
-           cash forecast need to know whether a historic row came from a bank or a
-           credit card statement, because the two use opposite sign conventions. */
         historyData = ledger.map(l => ({
             id: l.id,
             date: l.txn_date,
@@ -1808,18 +1820,20 @@ Return ONLY JSON Object:
         const dl = document.getElementById('glChoices'); dl.innerHTML = ""; 
         const batchSel = document.getElementById('batchCategorySelect'); batchSel.innerHTML = '<option value="Uncategorized">-- Assign Expense Account --</option>';
         const batchBankSel = document.getElementById('batchBankSelect'); batchBankSel.innerHTML = '<option value="Uncategorized">-- Bulk Assign Bank / Offset Account --</option>';
+        
+        // Keep sens_acc_picker options strictly aligned with the three functional metrics
         const sensPicker = document.getElementById('sens_acc_picker'); 
-        if(sensPicker) sensPicker.innerHTML = '<option value="TOTAL_REVENUE">Total Revenue / Inflows</option><option value="TOTAL_EXPENSE">Total Expenses / Outflows</option>';
+        if(sensPicker) sensPicker.innerHTML = '<option value="TOTAL_REVENUE">Total Revenue / Inflows</option><option value="FIXED_EXPENSE">Fixed Overhead Costs</option><option value="VARIABLE_EXPENSE">Variable Monthly Costs</option>';
 
         appGLOptions.forEach(opt => { 
-            dl.innerHTML += `<option value="${opt}">`; 
-            batchSel.innerHTML += `<option value="${opt}">${opt}</option>`; 
-            batchBankSel.innerHTML += `<option value="${opt}">${opt}</option>`; 
-            if(sensPicker) sensPicker.innerHTML += `<option value="${opt}">${opt}</option>`;
+            const escOpt = escapeHTML(opt);
+            dl.innerHTML += `<option value="${escOpt}">`; 
+            batchSel.innerHTML += `<option value="${escOpt}">${escOpt}</option>`; 
+            batchBankSel.innerHTML += `<option value="${escOpt}">${escOpt}</option>`; 
         });
 
         const glBody = document.getElementById('tb-gl'); glBody.innerHTML = "";
-        appGLOptions.forEach((acc, idx) => { glBody.innerHTML += `<tr><td>${idx + 1}</td><td class="fw-semibold">${acc}</td></tr>`; });
+        appGLOptions.forEach((acc, idx) => { glBody.innerHTML += `<tr><td>${idx + 1}</td><td class="fw-semibold">${escapeHTML(acc)}</td></tr>`; });
 
         const tbHist = document.getElementById('tb-history');
         tbHist.innerHTML = ""; 
@@ -1832,20 +1846,20 @@ Return ONLY JSON Object:
 
             const revActionHtml = showRevBtn ? `
                 <div class="d-flex gap-1 justify-content-center">
-                    <button class="btn btn-xs btn-outline-danger py-0 fw-bold rounded-pill" onclick="reverseFullBatch('${i.qbo}')">↩️ Reverse</button>
-                    <button class="btn btn-xs btn-outline-primary py-0 fw-bold rounded-pill" onclick="restageFullBatch('${i.qbo}')">⚡ Re-Stage</button>
+                    <button class="btn btn-xs btn-outline-danger py-0 fw-bold rounded-pill" onclick="reverseFullBatch('${i.qbo}')" title="Post counter journal entry to reverse this batch in QBO">↩️ Reverse</button>
+                    <button class="btn btn-xs btn-outline-primary py-0 fw-bold rounded-pill" onclick="restageFullBatch('${i.qbo}')" title="Copy batch rows back to review staging for account editing">⚡ Re-Stage</button>
                 </div>
             ` : `<span class="text-muted small">Batch #${i.qbo}</span>`;
 
             tbHist.innerHTML += `<tr>
-                <td>${i.date}</td>
-                <td><span class="badge bg-light text-dark border small fw-bold">${i.bank_name}</span></td>
-                <td class="fw-bold">${i.vendor || 'N/A'}</td>
-                <td><small class="text-muted">${i.desc}</small></td>
-                <td class="fw-bold ${parseFloat(i.amt) < 0 ? 'text-danger' : 'text-success'}">$${i.amt}</td>
-                <td><span class="badge bg-secondary">${i.cat}</span></td>
-                <td><span class="badge bg-light text-dark border">${i.bnk}</span></td>
-                <td class="fw-bold">${i.qbo}</td>
+                <td>${escapeHTML(i.date)}</td>
+                <td><span class="badge bg-light text-dark border small fw-bold">${escapeHTML(i.bank_name)}</span></td>
+                <td class="fw-bold">${escapeHTML(i.vendor || 'N/A')}</td>
+                <td><small class="text-muted">${escapeHTML(i.desc)}</small></td>
+                <td class="fw-bold ${parseFloat(i.amt) < 0 ? 'text-danger' : 'text-success'}">$${escapeHTML(i.amt)}</td>
+                <td><span class="badge bg-secondary">${escapeHTML(i.cat)}</span></td>
+                <td><span class="badge bg-light text-dark border">${escapeHTML(i.bnk)}</span></td>
+                <td class="fw-bold">${escapeHTML(i.qbo)}</td>
                 <td class="text-center">${revActionHtml}</td>
             </tr>`; 
         });
@@ -1853,14 +1867,14 @@ Return ONLY JSON Object:
         const meta = res.metadata || {};
         document.getElementById('metaList').innerHTML = `
             <div class="row g-3">
-                <div class="col-md-6"><label class="small fw-bold">Client Legal Name</label><input id="edit_m_name" class="form-control form-control-sm" value="${meta.client_name || currentClient}" readonly></div>
-                <div class="col-md-6"><label class="small fw-bold">Business Industry / Nature</label><input id="edit_m_nature" class="form-control form-control-sm" value="${meta.nature || 'General'}"></div>
-                <div class="col-md-6"><label class="small fw-bold">Client Authorization Email</label><input id="edit_m_email" class="form-control form-control-sm" value="${meta.client_email || ''}"></div>
-                <div class="col-md-6"><label class="small fw-bold">QBO Realm ID</label><input id="edit_m_qbo" class="form-control form-control-sm" value="${meta.qbo_id || 'Not Connected'}" readonly></div>
-                <div class="col-12"><label class="small fw-bold">Chart of Accounts (Comma Separated)</label><textarea id="edit_m_gl" class="form-control form-control-sm" rows="3">${appGLOptions.join(', ')}</textarea></div>
+                <div class="col-md-6"><label class="small fw-bold">Client Legal Name</label><input id="edit_m_name" class="form-control form-control-sm" value="${escapeHTML(meta.client_name || currentClient)}" readonly></div>
+                <div class="col-md-6"><label class="small fw-bold">Business Industry / Nature</label><input id="edit_m_nature" class="form-control form-control-sm" value="${escapeHTML(meta.nature || 'General')}"></div>
+                <div class="col-md-6"><label class="small fw-bold">Client Authorization Email</label><input id="edit_m_email" class="form-control form-control-sm" value="${escapeHTML(meta.client_email || '')}"></div>
+                <div class="col-md-6"><label class="small fw-bold">QBO Realm ID</label><input id="edit_m_qbo" class="form-control form-control-sm" value="${escapeHTML(meta.qbo_id || 'Not Connected')}" readonly></div>
+                <div class="col-12"><label class="small fw-bold">Chart of Accounts (Comma Separated)</label><textarea id="edit_m_gl" class="form-control form-control-sm" rows="3">${escapeHTML(appGLOptions.join(', '))}</textarea></div>
                 <div class="col-12 d-flex gap-2 justify-content-end mt-3">
-                    <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="sendAuthEmailFromMeta()">Generate Authorization Message</button>
-                    <button class="btn btn-dark-app btn-sm rounded-pill px-3" onclick="updateClientMetadataFromTab()">Update Client Metadata</button>
+                    <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="sendAuthEmailFromMeta()" title="Generate email text for client OAuth link">Generate Authorization Message</button>
+                    <button class="btn btn-dark-app btn-sm rounded-pill px-3" onclick="updateClientMetadataFromTab()" title="Update metadata records in Supabase">Update Client Metadata</button>
                 </div>
                 <div class="col-12 mt-3" id="emailMessageBox" style="display:none;">
                     <div class="card p-3 bg-light border">
@@ -1876,12 +1890,7 @@ Return ONLY JSON Object:
         recalcJE(); applyGlobalDateFilter();
     }
 
-    /* FULL BATCH JOURNAL ENTRY REVERSAL CONTROLLER
-       FIX (ordering): the reversal is now posted to QuickBooks FIRST. Only if QBO
-       accepts it does anything land in permanent_ledger, and qbo-sync writes those
-       rows itself. Previously the rows were inserted locally before the sync call,
-       which (a) made the sync's duplicate pre-flight block its own batch and
-       (b) swallowed the failure, so the ledger and QBO silently diverged. */
+    /* FULL BATCH JOURNAL ENTRY REVERSAL CONTROLLER */
     async function reverseFullBatch(syncRef) {
         if (!syncRef) return showToast("Invalid Sync Reference for reversal.", "danger");
         if (!confirm(`Are you sure you want to reverse the ENTIRE Batch #${syncRef}? This will post offsetting entries to QuickBooks for all associated line items.`)) return;
@@ -1893,8 +1902,6 @@ Return ONLY JSON Object:
             const { data: batchRows, error: fetchErr } = await db.from('permanent_ledger').select('*').ilike('client_name', currentClient.trim()).eq('qbo_id', syncRef);
             if (fetchErr || !batchRows || batchRows.length === 0) throw new Error("Could not retrieve batch rows for reversal: " + (fetchErr?.message || "No matching rows found."));
 
-            // Build the offsetting entries. No local insert here — qbo-sync writes
-            // them to permanent_ledger only after QuickBooks accepts the post.
             const reversalPayload = batchRows.map(r => ({
                 client_name: r.client_name,
                 source: r.source,
@@ -1928,9 +1935,7 @@ Return ONLY JSON Object:
         }
     }
 
-    /* BATCH RE-STAGE CONTROLLER FOR USER-DRIVEN ACCOUNT MAPPING FIXES
-       FIX (sign): the amount is no longer passed through Math.abs(). Stripping the
-       sign turned every re-staged payment into a deposit. */
+    /* BATCH RE-STAGE CONTROLLER FOR USER-DRIVEN ACCOUNT MAPPING FIXES */
     async function restageFullBatch(syncRef) {
         if (!syncRef) return showToast("Invalid Sync Reference.", "danger");
         if (!confirm(`Do you want to copy Batch #${syncRef} back into the Review Staging queue for account editing?`)) return;
@@ -1979,12 +1984,7 @@ Return ONLY JSON Object:
         }
     }
 
-    /* PERIOD-SPECIFIC TRIAL BALANCE CORE DATA LAYER ENGINE
-       FIX (sign): debits and credits were inverted. On a BANK statement a negative
-       amount is an outflow, which DEBITS the expense account; a positive amount is
-       an inflow, which CREDITS income. On a CREDIT CARD statement the convention is
-       reversed: positive spend DEBITS the expense. The old code keyed purely off
-       `val > 0`, so the Impact tab showed expenses as credits and revenue as debits. */
+    /* PERIOD-SPECIFIC TRIAL BALANCE CORE DATA LAYER ENGINE */
     function getPeriodTrialBalance() {
         const filteredDataset = filterBySelectedPeriod([...historyData, ...localData]);
         const trialBalance = {};
@@ -2059,6 +2059,7 @@ Return ONLY JSON Object:
     }
 
     async function applyGlobalDateFilter() {
+        forecastBaselines = null; // Invalidate forecast cache on period filter change
         renderStagingTable(filterBySelectedPeriod(localData));
         renderPnLCharts();
         renderVendorMatrix();
@@ -2098,7 +2099,7 @@ Return ONLY JSON Object:
         const latestMonth = sortedMonths.length > 0 ? sortedMonths[sortedMonths.length - 1] : null;
 
         let headerHtml = `<tr><th>Vendor Legal Name</th>`;
-        sortedMonths.forEach(m => headerHtml += `<th class="text-end">${m}</th>`);
+        sortedMonths.forEach(m => headerHtml += `<th class="text-end">${escapeHTML(m)}</th>`);
         headerHtml += `<th class="text-end bg-secondary text-white">Lifetime Paid ($)</th><th class="text-center">Current Status</th></tr>`;
         th.innerHTML = headerHtml;
 
@@ -2111,7 +2112,7 @@ Return ONLY JSON Object:
             const currentMonthSpend = latestMonth ? (vData.months[latestMonth] || 0) : 0;
             const isInactiveThisMonth = latestMonth && currentMonthSpend === 0;
 
-            let rowHtml = `<tr><td class="fw-bold">${vendor}</td>`;
+            let rowHtml = `<tr><td class="fw-bold">${escapeHTML(vendor)}</td>`;
             sortedMonths.forEach(m => {
                 const amt = vData.months[m] || 0;
                 rowHtml += `<td class="text-end ${amt > 0 ? 'fw-semibold' : 'text-muted opacity-50'}">${amt > 0 ? `$${amt.toLocaleString('en-US', {minimumFractionDigits: 2})}` : '-'}</td>`;
@@ -2184,78 +2185,134 @@ Return ONLY JSON Object:
     }
 
     /* PREDICTIVE 90-DAY CASH FORECAST ENGINE
-       FIX (averaging): monthly figures are now divided by the number of distinct
-       months actually present in the filtered period. Previously the whole filtered
-       range was treated as a single month, so with the year filter on and the month
-       filter set to All, twelve months of activity became "monthly" revenue and the
-       runway was out by roughly 12x.
-       FIX (starting cash): cash is drawn only from BANK-source rows. stmtEnd holds
-       whatever the last processed statement closed at — if that was a credit card,
-       the old code put a LIABILITY balance into "Starting Liquid Cash". */
-    async function renderCashForecast() {
+       FIX (Single-month threshold): Requires monthsInView >= 3 to classify fixed vs variable costs by vendor frequency.
+       FIX (Starting cash): Derived specifically from BANK-source statement closing balances within the active scope.
+       FIX (Cache & AI API): Baseline cache invalidates on scope changes, and AI Runway Advice is triggered on demand. */
+    async function renderCashForecast(forceRecalculate = false) {
+        if (!forceRecalculate && forecastBaselines !== null) {
+            updateForecastSandbox();
+            return;
+        }
+
         const filtered = filterBySelectedPeriod([...historyData, ...localData]);
         const bankRows = filtered.filter(i => String(i.src || "").toUpperCase() !== "CREDIT CARD");
 
         const monthKeys = new Set();
+        const vendorMonthMap = {};
         let totalIn = 0, totalOut = 0;
 
         bankRows.forEach(i => {
             const v = parseFloat(String(i.amt).replace(/[^0-9.-]+/g, "")) || 0;
-            if (i.date) monthKeys.add(String(i.date).substring(0, 7));
-            if (v > 0) totalIn += v; else totalOut += Math.abs(v);
+            const mKey = i.date ? String(i.date).substring(0, 7) : "Active";
+            monthKeys.add(mKey);
+
+            if (v > 0) {
+                totalIn += v;
+            } else {
+                const absVal = Math.abs(v);
+                totalOut += absVal;
+                const vName = (i.vendor && i.vendor.trim()) ? i.vendor.trim().toLowerCase() : "unassigned";
+                if (!vendorMonthMap[vName]) vendorMonthMap[vName] = { total: 0, months: new Set() };
+                vendorMonthMap[vName].total += absVal;
+                vendorMonthMap[vName].months.add(mKey);
+            }
         });
 
         const monthsInView = Math.max(1, monthKeys.size);
         const avgMonthlyIn = totalIn / monthsInView;
-        const avgMonthlyOut = totalOut / monthsInView;
 
-        // Only trust stmtEnd as a cash balance when the period actually contains
-        // bank activity. Otherwise start from zero and let the accountant key it in.
+        let fixedTotal = 0, varTotal = 0;
+
+        if (monthsInView >= 3) {
+            const threshold = Math.ceil(monthsInView * 0.5);
+            for (let vName in vendorMonthMap) {
+                const entry = vendorMonthMap[vName];
+                if (entry.months.size >= threshold) {
+                    fixedTotal += entry.total;
+                } else {
+                    varTotal += entry.total;
+                }
+            }
+        } else {
+            bankRows.forEach(i => {
+                const v = parseFloat(String(i.amt).replace(/[^0-9.-]+/g, "")) || 0;
+                if (v < 0) {
+                    const absVal = Math.abs(v);
+                    const cat = (i.cat || "").toLowerCase();
+                    if (cat.includes("rent") || cat.includes("payroll") || cat.includes("insurance") || cat.includes("software") || cat.includes("dues")) {
+                        fixedTotal += absVal;
+                    } else {
+                        varTotal += absVal;
+                    }
+                }
+            });
+        }
+
+        const avgMonthlyFixed = fixedTotal / monthsInView;
+        const avgMonthlyVar = varTotal / monthsInView;
         const currentCash = bankRows.length > 0 ? (parseFloat(stmtEnd) || 0) : 0;
 
-        document.getElementById('sb_start_base').value = currentCash.toFixed(2);
-        document.getElementById('sb_start_cons').value = currentCash.toFixed(2);
-        
-        document.getElementById('sb_rev_base').value = avgMonthlyIn.toFixed(2);
-        document.getElementById('sb_rev_cons').value = (avgMonthlyIn * 0.85).toFixed(2); 
+        forecastBaselines = {
+            startBase: currentCash,
+            startCons: currentCash,
+            revBase: avgMonthlyIn,
+            revCons: avgMonthlyIn * 0.85,
+            fixedBase: avgMonthlyFixed,
+            fixedCons: avgMonthlyFixed * 1.05,
+            varBase: avgMonthlyVar,
+            varCons: avgMonthlyVar * 1.15
+        };
 
-        document.getElementById('sb_fixed_base').value = (avgMonthlyOut * 0.60).toFixed(2);
-        document.getElementById('sb_fixed_cons').value = (avgMonthlyOut * 0.65).toFixed(2);
+        resetForecastDefaults();
 
-        document.getElementById('sb_var_base').value = (avgMonthlyOut * 0.40).toFixed(2);
-        document.getElementById('sb_var_cons').value = (avgMonthlyOut * 0.55).toFixed(2); 
+        if (forceRecalculate) {
+            generateAIRunwayAdvice(forecastBaselines);
+        }
+    }
 
+    function resetForecastDefaults() {
+        if (!forecastBaselines) {
+            renderCashForecast(true);
+            return;
+        }
+        document.getElementById('sb_start_base').value = forecastBaselines.startBase.toFixed(2);
+        document.getElementById('sb_start_cons').value = forecastBaselines.startCons.toFixed(2);
+        document.getElementById('sb_rev_base').value = forecastBaselines.revBase.toFixed(2);
+        document.getElementById('sb_rev_cons').value = forecastBaselines.revCons.toFixed(2);
+        document.getElementById('sb_fixed_base').value = forecastBaselines.fixedBase.toFixed(2);
+        document.getElementById('sb_fixed_cons').value = forecastBaselines.fixedCons.toFixed(2);
+        document.getElementById('sb_var_base').value = forecastBaselines.varBase.toFixed(2);
+        document.getElementById('sb_var_cons').value = forecastBaselines.varCons.toFixed(2);
+
+        document.getElementById('sens_val_input').value = 0;
         updateForecastSandbox();
     }
 
     /* UNIVERSAL SENSITIVITY SIDE-BOX CONTROLLER WIRING */
     function updateUniversalSensitivity() {
+        if (!forecastBaselines) return;
+
         const accPicker = document.getElementById('sens_acc_picker').value;
         const modType = document.getElementById('sens_type_picker').value;
         const modVal = parseFloat(document.getElementById('sens_val_input').value) || 0;
 
-        let baseRev = parseFloat(document.getElementById('sb_rev_base').value) || 0;
-        let baseFixed = parseFloat(document.getElementById('sb_fixed_base').value) || 0;
-        let baseVar = parseFloat(document.getElementById('sb_var_base').value) || 0;
+        let targetBase = forecastBaselines.revBase;
+        if (accPicker === "FIXED_EXPENSE") targetBase = forecastBaselines.fixedBase;
+        if (accPicker === "VARIABLE_EXPENSE") targetBase = forecastBaselines.varBase;
+
+        let adjustedVal = targetBase;
+        if (modType === "PERCENTAGE") {
+            adjustedVal = targetBase * (1 + (modVal / 100));
+        } else {
+            adjustedVal = targetBase + modVal;
+        }
 
         if (accPicker === "TOTAL_REVENUE") {
-            if (modType === "PERCENTAGE") {
-                document.getElementById('sb_rev_base').value = (baseRev * (1 + (modVal / 100))).toFixed(2);
-            } else {
-                document.getElementById('sb_rev_base').value = (baseRev + modVal).toFixed(2);
-            }
-        } else if (accPicker === "TOTAL_EXPENSE") {
-            if (modType === "PERCENTAGE") {
-                document.getElementById('sb_fixed_base').value = (baseFixed * (1 + (modVal / 100))).toFixed(2);
-            } else {
-                document.getElementById('sb_fixed_base').value = (baseFixed + modVal).toFixed(2);
-            }
-        } else {
-            if (modType === "PERCENTAGE") {
-                document.getElementById('sb_var_base').value = (baseVar * (1 + (modVal / 100))).toFixed(2);
-            } else {
-                document.getElementById('sb_var_base').value = (baseVar + modVal).toFixed(2);
-            }
+            document.getElementById('sb_rev_base').value = Math.max(0, adjustedVal).toFixed(2);
+        } else if (accPicker === "FIXED_EXPENSE") {
+            document.getElementById('sb_fixed_base').value = Math.max(0, adjustedVal).toFixed(2);
+        } else if (accPicker === "VARIABLE_EXPENSE") {
+            document.getElementById('sb_var_base').value = Math.max(0, adjustedVal).toFixed(2);
         }
 
         updateForecastSandbox();
@@ -2271,6 +2328,8 @@ Return ONLY JSON Object:
         let revCons = parseFloat(document.getElementById('sb_rev_cons').value) || 0;
         let fixedCons = parseFloat(document.getElementById('sb_fixed_cons').value) || 0;
         let varCons = parseFloat(document.getElementById('sb_var_cons').value) || 0;
+
+        const durationType = document.getElementById('sens_duration_picker').value;
 
         let totalOutBase = fixedBase + varBase;
         let netBurnBase = totalOutBase - revBase;
@@ -2291,18 +2350,35 @@ Return ONLY JSON Object:
         document.getElementById('fc-burn-rate').innerText = netBurnBase > 0 ? `-$${netBurnBase.toFixed(2)} / mo` : `+$${Math.abs(netBurnBase).toFixed(2)} / mo`;
 
         let labels = ["Today", "+30 Days", "+60 Days", "+90 Days"];
-        let baseline = [
-            startBase,
-            startBase - (netBurnBase * 1),
-            startBase - (netBurnBase * 2),
-            startBase - (netBurnBase * 3)
-        ];
-        let conservative = [
-            startCons,
-            startCons - (netBurnCons * 1),
-            startCons - (netBurnCons * 2),
-            startCons - (netBurnCons * 3)
-        ];
+        
+        let baseline, conservative;
+        if (durationType === "ONETIME") {
+            baseline = [
+                startBase,
+                startBase - (netBurnBase * 1),
+                startBase - (netBurnBase * 1),
+                startBase - (netBurnBase * 1)
+            ];
+            conservative = [
+                startCons,
+                startCons - (netBurnCons * 1),
+                startCons - (netBurnCons * 1),
+                startCons - (netBurnCons * 1)
+            ];
+        } else {
+            baseline = [
+                startBase,
+                startBase - (netBurnBase * 1),
+                startBase - (netBurnBase * 2),
+                startBase - (netBurnBase * 3)
+            ];
+            conservative = [
+                startCons,
+                startCons - (netBurnCons * 1),
+                startCons - (netBurnCons * 2),
+                startCons - (netBurnCons * 3)
+            ];
+        }
 
         let lowestFloor = Math.min(...conservative);
         document.getElementById('fc-lowest-point').innerText = `$${lowestFloor.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
@@ -2321,6 +2397,44 @@ Return ONLY JSON Object:
                 },
                 options: { responsive: true, maintainAspectRatio: false }
             });
+        }
+    }
+
+    /* SYNTHESIZE AI RUNWAY RECOMMENDATIONS SAFE FROM PROMPT-INJECTION XSS */
+    async function generateAIRunwayAdvice(baselines) {
+        const adviceBox = document.getElementById('fc-ai-advice');
+        if (!adviceBox) return;
+
+        adviceBox.innerHTML = `<em>Generating AI liquidity analysis for ${escapeHTML(currentClient)}...</em>`;
+
+        try {
+            const prompt = `ACT AS: CFO & Treasury Liquidity Analyst.
+Analyze liquidity forecast for client '${currentClient}':
+- Starting Cash: $${baselines.startBase.toFixed(2)}
+- Expected Monthly Revenue: $${baselines.revBase.toFixed(2)}
+- Fixed Monthly Overhead: $${baselines.fixedBase.toFixed(2)}
+- Variable Monthly Costs: $${baselines.varBase.toFixed(2)}
+
+Provide 3 concise bullet points advising management on runway optimization, cash buffers, and working capital strategy. Return JSON: {'advice': ['Point 1 string', 'Point 2 string', 'Point 3 string']}`;
+
+            const res = await callAIModel(prompt);
+            adviceBox.innerHTML = "";
+
+            if (res.advice && Array.isArray(res.advice) && res.advice.length > 0) {
+                const ul = document.createElement('ul');
+                ul.className = "ps-3 mb-0";
+                res.advice.forEach(text => {
+                    const li = document.createElement('li');
+                    li.className = "mb-1";
+                    li.textContent = text;
+                    ul.appendChild(li);
+                });
+                adviceBox.appendChild(ul);
+            } else {
+                adviceBox.textContent = "Maintain 3-month cash reserve for operational safety.";
+            }
+        } catch(e) {
+            adviceBox.innerHTML = `⚠️ <strong>Liquidity Summary:</strong> Fixed overhead represents $${baselines.fixedBase.toFixed(2)}/mo. Maintain minimum liquid buffer of $${(baselines.fixedBase * 3).toFixed(2)}.`;
         }
     }
 
@@ -2467,7 +2581,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
             let changeClass = pendingChange > 0 ? "text-danger fw-bold" : (pendingChange < 0 ? "text-success fw-bold" : "text-muted");
 
             tbody.innerHTML += `<tr>
-                <td class="fw-bold">${accName}</td>
+                <td class="fw-bold">${escapeHTML(accName)}</td>
                 <td class="text-end">$${item.debits.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
                 <td class="text-end">$${item.credits.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
                 <td class="text-end fw-semibold">$${item.net.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
@@ -2511,28 +2625,30 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         });
 
         dataRows.forEach(i => {
-            const dupBadge = i.dup ? `<span class="badge-dup">DUP</span>` : '';
-            const receiptCell = i.receipt ? `✓ Verified` : `<button class="btn btn-xs btn-outline-secondary py-0" onclick="document.getElementById('rup${i.row}').click()">📁 Match</button><input type="file" id="rup${i.row}" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleReceiptUpload(this, ${i.row})">`;
+            const dupBadge = i.dup ? `<span class="badge-dup" title="Transaction fingerprint matches a previously posted ledger row">DUP</span>` : '';
+            const receiptCell = i.receipt ? `✓ Verified` : `<button class="btn btn-xs btn-outline-secondary py-0" onclick="document.getElementById('rup${i.row}').click()" title="Upload receipt to match amount with statement line">📁 Match</button><input type="file" id="rup${i.row}" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleReceiptUpload(this, ${i.row})">`;
             const popupId = `vpop_${i.row}`;
-            const vendorHtml = (i.vendor && i.vendor.trim() !== "") ? `<span class="vendor-hover" onmouseenter="fetchVendorIntelligence('${i.vendor.replace(/'/g, "\\'")}', '${popupId}')">${i.vendor} ${dupBadge}</span><div class="vendor-card-popup" id="${popupId}">Fetching merchant insights...</div>` : `<span class="text-muted small">N/A</span> ${dupBadge}`;
+            
+            // FIX: Replaced raw string interpolation with data-vendor attributes safely escaped with escapeHTML()
+            const vendorHtml = (i.vendor && i.vendor.trim() !== "") ? `<span class="vendor-hover" data-vendor="${escapeHTML(i.vendor)}" data-popup="${popupId}" onmouseenter="fetchVendorIntelligenceFromData(this)" title="Hover for merchant intelligence details">${escapeHTML(i.vendor)} ${dupBadge}</span><div class="vendor-card-popup" id="${popupId}">Fetching merchant insights...</div>` : `<span class="text-muted small">N/A</span> ${dupBadge}`;
 
             const isLowConf = i.confidence !== undefined && parseFloat(i.confidence) < 0.8;
             const rowClass = isLowConf ? "low-confidence-row" : "";
             const confBadgeClass = isLowConf ? "badge-conf-low" : "badge-conf-high";
-            const confDisplay = i.confidence !== undefined ? `<span class="badge-confidence ${confBadgeClass}">${(parseFloat(i.confidence) * 100).toFixed(0)}%</span>` : `<span class="badge-confidence badge-conf-high">95%</span>`;
+            const confDisplay = i.confidence !== undefined ? `<span class="badge-confidence ${confBadgeClass}" title="AI OCR Extraction Confidence Score">${(parseFloat(i.confidence) * 100).toFixed(0)}%</span>` : `<span class="badge-confidence badge-conf-high" title="AI OCR Extraction Confidence Score">95%</span>`;
 
             sBody.innerHTML += `<tr class="${rowClass}">
-                <td><input type="checkbox" class="form-check-input staging-row-select" data-row="${i.row}"></td>
-                <td>${i.src}</td>
-                <td><span class="badge bg-light text-dark border small fw-bold">${i.bank_name || 'Bank Account'}</span></td>
-                <td>${i.date}</td>
+                <td><input type="checkbox" class="form-check-input staging-row-select" data-row="${i.row}" title="Select row for bulk actions"></td>
+                <td title="Statement source type">${escapeHTML(i.src)}</td>
+                <td><span class="badge bg-light text-dark border small fw-bold" title="Statement issuer header name">${escapeHTML(i.bank_name || 'Bank Account')}</span></td>
+                <td title="Transaction date">${escapeHTML(i.date)}</td>
                 <td class="vendor-cell">${vendorHtml}</td>
-                <td><small class="text-muted">${i.desc}</small></td>
-                <td><input type="number" step="0.01" id="a${i.row}" class="form-control form-control-sm input-amount-cell" value="${parseFloat(i.amt.replace(/[^0-9.-]+/g, '')) || 0}" onchange="recalcJE()"></td>
-                <td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td>
-                <td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat" onchange="recalcJE()"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td>
-                <td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${o}">${o}</option>`).join('')}</select></td>
-                <td><select id="l${i.row}" class="form-select form-select-sm">${CLASS_OPTIONS.map(c => `<option value="${c}" ${i.cls==c?'selected':''}>${c}</option>`).join('')}</select></td>
+                <td><small class="text-muted" title="Raw line item text from statement">${escapeHTML(i.desc)}</small></td>
+                <td><input type="number" step="0.01" id="a${i.row}" class="form-control form-control-sm input-amount-cell" value="${parseFloat(i.amt.replace(/[^0-9.-]+/g, '')) || 0}" onchange="recalcJE()" title="Line dollar amount"></td>
+                <td><select id="c${i.row}" data-row="${i.row}" class="form-select form-select-sm mb-0 row-cat" onchange="recalcJE()" title="Target General Ledger Expense/Revenue account"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${escapeHTML(o)}">${escapeHTML(o)}</option>`).join('')}</select></td>
+                <td><select id="s${i.row}" class="form-select form-select-sm mb-0 row-stat" onchange="recalcJE()" title="Row approval status"><option value="PENDING" ${i.stat=='PENDING'?'selected':''}>PENDING</option><option value="APPROVED" ${i.stat=='APPROVED'?'selected':''}>APPROVED</option></select></td>
+                <td><select id="b${i.row}" class="form-select form-select-sm mb-0 row-bnk" onchange="recalcJE()" title="Offset balancing Bank or Credit Card GL account"><option value="Uncategorized">Uncategorized</option>${appGLOptions.map(o => `<option value="${escapeHTML(o)}">${escapeHTML(o)}</option>`).join('')}</select></td>
+                <td><select id="l${i.row}" class="form-select form-select-sm" title="QuickBooks Class allocation tag">${CLASS_OPTIONS.map(c => `<option value="${c}" ${i.cls==c?'selected':''}>${c}</option>`).join('')}</select></td>
                 <td>${confDisplay}</td>
                 <td>${receiptCell}</td>
             </tr>`;
@@ -2542,6 +2658,14 @@ Generate executive MD&A notes. Return ONLY JSON Object:
             if(document.getElementById('c'+i.row)) document.getElementById('c'+i.row).value = i.cat || "Uncategorized"; 
             if(document.getElementById('b'+i.row)) document.getElementById('b'+i.row).value = i.bnk || "Uncategorized"; 
         });
+    }
+
+    function fetchVendorIntelligenceFromData(el) {
+        const vName = el.getAttribute('data-vendor');
+        const popId = el.getAttribute('data-popup');
+        if (vName && popId) {
+            fetchVendorIntelligence(vName, popId);
+        }
     }
 
     /* INTERACTIVE COLUMN SORTING & SEARCH HANDLERS */
@@ -2620,7 +2744,8 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         }
     }
 
-    /* INSTANT HOVER READ FROM PRE-ENRICHED VENDOR_KNOWLEDGE TABLE OR LOCAL CACHE */
+    /* INSTANT HOVER READ FROM PRE-ENRICHED VENDOR_KNOWLEDGE TABLE OR LOCAL CACHE
+       FIX (Protocol check): Ensures merchant links strictly begin with http:// or https:// to block javascript: URI execution. */
     async function fetchVendorIntelligence(vendorName, targetElementId) {
         if (!vendorName || vendorName.trim() === "") return;
         const popupEl = document.getElementById(targetElementId); if (!popupEl) return;
@@ -2628,12 +2753,21 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         const cleanVendor = vendorName.trim();
         const cacheKey = "vendor_cache_" + cleanVendor.toLowerCase().replace(/\s+/g, '_');
 
+        function formatLink(url) {
+            if (!url) return '';
+            const cleanUrl = url.trim();
+            if (cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://")) {
+                return `<br><a href="${escapeHTML(cleanUrl)}" target="_blank" rel="noopener noreferrer" class="small text-primary">${escapeHTML(cleanUrl)}</a>`;
+            }
+            return '';
+        }
+
         const localCached = localStorage.getItem(cacheKey);
         if (localCached) {
             try {
                 const info = JSON.parse(localCached);
-                const linkHtml = info.website ? `<br><a href="${info.website}" target="_blank" class="small text-primary">${info.website}</a>` : '';
-                popupEl.innerHTML = `<span class="vendor-badge">MERCHANT DETAILS</span><br><strong>${cleanVendor}</strong><br><span>${info.description}</span>${linkHtml}`;
+                const linkHtml = formatLink(info.website);
+                popupEl.innerHTML = `<span class="vendor-badge">MERCHANT DETAILS</span><br><strong>${escapeHTML(cleanVendor)}</strong><br><span>${escapeHTML(info.description)}</span>${linkHtml}`;
                 return;
             } catch (e) {
                 localStorage.removeItem(cacheKey);
@@ -2644,14 +2778,14 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         if (db) {
             const { data: cached } = await db.from('vendor_knowledge').select('*').ilike('vendor_name', cleanVendor).maybeSingle();
             if (cached && cached.description) {
-                const linkHtml = cached.website ? `<br><a href="${cached.website}" target="_blank" class="small text-primary">${cached.website}</a>` : '';
-                popupEl.innerHTML = `<span class="vendor-badge">VERIFIED MERCHANT</span><br><strong>${cleanVendor}</strong><br><span>${cached.description}</span>${linkHtml}`;
+                const linkHtml = formatLink(cached.website);
+                popupEl.innerHTML = `<span class="vendor-badge">VERIFIED MERCHANT</span><br><strong>${escapeHTML(cleanVendor)}</strong><br><span>${escapeHTML(cached.description)}</span>${linkHtml}`;
                 localStorage.setItem(cacheKey, JSON.stringify({ description: cached.description, website: cached.website || "" }));
                 return;
             }
         }
 
-        popupEl.innerHTML = `<strong>${cleanVendor}</strong><br><span class="text-muted">Merchant details pending post-processing.</span>`;
+        popupEl.innerHTML = `<strong>${escapeHTML(cleanVendor)}</strong><br><span class="text-muted">Merchant details pending post-processing.</span>`;
     }
 
     function filterStagingRows(filterType) {
@@ -2797,7 +2931,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
                 let bal = jeBank[acc]; if(Math.abs(bal) < 0.01) continue;
                 let dr = bal < 0 ? Math.abs(bal) : 0, cr = bal > 0 ? bal : 0;
                 tDrBank += dr; tCrBank += cr;
-                divBank.innerHTML += `<div class="je-item"><span>${acc}</span><span class="dr">${dr?`$${dr.toFixed(2)}`:''}</span><span class="cr">${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
+                divBank.innerHTML += `<div class="je-item"><span>${escapeHTML(acc)}</span><span class="dr">${dr?`$${dr.toFixed(2)}`:''}</span><span class="cr">${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
             }
             const alertBank = document.getElementById('jeBalanceAlertBank');
             if(alertBank) {
@@ -2814,7 +2948,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
                 let bal = jeCC[acc]; if(Math.abs(bal) < 0.01) continue;
                 let dr = bal > 0 ? bal : 0, cr = bal < 0 ? Math.abs(bal) : 0;
                 tDrCC += dr; tCrCC += cr;
-                divCC.innerHTML += `<div class="je-item"><span>${acc}</span><span class="dr">${dr?`$${dr.toFixed(2)}`:''}</span><span class="cr">${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
+                divCC.innerHTML += `<div class="je-item"><span>${escapeHTML(acc)}</span><span class="dr">${dr?`$${dr.toFixed(2)}`:''}</span><span class="cr">${cr?`$${cr.toFixed(2)}`:''}</span></div>`;
             }
             const alertCC = document.getElementById('jeBalanceAlertCC');
             if(alertCC) {
@@ -2833,7 +2967,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
     
     async function sendChat() {
         const i = document.getElementById('chat-input'), b = document.getElementById('chat-content'), q = i.value; if(!q) return; i.value = "";
-        b.innerHTML += `<div class="chat-bubble text-primary"><strong>You:</strong> ${q}</div>`;
+        b.innerHTML += `<div class="chat-bubble text-primary"><strong>You:</strong> ${escapeHTML(q)}</div>`;
         b.innerHTML += `<div id="chat-thinking" class="chat-bubble text-muted small"><em>Processing query...</em></div>`;
         b.scrollTop = b.scrollHeight;
 
@@ -2843,17 +2977,17 @@ Generate executive MD&A notes. Return ONLY JSON Object:
             const replyObj = await callAIModel(projectContext + ". User Query: " + q + "\n\nReturn response as JSON: {'reply': 'your text here'}");
             const thinking = document.getElementById('chat-thinking'); if(thinking) thinking.remove();
             const reply = replyObj.reply || JSON.stringify(replyObj);
-            b.innerHTML += `<div class="chat-bubble text-dark"><strong>AI:</strong><br>${reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>')}</div>`; 
+            b.innerHTML += `<div class="chat-bubble text-dark"><strong>AI:</strong><br>${escapeHTML(reply).replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>')}</div>`; 
         } catch(err) {
             const thinking = document.getElementById('chat-thinking'); if(thinking) thinking.remove();
-            b.innerHTML += `<div class="chat-bubble text-danger"><strong>Error:</strong> ${err.message}</div>`;
+            b.innerHTML += `<div class="chat-bubble text-danger"><strong>Error:</strong> ${escapeHTML(err.message)}</div>`;
         }
         b.scrollTop = b.scrollHeight;
     }
 
     async function sendZoroChat() {
         const i = document.getElementById('zoro-chat-input'), b = document.getElementById('zoro-chat-content'), q = i.value; if(!q) return; i.value = "";
-        b.innerHTML += `<div class="chat-bubble text-primary"><strong>You:</strong> ${q}</div>`;
+        b.innerHTML += `<div class="chat-bubble text-primary"><strong>You:</strong> ${escapeHTML(q)}</div>`;
         b.innerHTML += `<div id="zoro-thinking" class="chat-bubble text-muted small"><em>Scanning dashboard dataset...</em></div>`;
         b.scrollTop = b.scrollHeight;
 
@@ -2863,10 +2997,10 @@ Generate executive MD&A notes. Return ONLY JSON Object:
             const replyObj = await callAIModel(dashboardContext + "\n\nUser Question: " + q + "\n\nReturn response as JSON: {'reply': 'your text here'}");
             const thinking = document.getElementById('zoro-thinking'); if(thinking) thinking.remove();
             const reply = replyObj.reply || JSON.stringify(replyObj);
-            b.innerHTML += `<div class="chat-bubble text-dark"><strong>ZORO:</strong><br>${reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>')}</div>`; 
+            b.innerHTML += `<div class="chat-bubble text-dark"><strong>ZORO:</strong><br>${escapeHTML(reply).replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>')}</div>`; 
         } catch(err) {
             const thinking = document.getElementById('zoro-thinking'); if(thinking) thinking.remove();
-            b.innerHTML += `<div class="chat-bubble text-danger"><strong>Error:</strong> ${err.message}</div>`;
+            b.innerHTML += `<div class="chat-bubble text-danger"><strong>Error:</strong> ${escapeHTML(err.message)}</div>`;
         }
         b.scrollTop = b.scrollHeight;
     }
