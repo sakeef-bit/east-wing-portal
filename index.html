@@ -360,9 +360,8 @@
     <div class="app-nav">
         <div id="nav-review" class="app-nav-btn active" onclick="switchTab('review')" title="View and categorize unposted statement staging queue">REVIEW STAGING</div>
         <div id="nav-impact" class="app-nav-btn" onclick="switchTab('impact')" title="Analyze trial balance impact of pending adjustments">PROPOSED IMPACT</div>
-        <div id="nav-pnl" class="app-nav-btn" onclick="switchTab('pnl')" title="View interactive revenue, expense, and net income charts">VISUAL P&L</div>
-        <div id="nav-forecast" class="app-nav-btn" onclick="switchTab('forecast')" title="Model 90-day predictive cash flow trajectory">CASH FORECAST</div>
-        <div id="nav-mda" class="app-nav-btn" onclick="switchTab('mda')" title="View and generate AI executive financial analysis notes">MD&A NOTES</div>
+        <div id="nav-pnl" class="app-nav-btn" onclick="switchTab('pnl')" title="View interactive revenue, expense, and net income charts">CASH-BASIS P&L</div>
+        <div id="nav-tax" class="app-nav-btn" onclick="switchTab('tax')" title="View Schedule C IRS Tax Readiness Summary">TAX READINESS</div>
         <div id="nav-vendor" class="app-nav-btn" onclick="switchTab('vendor')" title="Audit vendor spending consistency and inactivity">VENDOR AUDIT</div>
         <div id="nav-gl" class="app-nav-btn" onclick="switchTab('gl')" title="View active General Ledger Chart of Accounts">CHART OF ACCOUNTS</div>
         <div id="nav-history" class="app-nav-btn" onclick="switchTab('history')" title="Inspect permanent posted transaction ledger and batch sync references">PERMANENT LEDGER</div>
@@ -478,163 +477,49 @@
     </div>
 
     <div id="tab-pnl" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
+        <div class="alert alert-info py-2 small mb-3">
+            ℹ️ <strong>Accounting Basis Notice:</strong> This summary reflects <strong>Cash & Credit Card Activity Only</strong> derived from uploaded statements. It excludes Accounts Receivable, Accounts Payable, inventory adjustments, and non-cash items.
+        </div>
         <div class="row g-3 mb-4">
-            <div class="col-md-3"><div class="summary-card" title="Total period revenue inflows"><h6>Total Revenue</h6><h3 id="stat-rev" class="fw-bold mb-0">$0.00</h3></div></div>
-            <div class="col-md-3"><div class="summary-card" title="Total period operating expenses"><h6>Total Expenses</h6><h3 id="stat-exp" class="text-danger fw-bold mb-0">$0.00</h3></div></div>
-            <div class="col-md-3"><div class="summary-card" title="Net operating income (Revenue - Expenses)"><h6>Net Income</h6><h3 id="stat-net" class="fw-bold mb-0">$0.00</h3></div></div>
-            <div class="col-md-3"><div class="summary-card" title="Net profit margin percentage"><h6>Profit Margin</h6><h3 id="stat-margin" class="fw-bold mb-0">0%</h3></div></div>
+            <div class="col-md-3"><div class="summary-card" title="Total period revenue inflows"><h6>Total Gross Inflows</h6><h3 id="stat-rev" class="fw-bold mb-0">$0.00</h3></div></div>
+            <div class="col-md-3"><div class="summary-card" title="Total period operating expenses"><h6>Total Outflows & Spend</h6><h3 id="stat-exp" class="text-danger fw-bold mb-0">$0.00</h3></div></div>
+            <div class="col-md-3"><div class="summary-card" title="Net cash generation (Inflows - Outflows)"><h6>Net Cash Generation</h6><h3 id="stat-net" class="fw-bold mb-0">$0.00</h3></div></div>
+            <div class="col-md-3"><div class="summary-card" title="Net operating margin percentage"><h6>Operating Margin</h6><h3 id="stat-margin" class="fw-bold mb-0">0%</h3></div></div>
         </div>
         <div class="row g-4">
-            <div class="col-md-7"><div class="card p-3 border"><h6 class="fw-bold text-muted mb-3">Revenue vs. Expense Trend</h6><div style="height: 280px;"><canvas id="chart-bar"></canvas></div></div></div>
+            <div class="col-md-7"><div class="card p-3 border"><h6 class="fw-bold text-muted mb-3">Inflows vs. Outflows Trend</h6><div style="height: 280px;"><canvas id="chart-bar"></canvas></div></div></div>
             <div class="col-md-5"><div class="card p-3 border"><h6 class="fw-bold text-muted mb-3">Expense Category Share</h6><div style="height: 280px;"><canvas id="chart-doughnut"></canvas></div></div></div>
         </div>
     </div>
 
-    <!-- Predictive 90-Day Cash Flow Forecast Tab & Universal Sensitivity Box Engine -->
-    <div id="tab-forecast" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h5 class="fw-bold mb-0">Predictive 90-Day Cash Flow Forecast</h5>
-                <p class="small text-muted mb-0">Forward-looking cash trajectory modeling based on historical ledger cycles and approved staging items.</p>
-            </div>
-            <button class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold" onclick="renderCashForecast(true)" title="Recalculate forecast and generate AI liquidity advice">🔄 Recalculate Runway</button>
-        </div>
-        <div class="row g-3 mb-4">
-            <div class="col-md-4"><div class="summary-card" title="Estimated liquid cash runway in days based on baseline net burn"><h6>Estimated Cash Runway</h6><h3 id="fc-runway-days" class="fw-bold text-primary mb-0">-- Days</h3></div></div>
-            <div class="col-md-4"><div class="summary-card" title="Projected monthly net cash burn rate"><h6>Projected Net Burn Rate</h6><h3 id="fc-burn-rate" class="fw-bold text-danger mb-0">$0.00 / mo</h3></div></div>
-            <div class="col-md-4"><div class="summary-card" title="Lowest projected cash balance point over the 90-day trajectory window"><h6>Projected 90-Day Cash Floor</h6><h3 id="fc-lowest-point" class="fw-bold mb-0">$0.00</h3></div></div>
-        </div>
-
-        <!-- UNIVERSAL SENSITIVITY SIDE-BOX SIMULATOR -->
-        <div class="card p-4 border mb-4 rounded-xl bg-light">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="fw-bold text-dark mb-0" title="Sensitivity modeling controls">🎛️ Universal Sensitivity & Scenario Modeling Side-Boxes</h6>
-                <button class="btn btn-xs btn-outline-secondary rounded-pill px-2" onclick="resetForecastDefaults()" title="Reset sandbox inputs to unadjusted ledger baselines">Reset to Trial Balance Defaults</button>
-            </div>
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <label class="fw-bold small text-muted mb-1" title="Select account metric to adjust">1. Select Chart of Account</label>
-                    <select id="sens_acc_picker" class="form-select form-select-sm fw-semibold" onchange="updateUniversalSensitivity()" title="Select metric family for sensitivity shift">
-                        <option value="TOTAL_REVENUE">Total Revenue / Inflows</option>
-                        <option value="FIXED_EXPENSE">Fixed Overhead Costs</option>
-                        <option value="VARIABLE_EXPENSE">Variable Monthly Costs</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="fw-bold small text-muted mb-1" title="Choose percentage or dollar modification">2. Sensitivity Modifier Type</label>
-                    <select id="sens_type_picker" class="form-select form-select-sm fw-semibold" onchange="updateUniversalSensitivity()" title="Choose modifier unit type">
-                        <option value="PERCENTAGE">Percentage Shift (%)</option>
-                        <option value="ABSOLUTE">Absolute Dollar Change ($)</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="fw-bold small text-muted mb-1" title="Adjustment magnitude value">3. Adjustment Value (+/-)</label>
-                    <input type="number" id="sens_val_input" class="form-control form-control-sm text-end fw-bold" value="0" step="1" onchange="updateUniversalSensitivity()" title="Enter positive or negative modifier value">
-                </div>
-                <div class="col-md-3">
-                    <label class="fw-bold small text-muted mb-1" title="Shift duration frequency">4. Effective Duration</label>
-                    <select id="sens_duration_picker" class="form-select form-select-sm fw-semibold" onchange="updateUniversalSensitivity()" title="Specify if shift recurs monthly or occurs once">
-                        <option value="RECURRING">Recurring Monthly</option>
-                        <option value="ONETIME">One-Time Event</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <!-- EDITABLE CASH BURN SCENARIO SANDBOX TABLE -->
-        <div class="card p-4 border mb-4 rounded-xl">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="fw-bold text-dark mb-0" title="Editable sandbox parameter inputs">🛠️ Interactive Cash Burn & Scenario Sandbox (Editable Inputs)</h6>
-                <button class="btn btn-xs btn-outline-secondary rounded-pill px-2" onclick="resetForecastDefaults()" title="Reset sandbox inputs to unadjusted ledger baselines">Reset to Ledger Defaults</button>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-bordered align-middle small mb-0 bg-white">
-                    <thead class="table-dark">
-                        <tr>
-                            <th title="Parameter Title">Parameter Name</th>
-                            <th title="Baseline expected monthly dollar value">Baseline / Expected ($)</th>
-                            <th title="Conservative scenario monthly dollar value">Conservative Case ($)</th>
-                            <th title="Description and impact overview">Notes & Impact</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="fw-bold" title="Opening bank cash position for the selected scope">Starting Liquid Cash ($)</td>
-                            <td><input type="number" id="sb_start_base" class="form-control form-control-sm text-end fw-bold" onchange="updateForecastSandbox()" title="Baseline opening cash position"></td>
-                            <td><input type="number" id="sb_start_cons" class="form-control form-control-sm text-end fw-bold" onchange="updateForecastSandbox()" title="Conservative opening cash position"></td>
-                            <td class="text-muted">Opening liquid cash position across bank accounts for active period scope.</td>
-                        </tr>
-                        <tr>
-                            <td class="fw-bold" title="Monthly recurring cash inflows">Monthly Recurring Revenues ($)</td>
-                            <td><input type="number" id="sb_rev_base" class="form-control form-control-sm text-end text-success fw-bold" onchange="updateForecastSandbox()" title="Baseline monthly revenue inflows"></td>
-                            <td><input type="number" id="sb_rev_cons" class="form-control form-control-sm text-end text-success fw-bold" onchange="updateForecastSandbox()" title="Conservative monthly revenue inflows"></td>
-                            <td class="text-muted">Average monthly cash revenue derived from historical bank inflows.</td>
-                        </tr>
-                        <tr>
-                            <td class="fw-bold" title="Fixed recurring overhead costs derived from monthly recurring vendor frequency">Fixed Monthly Overhead ($)</td>
-                            <td><input type="number" id="sb_fixed_base" class="form-control form-control-sm text-end text-danger fw-bold" onchange="updateForecastSandbox()" title="Baseline fixed overhead expenses"></td>
-                            <td><input type="number" id="sb_fixed_cons" class="form-control form-control-sm text-end text-danger fw-bold" onchange="updateForecastSandbox()" title="Conservative fixed overhead expenses"></td>
-                            <td class="text-muted">Fixed overhead spending auto-classified by vendor monthly occurrence frequency.</td>
-                        </tr>
-                        <tr>
-                            <td class="fw-bold" title="Variable non-recurring monthly costs">Variable Monthly Costs ($)</td>
-                            <td><input type="number" id="sb_var_base" class="form-control form-control-sm text-end text-danger fw-bold" onchange="updateForecastSandbox()" title="Baseline variable costs"></td>
-                            <td><input type="number" id="sb_var_cons" class="form-control form-control-sm text-end text-danger fw-bold" onchange="updateForecastSandbox()" title="Conservative variable costs"></td>
-                            <td class="text-muted">Variable or discretionary spending from non-recurring vendor activity.</td>
-                        </tr>
-                        <tr class="table-light">
-                            <td class="fw-bold" title="Calculated net monthly burn (Outflows - Revenue)">Calculated Monthly Cash Burn ($)</td>
-                            <td id="sb_burn_base" class="text-end fw-bold fs-6" title="Calculated baseline monthly net burn">--</td>
-                            <td id="sb_burn_cons" class="text-end fw-bold fs-6" title="Calculated conservative monthly net burn">--</td>
-                            <td class="fw-bold text-dark" id="sb_burn_summary">Net monthly cash movement.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="row g-4 mb-4">
-            <div class="col-md-8">
-                <div class="card p-3 border">
-                    <h6 class="fw-bold text-muted mb-3" title="Visual 90-day cash balance projection">90-Day Projected Cash Trajectory ($)</h6>
-                    <div style="height: 300px;"><canvas id="chart-forecast"></canvas></div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-3 border h-100 bg-light">
-                    <h6 class="fw-bold text-dark mb-2" title="AI synthesized runway and liquidity recommendations">⚡ AI Runway Recommendations</h6>
-                    <div id="fc-ai-advice" class="small text-secondary" style="line-height: 1.6;">Select a client and click "Recalculate Runway" to generate predictive liquidity advice.</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MD&A Notes Tab -->
-    <div id="tab-mda" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
+    <!-- 100% DETERMINISTIC SCHEDULE C TAX READINESS TAB -->
+    <div id="tab-tax" class="bg-white p-4 rounded-xl shadow-sm" style="display:none;">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-                <h5 class="fw-bold mb-0">Management's Discussion & Analysis (MD&A) Notes</h5>
-                <p class="small text-muted mb-0">Record executive comments, variances, and strategic insights for <strong id="mdaPeriodTitle" class="text-primary">August 2026</strong>.</p>
+                <h5 class="fw-bold mb-0">IRS Form 1040 Schedule C Tax Readiness Summary</h5>
+                <p class="small text-muted mb-0">Deterministic summation mapping GL accounts directly into IRS Schedule C tax lines.</p>
             </div>
-            <button class="btn btn-dark-app btn-sm rounded-pill px-4" onclick="saveMDANotes()" title="Save MD&A notes to Supabase database">Save MD&A Notes</button>
+            <button class="btn btn-sm btn-outline-dark fw-bold rounded-pill px-3" onclick="exportTaxScheduleC()" title="Download CSV summary formatted for tax preparation">📥 Export Schedule C Summary</button>
         </div>
-        <div class="row g-3">
-            <div class="col-md-6">
-                <label class="fw-bold small text-muted" title="Executive high-level period overview">1. Executive Summary & Period Highlights</label>
-                <textarea id="mda_exec" class="form-control" rows="5" placeholder="Enter key accomplishments, net income commentary, or major events..." title="Executive summary commentary"></textarea>
-            </div>
-            <div class="col-md-6">
-                <label class="fw-bold small text-muted" title="Analysis of revenue growth or decline drivers">2. Revenue Variances & Income Growth Analysis</label>
-                <textarea id="mda_rev" class="form-control" rows="5" placeholder="Explain drivers behind revenue shifts, customer acquisitions, or billing changes..." title="Revenue analysis commentary"></textarea>
-            </div>
-            <div class="col-md-6">
-                <label class="fw-bold small text-muted" title="Breakdown of key cost drivers and spending anomalies">3. Cost & Expense Driver Breakdown</label>
-                <textarea id="mda_exp" class="form-control" rows="5" placeholder="Identify anomalous vendor spend, seasonal cost increases, or software adjustments..." title="Expense driver commentary"></textarea>
-            </div>
-            <div class="col-md-6">
-                <label class="fw-bold small text-muted" title="Strategic action items for executive management">4. Recommended Action Items & Next Steps</label>
-                <textarea id="mda_actions" class="form-control" rows="5" placeholder="List action items for management, cost savings targets, or follow-ups..." title="Recommended action items"></textarea>
-            </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-4"><div class="summary-card"><h6>Gross Inflows (Income)</h6><h3 id="tax-gross-inflows" class="fw-bold text-success mb-0">$0.00</h3></div></div>
+            <div class="col-md-4"><div class="summary-card"><h6>Total Deductible Expenses</h6><h3 id="tax-total-deductions" class="fw-bold text-danger mb-0">$0.00</h3></div></div>
+            <div class="col-md-4"><div class="summary-card"><h6>Estimated Taxable Net Profit</h6><h3 id="tax-estimated-net" class="fw-bold text-primary mb-0">$0.00</h3></div></div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle small bg-white">
+                <thead class="table-dark">
+                    <tr>
+                        <th title="Official IRS Schedule C Line Item">IRS Schedule C Tax Line</th>
+                        <th title="Mapped General Ledger accounts">Mapped Chart of Accounts</th>
+                        <th class="text-center" title="Total line item transactions">Count</th>
+                        <th class="text-end" title="Total deductible dollar amount">Deductible Total ($)</th>
+                    </tr>
+                </thead>
+                <tbody id="tb-tax-summary"></tbody>
+            </table>
         </div>
     </div>
 
@@ -825,12 +710,64 @@
     let currentClient = "";
     let localData = [], historyData = [];
     let appGLOptions = [], rawQBOAccountDetails = [], activeRules = [];
-    let stmtStart = 0, stmtEnd = 0, barChart = null, forecastChart = null;
+    let stmtStart = 0, stmtEnd = 0, barChart = null;
 
     let sortKey = 'date', sortAsc = true;
-    let forecastBaselines = null; // Preserves unadjusted baseline values
 
     const CLASS_OPTIONS = ["General", "Marketing", "Sales", "Operations", "NY-Office"];
+
+    /* DEFAULT IRS SCHEDULE C TAX LINE MAPPING MATRIX */
+    const SCHEDULE_C_MAPPING = {
+        "Advertising": "Line 8: Advertising",
+        "Marketing": "Line 8: Advertising",
+        "Car & Truck": "Line 9: Car and truck expenses",
+        "Vehicle Expense": "Line 9: Car and truck expenses",
+        "Commissions": "Line 10: Commissions and fees",
+        "Contract Labor": "Line 11: Contract labor",
+        "Subcontractors": "Line 11: Contract labor",
+        "Insurance": "Line 15: Insurance (other than health)",
+        "Mortgage Interest": "Line 16a: Mortgage interest",
+        "Bank Interest": "Line 16b: Other interest",
+        "Credit Card Interest": "Line 16b: Other interest",
+        "Legal & Professional": "Line 17: Legal and professional services",
+        "Accounting & CPA": "Line 17: Legal and professional services",
+        "Office Expense": "Line 18: Office expense",
+        "Software & Subscriptions": "Line 18: Office expense",
+        "Equipment Rent": "Line 20a: Rent - Vehicles, machinery, equipment",
+        "Building Rent": "Line 20b: Rent - Other business property",
+        "Rent": "Line 20b: Rent - Other business property",
+        "Repairs & Maintenance": "Line 21: Repairs and maintenance",
+        "Supplies": "Line 22: Supplies",
+        "Taxes & Licenses": "Line 23: Taxes and licenses",
+        "Travel": "Line 24a: Travel",
+        "Meals & Entertainment": "Line 24b: Deductible meals (50% rule)",
+        "Utilities": "Line 25: Utilities",
+        "Payroll & Wages": "Line 26: Wages (less employment credits)",
+        "Bank Fees": "Line 27b: Other expenses",
+        "Dues & Subscriptions": "Line 27b: Other expenses"
+    };
+
+    function getScheduleCLine(glAccount) {
+        if (!glAccount || glAccount === "Uncategorized") return "Line 27b: Other expenses (Uncategorized)";
+        if (SCHEDULE_C_MAPPING[glAccount]) return SCHEDULE_C_MAPPING[glAccount];
+        
+        const lower = glAccount.toLowerCase();
+        if (lower.includes("ad") || lower.includes("market")) return "Line 8: Advertising";
+        if (lower.includes("car") || lower.includes("auto") || lower.includes("fuel")) return "Line 9: Car and truck expenses";
+        if (lower.includes("contract") || lower.includes("sub")) return "Line 11: Contract labor";
+        if (lower.includes("insur")) return "Line 15: Insurance (other than health)";
+        if (lower.includes("legal") || lower.includes("cpa") || lower.includes("prof")) return "Line 17: Legal and professional services";
+        if (lower.includes("soft") || lower.includes("office")) return "Line 18: Office expense";
+        if (lower.includes("rent")) return "Line 20b: Rent - Other business property";
+        if (lower.includes("repair") || lower.includes("maint")) return "Line 21: Repairs and maintenance";
+        if (lower.includes("tax") || lower.includes("license")) return "Line 23: Taxes and licenses";
+        if (lower.includes("travel")) return "Line 24a: Travel";
+        if (lower.includes("meal") || lower.includes("food")) return "Line 24b: Deductible meals (50% rule)";
+        if (lower.includes("util") || lower.includes("internet") || lower.includes("phone")) return "Line 25: Utilities";
+        if (lower.includes("wage") || lower.includes("pay")) return "Line 26: Wages (less employment credits)";
+        
+        return "Line 27b: Other expenses";
+    }
 
     /* TEXT SANITIZATION UTILITY FOR SAFE DOM INSERTION (XSS PROTECTION) */
     function escapeHTML(str) {
@@ -899,8 +836,7 @@
         }
     }
 
-    /* STEP B: REFACTORED callAIModel TO DELEGATE TO SUPABASE EDGE FUNCTION AI-ROUTER
-       This function forwards requests to the server-side Edge Function, eliminating client-side API key leaks. */
+    /* REFACTORED callAIModel TO DELEGATE TO SUPABASE EDGE FUNCTION AI-ROUTER */
     async function callAIModel(promptText, pdfBase64Data = null, mimeType = "application/pdf") {
         const provider = localStorage.getItem('hca_provider') || "GEMINI";
         const model = localStorage.getItem('hca_model') || "gemini-3.6-flash";
@@ -1162,11 +1098,10 @@
         localStorage.removeItem('hca_model');
         currentUserId = null;
         isSuperAdmin = false;
-        forecastBaselines = null;
         location.reload();
     }
 
-    /* STEP B: SECURE BYOK VAULT SAVE HANDLER WITH DEFENSIVE FALLBACK TO PREVENT CONSTRAINT ERRORS */
+    /* SECURE BYOK VAULT SAVE HANDLER WITH DEFENSIVE FALLBACK */
     async function lockKey() { 
         const keyVal = document.getElementById('master_gk').value.trim();
         if (!keyVal) return showToast("Please enter an API Key", "danger");
@@ -1184,7 +1119,6 @@
         currentUserId = user.id;
         document.getElementById('st').style.display = 'block';
 
-        // Check for existing record to avoid ON CONFLICT constraint mismatch
         const { data: existingKey } = await db.from('user_api_keys')
             .select('id')
             .eq('user_id', user.id)
@@ -1223,7 +1157,7 @@
         checkAuthFlowState(); 
     }
 
-    /* AUTHENTICATION STATE & SUPER_ADMIN ROLE CHECK CONTROLLER */
+    /* AUTHENTICATION STATE & ROLE CONTROLLER */
     async function checkAuthFlowState() {
         initSupabase();
         const { data: { session } } = await db.auth.getSession();
@@ -1240,7 +1174,6 @@
 
         currentUserId = session.user.id;
 
-        // Fetch user role to evaluate SUPER_ADMIN access rights
         const { data: roleData } = await db.from('user_roles')
             .select('role')
             .eq('user_id', currentUserId)
@@ -1254,11 +1187,18 @@
 
         handleProviderChange();
 
-        const apiKeyFlag = localStorage.getItem('hca_gk');
-        if (!apiKeyFlag) {
+        const provider = localStorage.getItem('hca_provider') || 'GEMINI';
+        const { data: vaultedKey } = await db.from('user_api_keys')
+            .select('id')
+            .eq('user_id', currentUserId)
+            .eq('provider', provider)
+            .maybeSingle();
+
+        if (!vaultedKey && !localStorage.getItem('hca_gk')) {
             document.getElementById('keyGate').style.display = 'flex';
             document.getElementById('mainPortal').style.display = 'none';
         } else {
+            localStorage.setItem('hca_gk', 'VAULT_MANAGED');
             document.getElementById('keyGate').style.display = 'none';
             document.getElementById('mainPortal').style.display = 'block';
             document.getElementById('dot-gemini').classList.add('dot-green');
@@ -1268,7 +1208,6 @@
     }
 
     function onClientChange() {
-        forecastBaselines = null; // Invalidate cached forecast when client changes
         pingStatus();
     }
 
@@ -1464,6 +1403,7 @@
         }
     }
 
+    /* EXCEL FORMULA INJECTION SANITIZATION (.xlsx EXPORT) */
     async function convertPDFToExcel(input) {
         const file = input.files[0];
         if (!file) return;
@@ -1478,7 +1418,16 @@ Return ONLY JSON array of arrays: [["Date", "Vendor/Description", "Reference", "
 
                 const rowsData = await callAIModel(prompt, pdfData, "application/pdf");
 
-                const ws = XLSX.utils.aoa_to_sheet(rowsData);
+                const sanitizedRows = rowsData.map(row => 
+                    row.map(cell => {
+                        if (typeof cell === 'string' && /^[=+\-@]/ .test(cell.trim())) {
+                            return "'" + cell;
+                        }
+                        return cell;
+                    })
+                );
+
+                const ws = XLSX.utils.aoa_to_sheet(sanitizedRows);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Converted Statement");
                 XLSX.writeFile(wb, file.name.replace(/\.[^/.]+$/, "") + "_Converted.xlsx");
@@ -1802,7 +1751,6 @@ Return ONLY JSON Object:
                 }
 
                 window.lastExtractedBankName = extractedBankName;
-                forecastBaselines = null; // Reset baseline cache on new upload
                 await loadDash();
 
                 if (rows.length > 0 && rows[0].txn_date) {
@@ -1901,10 +1849,6 @@ Return ONLY JSON Object:
         const dl = document.getElementById('glChoices'); dl.innerHTML = ""; 
         const batchSel = document.getElementById('batchCategorySelect'); batchSel.innerHTML = '<option value="Uncategorized">-- Assign Expense Account --</option>';
         const batchBankSel = document.getElementById('batchBankSelect'); batchBankSel.innerHTML = '<option value="Uncategorized">-- Bulk Assign Bank / Offset Account --</option>';
-        
-        // Keep sens_acc_picker options strictly aligned with the three functional metrics
-        const sensPicker = document.getElementById('sens_acc_picker'); 
-        if(sensPicker) sensPicker.innerHTML = '<option value="TOTAL_REVENUE">Total Revenue / Inflows</option><option value="FIXED_EXPENSE">Fixed Overhead Costs</option><option value="VARIABLE_EXPENSE">Variable Monthly Costs</option>';
 
         appGLOptions.forEach(opt => { 
             const escOpt = escapeHTML(opt);
@@ -2153,11 +2097,10 @@ Return ONLY JSON Object:
     }
 
     async function applyGlobalDateFilter() {
-        forecastBaselines = null; // Invalidate forecast cache on period filter change
         renderStagingTable(filterBySelectedPeriod(localData));
         renderPnLCharts();
         renderVendorMatrix();
-        await loadMDANotes();
+        renderTaxReadinessTab();
         recalcJE();
     }
 
@@ -2253,8 +2196,8 @@ Return ONLY JSON Object:
                 data: { 
                     labels: Object.keys(months).sort(), 
                     datasets: [
-                        { label: 'Revenue', data: Object.keys(months).sort().map(m => months[m].inc), backgroundColor: '#C5D1B8' },
-                        { label: 'Expenses', data: Object.keys(months).sort().map(m => months[m].exp), backgroundColor: '#2C3E50' }
+                        { label: 'Inflows', data: Object.keys(months).sort().map(m => months[m].inc), backgroundColor: '#C5D1B8' },
+                        { label: 'Outflows', data: Object.keys(months).sort().map(m => months[m].exp), backgroundColor: '#2C3E50' }
                     ]
                 },
                 options: { responsive: true, maintainAspectRatio: false }
@@ -2278,371 +2221,81 @@ Return ONLY JSON Object:
         }
     }
 
-    /* PREDICTIVE 90-DAY CASH FORECAST ENGINE
-       FIX (Single-month threshold): Requires monthsInView >= 3 to classify fixed vs variable costs by vendor frequency.
-       FIX (Starting cash): Derived specifically from BANK-source statement closing balances within the active scope.
-       FIX (Cache & AI API): Baseline cache invalidates on scope changes, and AI Runway Advice is triggered on demand. */
-    async function renderCashForecast(forceRecalculate = false) {
-        if (!forceRecalculate && forecastBaselines !== null) {
-            updateForecastSandbox();
-            return;
-        }
+    /* 100% DETERMINISTIC SCHEDULE C SUMMARY RENDERER */
+    function renderTaxReadinessTab() {
+        const tbody = document.getElementById('tb-tax-summary');
+        if (!tbody) return;
+        tbody.innerHTML = "";
 
-        const filtered = filterBySelectedPeriod([...historyData, ...localData]);
-        const bankRows = filtered.filter(i => String(i.src || "").toUpperCase() !== "CREDIT CARD");
+        const filteredDataset = filterBySelectedPeriod([...historyData, ...localData]);
+        const taxBuckets = {};
+        let totalGrossInflows = 0;
+        let totalTaxDeductions = 0;
 
-        const monthKeys = new Set();
-        const vendorMonthMap = {};
-        let totalIn = 0, totalOut = 0;
+        filteredDataset.forEach(item => {
+            let val = parseFloat(String(item.amt).replace(/[^0-9.-]+/g, "")) || 0;
+            let cat = item.cat || "Uncategorized";
 
-        bankRows.forEach(i => {
-            const v = parseFloat(String(i.amt).replace(/[^0-9.-]+/g, "")) || 0;
-            const mKey = i.date ? String(i.date).substring(0, 7) : "Active";
-            monthKeys.add(mKey);
-
-            if (v > 0) {
-                totalIn += v;
+            if (val > 0) {
+                totalGrossInflows += val;
             } else {
-                const absVal = Math.abs(v);
-                totalOut += absVal;
-                const vName = (i.vendor && i.vendor.trim()) ? i.vendor.trim().toLowerCase() : "unassigned";
-                if (!vendorMonthMap[vName]) vendorMonthMap[vName] = { total: 0, months: new Set() };
-                vendorMonthMap[vName].total += absVal;
-                vendorMonthMap[vName].months.add(mKey);
+                let absVal = Math.abs(val);
+                let taxLine = getScheduleCLine(cat);
+
+                if (!taxBuckets[taxLine]) {
+                    taxBuckets[taxLine] = { total: 0, items: 0, categories: new Set() };
+                }
+
+                let deductibleAmount = taxLine.includes("Line 24b") ? (absVal * 0.50) : absVal;
+
+                taxBuckets[taxLine].total += deductibleAmount;
+                taxBuckets[taxLine].items += 1;
+                taxBuckets[taxLine].categories.add(cat);
+                totalTaxDeductions += deductibleAmount;
             }
         });
 
-        const monthsInView = Math.max(1, monthKeys.size);
-        const avgMonthlyIn = totalIn / monthsInView;
+        document.getElementById('tax-gross-inflows').innerText = `$${totalGrossInflows.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+        document.getElementById('tax-total-deductions').innerText = `$${totalTaxDeductions.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+        document.getElementById('tax-estimated-net').innerText = `$${(totalGrossInflows - totalTaxDeductions).toLocaleString('en-US', {minimumFractionDigits: 2})}`;
 
-        let fixedTotal = 0, varTotal = 0;
+        const sortedLines = Object.keys(taxBuckets).sort();
 
-        if (monthsInView >= 3) {
-            const threshold = Math.ceil(monthsInView * 0.5);
-            for (let vName in vendorMonthMap) {
-                const entry = vendorMonthMap[vName];
-                if (entry.months.size >= threshold) {
-                    fixedTotal += entry.total;
-                } else {
-                    varTotal += entry.total;
-                }
-            }
-        } else {
-            bankRows.forEach(i => {
-                const v = parseFloat(String(i.amt).replace(/[^0-9.-]+/g, "")) || 0;
-                if (v < 0) {
-                    const absVal = Math.abs(v);
-                    const cat = (i.cat || "").toLowerCase();
-                    if (cat.includes("rent") || cat.includes("payroll") || cat.includes("insurance") || cat.includes("software") || cat.includes("dues")) {
-                        fixedTotal += absVal;
-                    } else {
-                        varTotal += absVal;
-                    }
-                }
-            });
-        }
+        sortedLines.forEach(line => {
+            const bucket = taxBuckets[line];
+            const mappedCategoriesStr = Array.from(bucket.categories).join(", ");
 
-        const avgMonthlyFixed = fixedTotal / monthsInView;
-        const avgMonthlyVar = varTotal / monthsInView;
-        const currentCash = bankRows.length > 0 ? (parseFloat(stmtEnd) || 0) : 0;
-
-        forecastBaselines = {
-            startBase: currentCash,
-            startCons: currentCash,
-            revBase: avgMonthlyIn,
-            revCons: avgMonthlyIn * 0.85,
-            fixedBase: avgMonthlyFixed,
-            fixedCons: avgMonthlyFixed * 1.05,
-            varBase: avgMonthlyVar,
-            varCons: avgMonthlyVar * 1.15
-        };
-
-        resetForecastDefaults();
-
-        if (forceRecalculate) {
-            generateAIRunwayAdvice(forecastBaselines);
-        }
+            tbody.innerHTML += `<tr>
+                <td class="fw-bold text-dark">${escapeHTML(line)}</td>
+                <td><small class="text-muted">${escapeHTML(mappedCategoriesStr)}</small></td>
+                <td class="text-center fw-semibold">${bucket.items}</td>
+                <td class="text-end fw-bold text-danger">$${bucket.total.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+            </tr>`;
+        });
     }
 
-    function resetForecastDefaults() {
-        if (!forecastBaselines) {
-            renderCashForecast(true);
-            return;
-        }
-        document.getElementById('sb_start_base').value = forecastBaselines.startBase.toFixed(2);
-        document.getElementById('sb_start_cons').value = forecastBaselines.startCons.toFixed(2);
-        document.getElementById('sb_rev_base').value = forecastBaselines.revBase.toFixed(2);
-        document.getElementById('sb_rev_cons').value = forecastBaselines.revCons.toFixed(2);
-        document.getElementById('sb_fixed_base').value = forecastBaselines.fixedBase.toFixed(2);
-        document.getElementById('sb_fixed_cons').value = forecastBaselines.fixedCons.toFixed(2);
-        document.getElementById('sb_var_base').value = forecastBaselines.varBase.toFixed(2);
-        document.getElementById('sb_var_cons').value = forecastBaselines.varCons.toFixed(2);
-
-        document.getElementById('sens_val_input').value = 0;
-        updateForecastSandbox();
-    }
-
-    /* UNIVERSAL SENSITIVITY SIDE-BOX CONTROLLER WIRING */
-    function updateUniversalSensitivity() {
-        if (!forecastBaselines) return;
-
-        const accPicker = document.getElementById('sens_acc_picker').value;
-        const modType = document.getElementById('sens_type_picker').value;
-        const modVal = parseFloat(document.getElementById('sens_val_input').value) || 0;
-
-        let targetBase = forecastBaselines.revBase;
-        if (accPicker === "FIXED_EXPENSE") targetBase = forecastBaselines.fixedBase;
-        if (accPicker === "VARIABLE_EXPENSE") targetBase = forecastBaselines.varBase;
-
-        let adjustedVal = targetBase;
-        if (modType === "PERCENTAGE") {
-            adjustedVal = targetBase * (1 + (modVal / 100));
-        } else {
-            adjustedVal = targetBase + modVal;
-        }
-
-        if (accPicker === "TOTAL_REVENUE") {
-            document.getElementById('sb_rev_base').value = Math.max(0, adjustedVal).toFixed(2);
-        } else if (accPicker === "FIXED_EXPENSE") {
-            document.getElementById('sb_fixed_base').value = Math.max(0, adjustedVal).toFixed(2);
-        } else if (accPicker === "VARIABLE_EXPENSE") {
-            document.getElementById('sb_var_base').value = Math.max(0, adjustedVal).toFixed(2);
-        }
-
-        updateForecastSandbox();
-    }
-
-    function updateForecastSandbox() {
-        let startBase = parseFloat(document.getElementById('sb_start_base').value) || 0;
-        let revBase = parseFloat(document.getElementById('sb_rev_base').value) || 0;
-        let fixedBase = parseFloat(document.getElementById('sb_fixed_base').value) || 0;
-        let varBase = parseFloat(document.getElementById('sb_var_base').value) || 0;
-
-        let startCons = parseFloat(document.getElementById('sb_start_cons').value) || 0;
-        let revCons = parseFloat(document.getElementById('sb_rev_cons').value) || 0;
-        let fixedCons = parseFloat(document.getElementById('sb_fixed_cons').value) || 0;
-        let varCons = parseFloat(document.getElementById('sb_var_cons').value) || 0;
-
-        const durationType = document.getElementById('sens_duration_picker').value;
-
-        let totalOutBase = fixedBase + varBase;
-        let netBurnBase = totalOutBase - revBase;
-
-        let totalOutCons = fixedCons + varCons;
-        let netBurnCons = totalOutCons - revCons;
-
-        document.getElementById('sb_burn_base').innerText = netBurnBase > 0 ? `-$${netBurnBase.toFixed(2)}` : `+$${Math.abs(netBurnBase).toFixed(2)}`;
-        document.getElementById('sb_burn_base').className = netBurnBase > 0 ? "text-end fw-bold fs-6 text-danger" : "text-end fw-bold fs-6 text-success";
-
-        document.getElementById('sb_burn_cons').innerText = netBurnCons > 0 ? `-$${netBurnCons.toFixed(2)}` : `+$${Math.abs(netBurnCons).toFixed(2)}`;
-        document.getElementById('sb_burn_cons').className = netBurnCons > 0 ? "text-end fw-bold fs-6 text-danger" : "text-end fw-bold fs-6 text-success";
-
-        let runwayDays = netBurnBase > 0 ? Math.round((startBase / netBurnBase) * 30) : 999;
-        if (runwayDays < 0) runwayDays = 0;
-
-        document.getElementById('fc-runway-days').innerText = runwayDays > 365 ? "365+ Days" : `${runwayDays} Days`;
-        document.getElementById('fc-burn-rate').innerText = netBurnBase > 0 ? `-$${netBurnBase.toFixed(2)} / mo` : `+$${Math.abs(netBurnBase).toFixed(2)} / mo`;
-
-        let labels = ["Today", "+30 Days", "+60 Days", "+90 Days"];
-        
-        let baseline, conservative;
-        if (durationType === "ONETIME") {
-            baseline = [
-                startBase,
-                startBase - (netBurnBase * 1),
-                startBase - (netBurnBase * 1),
-                startBase - (netBurnBase * 1)
-            ];
-            conservative = [
-                startCons,
-                startCons - (netBurnCons * 1),
-                startCons - (netBurnCons * 1),
-                startCons - (netBurnCons * 1)
-            ];
-        } else {
-            baseline = [
-                startBase,
-                startBase - (netBurnBase * 1),
-                startBase - (netBurnBase * 2),
-                startBase - (netBurnBase * 3)
-            ];
-            conservative = [
-                startCons,
-                startCons - (netBurnCons * 1),
-                startCons - (netBurnCons * 2),
-                startCons - (netBurnCons * 3)
-            ];
-        }
-
-        let lowestFloor = Math.min(...conservative);
-        document.getElementById('fc-lowest-point').innerText = `$${lowestFloor.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
-
-        const ctxForecast = document.getElementById('chart-forecast');
-        if (ctxForecast) {
-            if (forecastChart) forecastChart.destroy();
-            forecastChart = new Chart(ctxForecast, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'Baseline Trajectory', data: baseline, borderColor: '#2C3E50', backgroundColor: 'rgba(44, 62, 80, 0.1)', fill: true, tension: 0.3 },
-                        { label: 'Conservative Trajectory', data: conservative, borderColor: '#EF4444', borderDash: [5, 5], fill: false, tension: 0.3 }
-                    ]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-        }
-    }
-
-    /* SYNTHESIZE AI RUNWAY RECOMMENDATIONS SAFE FROM PROMPT-INJECTION XSS */
-    async function generateAIRunwayAdvice(baselines) {
-        const adviceBox = document.getElementById('fc-ai-advice');
-        if (!adviceBox) return;
-
-        adviceBox.innerHTML = `<em>Generating AI liquidity analysis for ${escapeHTML(currentClient)}...</em>`;
-
-        try {
-            const prompt = `ACT AS: CFO & Treasury Liquidity Analyst.
-Analyze liquidity forecast for client '${currentClient}':
-- Starting Cash: $${baselines.startBase.toFixed(2)}
-- Expected Monthly Revenue: $${baselines.revBase.toFixed(2)}
-- Fixed Monthly Overhead: $${baselines.fixedBase.toFixed(2)}
-- Variable Monthly Costs: $${baselines.varBase.toFixed(2)}
-
-Provide 3 concise bullet points advising management on runway optimization, cash buffers, and working capital strategy. Return JSON: {'advice': ['Point 1 string', 'Point 2 string', 'Point 3 string']}`;
-
-            const res = await callAIModel(prompt);
-            adviceBox.innerHTML = "";
-
-            if (res.advice && Array.isArray(res.advice) && res.advice.length > 0) {
-                const ul = document.createElement('ul');
-                ul.className = "ps-3 mb-0";
-                res.advice.forEach(text => {
-                    const li = document.createElement('li');
-                    li.className = "mb-1";
-                    li.textContent = text;
-                    ul.appendChild(li);
-                });
-                adviceBox.appendChild(ul);
-            } else {
-                adviceBox.textContent = "Maintain 3-month cash reserve for operational safety.";
-            }
-        } catch(e) {
-            adviceBox.innerHTML = `⚠️ <strong>Liquidity Summary:</strong> Fixed overhead represents $${baselines.fixedBase.toFixed(2)}/mo. Maintain minimum liquid buffer of $${(baselines.fixedBase * 3).toFixed(2)}.`;
-        }
-    }
-
-    /* AUTOMATED DATA-FETCH MD&A GENERATOR CONTROLLER WITH EMPTY PERIOD RESET AND SUPER_ADMIN AWARE SCOPING */
-    async function loadMDANotes() {
-        initSupabase();
-        if (!currentUserId) return;
-        const selYear = document.getElementById('globalFilterYear').value;
-        const selMonth = document.getElementById('globalFilterMonth').value;
-
-        const year = selYear === 'ALL' ? new Date().getFullYear() : parseInt(selYear);
-        const month = selMonth === 'ALL' ? (new Date().getMonth() + 1) : parseInt(selMonth);
-
-        document.getElementById('mdaPeriodTitle').innerText = `${month}/${year}`;
-
-        let query = db.from('mda_notes')
-            .select('*')
-            .ilike('client_name', currentClient.trim())
-            .eq('period_year', year)
-            .eq('period_month', month);
-
-        if (!isSuperAdmin) {
-            query = query.eq('user_id', currentUserId);
-        }
-
-        const { data } = await query.maybeSingle();
-
-        if (data && (data.executive_summary || data.revenue_commentary)) {
-            document.getElementById('mda_exec').value = data.executive_summary || "";
-            document.getElementById('mda_rev').value = data.revenue_commentary || "";
-            document.getElementById('mda_exp').value = data.expense_commentary || "";
-            document.getElementById('mda_actions').value = data.action_items || "";
-            return;
-        }
-
+    function exportTaxScheduleC() {
         const filteredDataset = filterBySelectedPeriod([...historyData, ...localData]);
-        
-        if (filteredDataset.length === 0) {
-            document.getElementById('mda_exec').value = "";
-            document.getElementById('mda_rev').value = "";
-            document.getElementById('mda_exp').value = "";
-            document.getElementById('mda_actions').value = "";
-            return;
-        }
+        let csvContent = "data:text/csv;charset=utf-8,IRS Schedule C Line,GL Category,Transaction Date,Vendor,Description,Amount,Deductible Amount\n";
 
-        document.getElementById('mda_exec').value = "Generating AI commentary from fetched dataset...";
-        document.getElementById('mda_rev').value = "Analyzing revenue streams...";
-        document.getElementById('mda_exp').value = "Analyzing expense categories...";
-        document.getElementById('mda_actions').value = "Synthesizing recommendations...";
+        filteredDataset.forEach(i => {
+            let val = parseFloat(String(i.amt).replace(/[^0-9.-]+/g, "")) || 0;
+            if (val < 0) {
+                let absVal = Math.abs(val);
+                let taxLine = getScheduleCLine(i.cat);
+                let dedVal = taxLine.includes("Line 24b") ? (absVal * 0.50) : absVal;
+                csvContent += `"${taxLine}","${i.cat}","${i.date}","${i.vendor}","${i.desc}",${absVal},${dedVal}\n`;
+            }
+        });
 
-        try {
-            const prompt = `ACT AS: CFO & Executive Financial Analyst. Analyze this client dataset for period ${month}/${year}:
-CLIENT: ${currentClient}
-TRANSACTIONS (${filteredDataset.length} items): ${JSON.stringify(filteredDataset.slice(0, 100))}
-
-Generate executive MD&A notes. Return ONLY JSON Object:
-{
-  "executive_summary": "High-level summary of period performance and net cash position.",
-  "revenue_commentary": "Key drivers behind sales, deposits, or revenue lines.",
-  "expense_commentary": "Notable vendor spending, recurring expenses, or anomalies.",
-  "action_items": "Recommended operational or financial next steps."
-}`;
-
-            const generated = await callAIModel(prompt);
-
-            document.getElementById('mda_exec').value = generated.executive_summary || "";
-            document.getElementById('mda_rev').value = generated.revenue_commentary || "";
-            document.getElementById('mda_exp').value = generated.expense_commentary || "";
-            document.getElementById('mda_actions').value = generated.action_items || "";
-
-            await db.from('mda_notes').upsert({
-                user_id: currentUserId,
-                client_name: currentClient,
-                period_year: year,
-                period_month: month,
-                executive_summary: generated.executive_summary || "",
-                revenue_commentary: generated.revenue_commentary || "",
-                expense_commentary: generated.expense_commentary || "",
-                action_items: generated.action_items || "",
-                updated_at: new Date()
-            }, { onConflict: 'user_id,client_name,period_year,period_month' });
-
-        } catch (e) {
-            document.getElementById('mda_exec').value = "";
-            document.getElementById('mda_rev').value = "";
-            document.getElementById('mda_exp').value = "";
-            document.getElementById('mda_actions').value = "";
-        }
-    }
-
-    async function saveMDANotes() {
-        initSupabase();
-        if (!currentUserId) return showToast("Session expired", "danger");
-        const selYear = document.getElementById('globalFilterYear').value;
-        const selMonth = document.getElementById('globalFilterMonth').value;
-
-        const year = selYear === 'ALL' ? new Date().getFullYear() : parseInt(selYear);
-        const month = selMonth === 'ALL' ? (new Date().getMonth() + 1) : parseInt(selMonth);
-
-        const payload = {
-            user_id: currentUserId,
-            client_name: currentClient,
-            period_year: year,
-            period_month: month,
-            executive_summary: document.getElementById('mda_exec').value,
-            revenue_commentary: document.getElementById('mda_rev').value,
-            expense_commentary: document.getElementById('mda_exp').value,
-            action_items: document.getElementById('mda_actions').value,
-            updated_at: new Date()
-        };
-
-        const { error } = await db.from('mda_notes').upsert(payload, { onConflict: 'user_id,client_name,period_year,period_month' });
-        if (error) showToast("Error saving MD&A notes: " + error.message, "danger");
-        else showToast(`✓ MD&A Notes saved successfully for period ${month}/${year}!`, "success");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Schedule_C_Tax_Summary_${currentClient}_${Date.now()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast("✓ Schedule C Tax Export Downloaded!", "success");
     }
 
     async function updateStatementTargetBalances() {
@@ -2749,7 +2402,6 @@ Generate executive MD&A notes. Return ONLY JSON Object:
             const receiptCell = i.receipt ? `✓ Verified` : `<button class="btn btn-xs btn-outline-secondary py-0" onclick="document.getElementById('rup${i.row}').click()" title="Upload receipt to match amount with statement line">📁 Match</button><input type="file" id="rup${i.row}" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleReceiptUpload(this, ${i.row})">`;
             const popupId = `vpop_${i.row}`;
             
-            // FIX: Replaced raw string interpolation with data-vendor attributes safely escaped with escapeHTML()
             const vendorHtml = (i.vendor && i.vendor.trim() !== "") ? `<span class="vendor-hover" data-vendor="${escapeHTML(i.vendor)}" data-popup="${popupId}" onmouseenter="fetchVendorIntelligenceFromData(this)" title="Hover for merchant intelligence details">${escapeHTML(i.vendor)} ${dupBadge}</span><div class="vendor-card-popup" id="${popupId}">Fetching merchant insights...</div>` : `<span class="text-muted small">N/A</span> ${dupBadge}`;
 
             const isLowConf = i.confidence !== undefined && parseFloat(i.confidence) < 0.8;
@@ -2869,8 +2521,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         }
     }
 
-    /* INSTANT HOVER READ FROM PRE-ENRICHED VENDOR_KNOWLEDGE TABLE OR LOCAL CACHE
-       FIX (Protocol check): Ensures merchant links strictly begin with http:// or https:// to block javascript: URI execution. */
+    /* INSTANT HOVER READ FROM PRE-ENRICHED VENDOR_KNOWLEDGE TABLE OR LOCAL CACHE */
     async function fetchVendorIntelligence(vendorName, targetElementId) {
         if (!vendorName || vendorName.trim() === "") return;
         const popupEl = document.getElementById(targetElementId); if (!popupEl) return;
@@ -3140,8 +2791,7 @@ Generate executive MD&A notes. Return ONLY JSON Object:
         document.querySelectorAll('.app-nav-btn').forEach(el => el.classList.remove('active')); 
         document.getElementById('tab-'+t).style.display = 'block'; 
         document.getElementById('nav-'+t).classList.add('active'); 
-        if (t === 'mda') loadMDANotes();
-        if (t === 'forecast') renderCashForecast();
+        if (t === 'tax') renderTaxReadinessTab();
         if (t === 'impact') renderImpactTab();
     }
 
